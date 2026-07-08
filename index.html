@@ -63,6 +63,8 @@
         .sector-badge { background: #e8f0fe; color: #1b6f9c; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; margin-left: 4px; }
         .suspense-badge { background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; margin-left: 4px; }
         
+        .required-star { color: #b13e4b; margin-left: 2px; }
+        
         @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } .tax-types-group { flex-direction: column; align-items: flex-start; gap: 0.4rem; } .actions { flex-direction: column; align-items: stretch; } .tax-types-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
 </head>
@@ -104,12 +106,12 @@
     <div class="card">
         <div class="form-grid">
             <div class="field-group">
-                <label><i class="fas fa-id-card"></i> TIN / Ghana Card *</label>
-                <input type="text" id="tin" placeholder="GRA-12345" required />
+                <label><i class="fas fa-id-card"></i> TIN / Ghana Card <span class="required-star">*</span></label>
+                <input type="text" id="tin" placeholder="GRA-12345" />
             </div>
             <div class="field-group">
-                <label><i class="fas fa-user-tie"></i> Name *</label>
-                <input type="text" id="taxpayerName" placeholder="Full name" required />
+                <label><i class="fas fa-user-tie"></i> Name <span class="required-star">*</span></label>
+                <input type="text" id="taxpayerName" placeholder="Full name" />
             </div>
             <div class="field-group">
                 <label><i class="fas fa-phone-alt"></i> Telephone</label>
@@ -128,7 +130,7 @@
                 <input type="text" id="taxOffice" placeholder="GRA-Accra" />
             </div>
             
-            <!-- TAXPAYER TYPE (was Sector) -->
+            <!-- TAXPAYER TYPE -->
             <div class="field-group">
                 <label><i class="fas fa-users"></i> Taxpayer Type</label>
                 <select id="taxpayerType">
@@ -139,11 +141,11 @@
                 </select>
             </div>
 
-            <!-- SECTOR A - U (New Dropdown) -->
+            <!-- SECTOR A - U -->
             <div class="field-group">
-                <label><i class="fas fa-layer-group"></i> Sector <span class="sector-badge">A - U</span></label>
+                <label><i class="fas fa-layer-group"></i> Sector <span class="sector-badge">A - U</span> <span class="required-star">*</span></label>
                 <select id="sectorSelect">
-                    <option value="">Select Sector...</option>
+                    <option value="">-- Select Sector --</option>
                     <option value="A">A</option>
                     <option value="B">B</option>
                     <option value="C">C</option>
@@ -434,49 +436,80 @@ function updateUserList() {
 // 🔥 FIREBASE - ADD RECORD
 // =============================================
 function addRecord() {
+    console.log('Add Record button clicked');
+    
+    // Get all values
     const tin = tinInput.value.trim();
     const name = nameInput.value.trim();
-    
-    if (tin === '' || name === '') {
-        alert('⚠️ TIN and Name are required.');
+    const telephone = telephoneInput.value.trim();
+    const email = emailInput.value.trim();
+    const location = locationInput.value.trim();
+    const taxOffice = taxOfficeInput.value.trim();
+    const taxpayerType = taxpayerTypeSelect.value;
+    const sector = sectorSelect.value;
+    const fileStatus = fileStatusSelect.value;
+    const liability = parseFloat(liabilityInput.value) || 0;
+    const payment = parseFloat(paymentInput.value) || 0;
+    const outstanding = parseFloat(outstandingInput.value) || 0;
+    const taxTypes = getSelectedTaxTypes();
+
+    // Validation
+    if (tin === '') {
+        alert('⚠️ Please enter TIN / Ghana Card.');
+        tinInput.focus();
         return;
     }
 
-    const sectorValue = sectorSelect.value;
-    if (sectorValue === '') {
+    if (name === '') {
+        alert('⚠️ Please enter the taxpayer name.');
+        nameInput.focus();
+        return;
+    }
+
+    if (sector === '' || sector === null) {
         alert('⚠️ Please select a Sector (A - U).');
         sectorSelect.focus();
         return;
     }
 
+    // Create record object
     const record = {
-        tin,
-        name,
-        telephone: telephoneInput.value.trim(),
-        email: emailInput.value.trim(),
-        location: locationInput.value.trim(),
-        taxOffice: taxOfficeInput.value.trim(),
-        taxpayerType: taxpayerTypeSelect.value,
-        sector: sectorValue,
-        fileStatus: fileStatusSelect.value,
-        taxTypes: getSelectedTaxTypes(),
-        liability: parseFloat(liabilityInput.value) || 0,
-        payment: parseFloat(paymentInput.value) || 0,
-        outstanding: parseFloat(outstandingInput.value) || 0,
+        tin: tin,
+        name: name,
+        telephone: telephone,
+        email: email,
+        location: location,
+        taxOffice: taxOffice,
+        taxpayerType: taxpayerType,
+        sector: sector,
+        fileStatus: fileStatus,
+        taxTypes: taxTypes,
+        liability: liability,
+        payment: payment,
+        outstanding: outstanding,
         timestamp: Date.now(),
         addedBy: userName,
         addedDate: new Date().toISOString()
     };
 
+    console.log('Saving record:', record);
+
+    // Save to Firebase
     database.ref('censusRecords').push(record)
         .then(() => {
+            console.log('✅ Record saved successfully!');
             resetForm();
             const btn = document.getElementById('addBtn');
             btn.innerHTML = '<i class="fas fa-check"></i> Added!';
-            setTimeout(() => { btn.innerHTML = '<i class="fas fa-plus"></i> Add Record'; }, 1500);
+            btn.style.background = '#28a745';
+            setTimeout(() => { 
+                btn.innerHTML = '<i class="fas fa-plus"></i> Add Record';
+                btn.style.background = '#0d3b52';
+            }, 2000);
         })
         .catch((error) => {
-            alert('❌ Error saving: ' + error.message);
+            console.error('❌ Error saving:', error);
+            alert('❌ Error saving record: ' + error.message);
         });
 }
 
@@ -487,7 +520,12 @@ function deleteRecord(firebaseKey) {
     if (!firebaseKey) return;
     if (confirm('Delete this record?')) {
         database.ref('censusRecords/' + firebaseKey).remove()
-            .catch((error) => alert('Error deleting: ' + error.message));
+            .then(() => {
+                console.log('✅ Record deleted successfully');
+            })
+            .catch((error) => {
+                alert('Error deleting: ' + error.message);
+            });
     }
 }
 
@@ -499,7 +537,12 @@ function clearAllRecords() {
     if (confirm('⚠️ Delete ALL records? This cannot be undone.')) {
         if (confirm('Are you sure? All data will be permanently removed.')) {
             database.ref('censusRecords').remove()
-                .catch((error) => alert('Error clearing: ' + error.message));
+                .then(() => {
+                    console.log('✅ All records cleared');
+                })
+                .catch((error) => {
+                    alert('Error clearing: ' + error.message);
+                });
         }
     }
 }
@@ -822,7 +865,7 @@ document.getElementById('mergeBtn').addEventListener('click', function() {
 document.getElementById('downloadBtn').addEventListener('click', downloadExcel);
 document.getElementById('downloadAllBtn').addEventListener('click', downloadAllData);
 
-// Enter key support
+// Enter key support - add record when Enter is pressed in any field
 document.querySelectorAll('input, select').forEach(input => {
     input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -845,6 +888,7 @@ console.log('📊 All team members will see updates in real-time!');
 console.log('📋 Tax types include: Suspense (marked with ⚠️)');
 console.log('🏢 Taxpayer Type: Company, Individual, NGO, Other');
 console.log('📂 Sector: A - U dropdown');
+console.log('💡 Click "Add Record" or press Enter to save');
 </script>
 </body>
 </html>
