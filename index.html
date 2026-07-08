@@ -15,11 +15,14 @@
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
         .field-group { display: flex; flex-direction: column; gap: 4px; }
         .field-group label { font-weight: 600; font-size: 0.75rem; color: #1e4a62; }
-        .field-group input, .field-group select { padding: 10px; border: 1px solid #d4e0ea; border-radius: 12px; font-size: 0.9rem; }
+        .field-group input, .field-group select { padding: 10px; border: 2px solid #d4e0ea; border-radius: 12px; font-size: 0.9rem; transition: 0.2s; }
         .field-group input:focus, .field-group select:focus { border-color: #1b6f9c; outline: none; box-shadow: 0 0 0 3px rgba(27,111,156,0.1); }
+        .field-group input.error, .field-group select.error { border-color: #b13e4b; background: #fff5f5; }
+        .field-group .error-msg { color: #b13e4b; font-size: 0.7rem; display: none; margin-top: 2px; }
         .btn { padding: 10px 20px; border: none; border-radius: 30px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn-primary { background: #0d3b52; color: white; }
         .btn-primary:hover { background: #134b66; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-success { background: #1f7b4b; color: white; }
         .btn-success:hover { background: #25945a; }
         .btn-danger { background: #b13e4b; color: white; }
@@ -28,7 +31,7 @@
         .btn-warning:hover { background: #e6b422; }
         .table-wrapper { overflow-x: auto; border-radius: 16px; border: 1px solid #deeaf3; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { background: #eaf2f9; padding: 12px; text-align: left; }
+        th { background: #eaf2f9; padding: 12px; text-align: left; white-space: nowrap; }
         td { padding: 10px 12px; border-bottom: 1px solid #e1ecf5; }
         .delete-row { background: none; border: none; color: #b13e4b; cursor: pointer; font-size: 1.1rem; }
         .delete-row:hover { color: #a12936; }
@@ -65,11 +68,27 @@
         
         .required-star { color: #b13e4b; margin-left: 2px; }
         
+        .toast { position: fixed; top: 20px; right: 20px; background: #28a745; color: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); display: none; z-index: 1000; align-items: center; gap: 10px; animation: slideIn 0.3s ease; }
+        .toast.error { background: #b13e4b; }
+        .toast.show { display: flex; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        /* Quick fill buttons */
+        .quick-fill { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .quick-fill .btn-sm { padding: 5px 15px; font-size: 0.75rem; border-radius: 20px; border: 1px solid #d4e0ea; background: white; cursor: pointer; transition: 0.2s; }
+        .quick-fill .btn-sm:hover { background: #eaf2f9; border-color: #1b6f9c; }
+        
         @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } .tax-types-group { flex-direction: column; align-items: flex-start; gap: 0.4rem; } .actions { flex-direction: column; align-items: stretch; } .tax-types-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
 </head>
 <body>
 <div class="container">
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Record added successfully!</span>
+    </div>
+
     <!-- HEADER -->
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
@@ -104,14 +123,25 @@
 
     <!-- FORM -->
     <div class="card">
+        <!-- Quick Fill Buttons -->
+        <div class="quick-fill">
+            <span style="font-size:0.75rem; color:#6a8ba0; font-weight:600;">Quick Fill:</span>
+            <button class="btn-sm" onclick="fillSample1()">📋 Sample 1</button>
+            <button class="btn-sm" onclick="fillSample2()">📋 Sample 2</button>
+            <button class="btn-sm" onclick="fillSample3()">📋 Sample 3</button>
+            <button class="btn-sm" onclick="clearForm()" style="color:#b13e4b;">🗑️ Clear</button>
+        </div>
+
         <div class="form-grid">
-            <div class="field-group">
+            <div class="field-group" id="tinGroup">
                 <label><i class="fas fa-id-card"></i> TIN / Ghana Card <span class="required-star">*</span></label>
-                <input type="text" id="tin" placeholder="GRA-12345" />
+                <input type="text" id="tin" placeholder="e.g. GRA-12345 or GC-1234" />
+                <span class="error-msg" id="tinError">Please enter TIN / Ghana Card</span>
             </div>
-            <div class="field-group">
+            <div class="field-group" id="nameGroup">
                 <label><i class="fas fa-user-tie"></i> Name <span class="required-star">*</span></label>
-                <input type="text" id="taxpayerName" placeholder="Full name" />
+                <input type="text" id="taxpayerName" placeholder="Full name or business name" />
+                <span class="error-msg" id="nameError">Please enter the taxpayer name</span>
             </div>
             <div class="field-group">
                 <label><i class="fas fa-phone-alt"></i> Telephone</label>
@@ -130,7 +160,6 @@
                 <input type="text" id="taxOffice" placeholder="GRA-Accra" />
             </div>
             
-            <!-- TAXPAYER TYPE -->
             <div class="field-group">
                 <label><i class="fas fa-users"></i> Taxpayer Type</label>
                 <select id="taxpayerType">
@@ -141,8 +170,7 @@
                 </select>
             </div>
 
-            <!-- SECTOR A - U -->
-            <div class="field-group">
+            <div class="field-group" id="sectorGroup">
                 <label><i class="fas fa-layer-group"></i> Sector <span class="sector-badge">A - U</span> <span class="required-star">*</span></label>
                 <select id="sectorSelect">
                     <option value="">-- Select Sector --</option>
@@ -168,6 +196,7 @@
                     <option value="T">T</option>
                     <option value="U">U</option>
                 </select>
+                <span class="error-msg" id="sectorError">Please select a sector (A - U)</span>
             </div>
 
             <div class="field-group">
@@ -181,7 +210,6 @@
                 </select>
             </div>
 
-            <!-- ALL TAX TYPES -->
             <div class="tax-types-group">
                 <span style="font-weight:600; color:#1d4b63;"><i class="fas fa-check-square"></i> Tax Types Registered:</span>
                 <div class="tax-types-grid">
@@ -337,6 +365,107 @@ const downloadBtn = document.getElementById('downloadBtn');
 const downloadAllBtn = document.getElementById('downloadAllBtn');
 const userListSpan = document.getElementById('userList');
 
+// Toast
+const toast = document.getElementById('toast');
+const toastMessage = document.getElementById('toastMessage');
+
+function showToast(message, isError = false) {
+    toastMessage.textContent = message;
+    toast.className = 'toast show';
+    if (isError) {
+        toast.classList.add('error');
+        toast.querySelector('i').className = 'fas fa-exclamation-circle';
+    } else {
+        toast.classList.remove('error');
+        toast.querySelector('i').className = 'fas fa-check-circle';
+    }
+    setTimeout(() => { toast.classList.remove('show'); }, 3000);
+}
+
+// =============================================
+// QUICK FILL FUNCTIONS
+// =============================================
+function fillSample1() {
+    tinInput.value = 'GRA-1001';
+    nameInput.value = 'Afia Mensah';
+    telephoneInput.value = '024 123 4567';
+    emailInput.value = 'afia@example.com';
+    locationInput.value = 'Accra';
+    taxOfficeInput.value = 'GRA-Accra Central';
+    taxpayerTypeSelect.value = 'Individual';
+    sectorSelect.value = 'A';
+    fileStatusSelect.value = 'Active';
+    liabilityInput.value = '12500.00';
+    paymentInput.value = '8000.00';
+    outstandingInput.value = '4500.00';
+    // Check specific tax types
+    taxCheckboxes.forEach(cb => {
+        cb.checked = ['Personal Income Tax', 'VAT, NHIL & GETFUND'].includes(cb.value);
+    });
+    showToast('📋 Sample 1 loaded! Click Add Record');
+    tinInput.focus();
+}
+
+function fillSample2() {
+    tinInput.value = 'GC-2024-5678';
+    nameInput.value = 'Kofi Trading Ltd';
+    telephoneInput.value = '020 987 6543';
+    emailInput.value = 'info@kofitrading.com';
+    locationInput.value = 'Tema';
+    taxOfficeInput.value = 'GRA-Tema';
+    taxpayerTypeSelect.value = 'Company';
+    sectorSelect.value = 'B';
+    fileStatusSelect.value = 'Pending';
+    liabilityInput.value = '34200.50';
+    paymentInput.value = '20000.00';
+    outstandingInput.value = '14200.50';
+    taxCheckboxes.forEach(cb => {
+        cb.checked = ['Corporate Income Tax', 'VAT, NHIL & GETFUND', 'Customs'].includes(cb.value);
+    });
+    showToast('📋 Sample 2 loaded! Click Add Record');
+    tinInput.focus();
+}
+
+function fillSample3() {
+    tinInput.value = 'GRA-4512';
+    nameInput.value = 'Accra Customs Services';
+    telephoneInput.value = '030 222 3344';
+    emailInput.value = 'customs@accra.com';
+    locationInput.value = 'Accra';
+    taxOfficeInput.value = 'GRA-Customs House';
+    taxpayerTypeSelect.value = 'Company';
+    sectorSelect.value = 'C';
+    fileStatusSelect.value = 'Audit';
+    liabilityInput.value = '8750.00';
+    paymentInput.value = '5000.00';
+    outstandingInput.value = '3750.00';
+    taxCheckboxes.forEach(cb => {
+        cb.checked = ['Customs', 'Excise', 'Petroleum Tax'].includes(cb.value);
+    });
+    showToast('📋 Sample 3 loaded! Click Add Record');
+    tinInput.focus();
+}
+
+function clearForm() {
+    tinInput.value = '';
+    nameInput.value = '';
+    telephoneInput.value = '';
+    emailInput.value = '';
+    locationInput.value = '';
+    taxOfficeInput.value = '';
+    taxpayerTypeSelect.value = 'Individual';
+    sectorSelect.value = '';
+    fileStatusSelect.value = 'Active';
+    liabilityInput.value = '';
+    paymentInput.value = '';
+    outstandingInput.value = '';
+    taxCheckboxes.forEach(cb => { cb.checked = (cb.value === 'Personal Income Tax'); });
+    document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
+    tinInput.focus();
+    showToast('🗑️ Form cleared');
+}
+
 // =============================================
 // USER SETUP
 // =============================================
@@ -374,6 +503,8 @@ function resetForm() {
     paymentInput.value = '';
     outstandingInput.value = '';
     taxCheckboxes.forEach(cb => { cb.checked = (cb.value === 'Personal Income Tax'); });
+    document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
     tinInput.focus();
 }
 
@@ -438,6 +569,10 @@ function updateUserList() {
 function addRecord() {
     console.log('Add Record button clicked');
     
+    // Clear previous errors
+    document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
+    
     // Get all values
     const tin = tinInput.value.trim();
     const name = nameInput.value.trim();
@@ -454,21 +589,33 @@ function addRecord() {
     const taxTypes = getSelectedTaxTypes();
 
     // Validation
+    let hasError = false;
+
     if (tin === '') {
-        alert('⚠️ Please enter TIN / Ghana Card.');
-        tinInput.focus();
-        return;
+        document.getElementById('tinGroup').querySelector('.error-msg').style.display = 'block';
+        document.getElementById('tin').classList.add('error');
+        hasError = true;
     }
 
     if (name === '') {
-        alert('⚠️ Please enter the taxpayer name.');
-        nameInput.focus();
-        return;
+        document.getElementById('nameGroup').querySelector('.error-msg').style.display = 'block';
+        document.getElementById('taxpayerName').classList.add('error');
+        hasError = true;
     }
 
     if (sector === '' || sector === null) {
-        alert('⚠️ Please select a Sector (A - U).');
-        sectorSelect.focus();
+        document.getElementById('sectorGroup').querySelector('.error-msg').style.display = 'block';
+        document.getElementById('sectorSelect').classList.add('error');
+        hasError = true;
+    }
+
+    if (hasError) {
+        showToast('⚠️ Please fill in all required fields (marked with *)', true);
+        // Scroll to first error
+        const firstError = document.querySelector('.field-group .error-msg[style*="display: block"]');
+        if (firstError) {
+            firstError.closest('.field-group').querySelector('input, select').focus();
+        }
         return;
     }
 
@@ -498,6 +645,7 @@ function addRecord() {
     database.ref('censusRecords').push(record)
         .then(() => {
             console.log('✅ Record saved successfully!');
+            showToast('✅ Record added successfully!');
             resetForm();
             const btn = document.getElementById('addBtn');
             btn.innerHTML = '<i class="fas fa-check"></i> Added!';
@@ -509,7 +657,7 @@ function addRecord() {
         })
         .catch((error) => {
             console.error('❌ Error saving:', error);
-            alert('❌ Error saving record: ' + error.message);
+            showToast('❌ Error saving: ' + error.message, true);
         });
 }
 
@@ -522,9 +670,10 @@ function deleteRecord(firebaseKey) {
         database.ref('censusRecords/' + firebaseKey).remove()
             .then(() => {
                 console.log('✅ Record deleted successfully');
+                showToast('🗑️ Record deleted');
             })
             .catch((error) => {
-                alert('Error deleting: ' + error.message);
+                showToast('❌ Error deleting: ' + error.message, true);
             });
     }
 }
@@ -539,9 +688,10 @@ function clearAllRecords() {
             database.ref('censusRecords').remove()
                 .then(() => {
                     console.log('✅ All records cleared');
+                    showToast('🗑️ All records cleared');
                 })
                 .catch((error) => {
-                    alert('Error clearing: ' + error.message);
+                    showToast('❌ Error clearing: ' + error.message, true);
                 });
         }
     }
@@ -632,7 +782,7 @@ function updateStats() {
 // EXPORT DATA
 // =============================================
 function exportData() {
-    if (records.length === 0) { alert('No records to export.'); return; }
+    if (records.length === 0) { showToast('No records to export.', true); return; }
     const data = { 
         exportedBy: userName, 
         exportDate: new Date().toISOString(), 
@@ -652,15 +802,16 @@ function exportData() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    alert('✅ Exported ' + records.length + ' records for ' + userName);
+    showToast('✅ Exported ' + records.length + ' records for ' + userName);
 }
 
 // =============================================
 // MERGE DATA
 // =============================================
 function mergeData(files) {
-    if (!files || files.length === 0) { alert('Please select JSON files to merge.'); return; }
+    if (!files || files.length === 0) { showToast('Please select JSON files to merge.', true); return; }
     let totalMerged = 0, duplicateCount = 0;
+    let processed = 0;
     
     Array.from(files).forEach(file => {
         const reader = new FileReader();
@@ -685,23 +836,23 @@ function mergeData(files) {
                         duplicateCount++;
                     }
                 });
+                processed++;
+                if (processed === files.length) {
+                    showToast(`✅ Merge complete! ${totalMerged} added, ${duplicateCount} duplicates skipped`);
+                }
             } catch (error) {
-                alert('Error reading file ' + file.name + ': ' + error.message);
+                showToast('Error reading file ' + file.name + ': ' + error.message, true);
             }
         };
         reader.readAsText(file);
     });
-    
-    setTimeout(() => {
-        alert(`✅ Merge complete!\n\n📊 ${totalMerged} new records added\n⚠️ ${duplicateCount} duplicates skipped\n📈 Total records: ${records.length}`);
-    }, 1000);
 }
 
 // =============================================
 // DOWNLOAD EXCEL
 // =============================================
 function downloadExcel() {
-    if (records.length === 0) { alert('No records to export.'); return; }
+    if (records.length === 0) { showToast('No records to export.', true); return; }
     
     const headers = [
         'TIN/Ghana Card', 'Name', 'Telephone', 'Email', 
@@ -740,16 +891,14 @@ function downloadExcel() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    showToast('✅ Excel downloaded successfully!');
 }
 
 // =============================================
 // 📊 DOWNLOAD ALL DATA
 // =============================================
 function downloadAllData() {
-    if (records.length === 0) { 
-        alert('No records to export.'); 
-        return; 
-    }
+    if (records.length === 0) { showToast('No records to export.', true); return; }
 
     downloadAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
     downloadAllBtn.disabled = true;
@@ -833,7 +982,7 @@ function downloadAllData() {
         downloadAllBtn.innerHTML = '<i class="fas fa-users"></i> Download All Data';
         downloadAllBtn.disabled = false;
         
-        alert(`✅ Complete data exported!\n\n📊 ${records.length} records exported\n💰 Total Liability: GHS ${totalLiab.toFixed(2)}\n👤 ${users.size} team members\n📅 ${new Date().toLocaleDateString()}`);
+        showToast(`✅ Complete data exported! ${records.length} records`);
     }, 500);
 }
 
@@ -858,14 +1007,14 @@ document.getElementById('clearAllBtn').addEventListener('click', clearAllRecords
 document.getElementById('exportBtn').addEventListener('click', exportData);
 document.getElementById('mergeBtn').addEventListener('click', function() {
     const files = document.getElementById('mergeFile').files;
-    if (files.length === 0) { alert('Please select JSON files to merge.'); return; }
+    if (files.length === 0) { showToast('Please select JSON files to merge.', true); return; }
     mergeData(files);
     document.getElementById('mergeFile').value = '';
 });
 document.getElementById('downloadBtn').addEventListener('click', downloadExcel);
 document.getElementById('downloadAllBtn').addEventListener('click', downloadAllData);
 
-// Enter key support - add record when Enter is pressed in any field
+// Enter key support
 document.querySelectorAll('input, select').forEach(input => {
     input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -873,6 +1022,28 @@ document.querySelectorAll('input, select').forEach(input => {
             addRecord();
         }
     });
+});
+
+// Real-time validation - clear errors when user types
+tinInput.addEventListener('input', function() {
+    if (this.value.trim() !== '') {
+        this.classList.remove('error');
+        document.getElementById('tinGroup').querySelector('.error-msg').style.display = 'none';
+    }
+});
+
+nameInput.addEventListener('input', function() {
+    if (this.value.trim() !== '') {
+        this.classList.remove('error');
+        document.getElementById('nameGroup').querySelector('.error-msg').style.display = 'none';
+    }
+});
+
+sectorSelect.addEventListener('change', function() {
+    if (this.value !== '') {
+        this.classList.remove('error');
+        document.getElementById('sectorGroup').querySelector('.error-msg').style.display = 'none';
+    }
 });
 
 // =============================================
@@ -889,6 +1060,8 @@ console.log('📋 Tax types include: Suspense (marked with ⚠️)');
 console.log('🏢 Taxpayer Type: Company, Individual, NGO, Other');
 console.log('📂 Sector: A - U dropdown');
 console.log('💡 Click "Add Record" or press Enter to save');
+console.log('⚠️ Required fields: TIN, Name, and Sector');
+console.log('📋 Use "Quick Fill" buttons to test with sample data');
 </script>
 </body>
 </html>
