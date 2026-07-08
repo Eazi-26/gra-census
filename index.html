@@ -61,8 +61,8 @@
         .user-legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; padding: 0.5rem 1rem; background: #f8fafc; border-radius: 12px; margin-top: 0.5rem; }
         .sector-group { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 1rem; background: #f0f7fe; padding: 0.7rem 1.2rem; border-radius: 40px; }
         .sector-group label { font-weight: 600; font-size: 0.75rem; color: #1e4a62; }
-        .sector-options { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; }
-        .sector-options label { font-weight: normal; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+        .sector-options { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; }
+        .sector-options label { font-weight: normal; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; cursor: pointer; }
         .sector-options input[type="radio"] { width: 16px; height: 16px; accent-color: #1b6f9c; cursor: pointer; }
         
         .suspense-badge { background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; margin-left: 4px; }
@@ -142,19 +142,18 @@
                 </select>
             </div>
 
-            <!-- SECTOR FIELD -->
+            <!-- SECTOR FIELD - UPDATED -->
             <div class="sector-group">
                 <label><i class="fas fa-industry"></i> Sector:</label>
                 <div class="sector-options">
-                    <label><input type="radio" name="sector" value="Public" checked> Public</label>
-                    <label><input type="radio" name="sector" value="Private"> Private</label>
-                    <label><input type="radio" name="sector" value="NGO"> NGO</label>
+                    <label><input type="radio" name="sector" value="Company" checked> Company</label>
                     <label><input type="radio" name="sector" value="Individual"> Individual</label>
+                    <label><input type="radio" name="sector" value="NGO"> NGO</label>
                     <label><input type="radio" name="sector" value="Other"> Other</label>
                 </div>
             </div>
 
-            <!-- ALL TAX TYPES - WITH SUSPENSE ADDED -->
+            <!-- ALL TAX TYPES -->
             <div class="tax-types-group">
                 <span style="font-weight:600; color:#1d4b63;"><i class="fas fa-check-square"></i> Tax Types Registered:</span>
                 <div class="tax-types-grid">
@@ -332,7 +331,7 @@ function getSelectedTaxTypes() {
 }
 
 function getSelectedSector() {
-    let sector = 'Public';
+    let sector = 'Company';
     sectorRadios.forEach(radio => {
         if (radio.checked) sector = radio.value;
     });
@@ -351,7 +350,7 @@ function resetForm() {
     paymentInput.value = '';
     outstandingInput.value = '';
     taxCheckboxes.forEach(cb => { cb.checked = (cb.value === 'Personal Income Tax'); });
-    sectorRadios.forEach(radio => { radio.checked = (radio.value === 'Public'); });
+    sectorRadios.forEach(radio => { radio.checked = (radio.value === 'Company'); });
     tinInput.focus();
 }
 
@@ -812,7 +811,7 @@ console.log('🔥 Firebase Connected!');
 console.log('👤 Current User:', userName);
 console.log('📊 All team members will see updates in real-time!');
 console.log('📋 Tax types include: Suspense (marked with ⚠️)');
-console.log('🏢 Sector field added');
+console.log('🏢 Sector options: Company, Individual, NGO, Other');
 </script>
 </body>
 </html>
