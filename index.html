@@ -82,6 +82,11 @@
         .toast.show { display: flex; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
+        /* Amount formatting in table */
+        .amount { font-weight: 600; color: #0d3b52; }
+        .amount.positive { color: #1f7b4b; }
+        .amount.negative { color: #b13e4b; }
+        
         @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } .tax-types-group { flex-direction: column; align-items: flex-start; gap: 0.4rem; } .actions { flex-direction: column; align-items: stretch; } .tax-types-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
 </head>
@@ -277,8 +282,10 @@
                         <th>TIN</th><th>Name</th><th>Telephone</th><th>Email</th>
                         <th>Location</th><th>Tax Office</th>
                         <th>Taxpayer Type</th><th>Sector</th><th>Status</th>
-                        <th>Tax Types</th><th>Liability</th><th>Payment</th>
-                        <th>Outstanding</th>
+                        <th>Tax Types</th>
+                        <th style="text-align:right;">Liability</th>
+                        <th style="text-align:right;">Payment</th>
+                        <th style="text-align:right;">Outstanding</th>
                         <th style="background:#d4e6f7;">👤 Added By</th>
                         <th style="width:50px;">Action</th>
                     </tr>
@@ -360,6 +367,21 @@ function showToast(message, isError = false) {
         toast.querySelector('i').className = 'fas fa-check-circle';
     }
     setTimeout(() => { toast.classList.remove('show'); }, 3000);
+}
+
+// =============================================
+// NUMBER FORMATTING FUNCTIONS
+// =============================================
+function formatNumber(num) {
+    if (num === undefined || num === null || isNaN(num)) return '0.00';
+    return Number(num).toLocaleString('en-GH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function formatNumberWithGHS(num) {
+    return 'GHS ' + formatNumber(num);
 }
 
 // =============================================
@@ -669,18 +691,30 @@ function renderTable() {
     sorted.forEach((rec) => {
         const row = document.createElement('tr');
         
-        const cells = [
+        // Text cells
+        const textCells = [
             rec.tin || '—', rec.name || '—', rec.telephone || '—', rec.email || '—',
             rec.location || '—', rec.taxOffice || '—', rec.taxpayerType || '—', rec.sector || '—',
-            rec.fileStatus || '—', rec.taxTypes || '—',
-            parseFloat(rec.liability || 0).toFixed(2),
-            parseFloat(rec.payment || 0).toFixed(2),
-            parseFloat(rec.outstanding || 0).toFixed(2)
+            rec.fileStatus || '—', rec.taxTypes || '—'
         ];
         
-        cells.forEach(text => {
+        textCells.forEach(text => {
             const td = document.createElement('td');
             td.textContent = text;
+            row.appendChild(td);
+        });
+
+        // Amount cells with formatting
+        const amountCells = [
+            { value: rec.liability || 0, className: 'amount' },
+            { value: rec.payment || 0, className: 'amount' },
+            { value: rec.outstanding || 0, className: 'amount' }
+        ];
+        
+        amountCells.forEach(item => {
+            const td = document.createElement('td');
+            td.style.textAlign = 'right';
+            td.textContent = formatNumber(item.value);
             row.appendChild(td);
         });
 
@@ -729,9 +763,9 @@ function updateStats() {
         totalOut += parseFloat(r.outstanding) || 0;
     });
     totalRecordsSpan.textContent = records.length;
-    totalLiabilitySpan.textContent = totalLiab.toFixed(2);
-    totalPaymentSpan.textContent = totalPay.toFixed(2);
-    totalOutstandingSpan.textContent = totalOut.toFixed(2);
+    totalLiabilitySpan.textContent = formatNumber(totalLiab);
+    totalPaymentSpan.textContent = formatNumber(totalPay);
+    totalOutstandingSpan.textContent = formatNumber(totalOut);
 }
 
 // =============================================
@@ -916,9 +950,9 @@ function downloadAllData() {
             }
         });
         
-        summary += `💰 Total Liability: GHS ${totalLiab.toFixed(2)}\n`;
-        summary += `💳 Total Payment: GHS ${totalPay.toFixed(2)}\n`;
-        summary += `⚠️ Total Outstanding: GHS ${totalOut.toFixed(2)}\n`;
+        summary += `💰 Total Liability: GHS ${formatNumber(totalLiab)}\n`;
+        summary += `💳 Total Payment: GHS ${formatNumber(totalPay)}\n`;
+        summary += `⚠️ Total Outstanding: GHS ${formatNumber(totalOut)}\n`;
         summary += `📊 Collection Rate: ${totalLiab > 0 ? ((totalPay/totalLiab)*100).toFixed(1) : 0}%\n`;
         summary += `👤 Team Members (${users.size}): ${Array.from(users).join(', ')}\n`;
         summary += `🏢 Taxpayer Types (${taxpayerTypes.size}): ${Array.from(taxpayerTypes).join(', ')}\n`;
@@ -1023,7 +1057,7 @@ if (!loaded || records.length === 0) {
             email: 'afia@example.com', location: 'Accra', taxOffice: 'GRA-Accra Central',
             taxpayerType: 'Individual', sector: 'A', fileStatus: 'Active',
             taxTypes: 'Personal Income Tax, VAT, NHIL & GETFUND', 
-            liability: 12500, payment: 8000, outstanding: 4500, 
+            liability: 12500.00, payment: 8000.00, outstanding: 4500.00, 
             timestamp: Date.now() - 3600000, addedBy: userName, addedDate: new Date().toISOString(),
             id: Date.now() + Math.random(),
             isDemo: true
@@ -1033,7 +1067,7 @@ if (!loaded || records.length === 0) {
             email: 'info@kofitrading.com', location: 'Tema', taxOffice: 'GRA-Tema',
             taxpayerType: 'Company', sector: 'B', fileStatus: 'Pending',
             taxTypes: 'Corporate Income Tax, VAT, NHIL & GETFUND, Customs',
-            liability: 34200.50, payment: 20000, outstanding: 14200.50, 
+            liability: 34200.50, payment: 20000.00, outstanding: 14200.50, 
             timestamp: Date.now() - 7200000, addedBy: userName, addedDate: new Date().toISOString(),
             id: Date.now() + Math.random(),
             isDemo: true
