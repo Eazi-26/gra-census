@@ -98,9 +98,8 @@
         
         .auto-calc-badge { background: #e8f0fe; color: #1b6f9c; font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; margin-left: 6px; }
         
-        .field-group input[type="text"].money-input { font-family: 'Courier New', monospace; font-weight: 600; text-align: right; }
+        .field-group input[type="number"].money-input { font-family: 'Courier New', monospace; font-weight: 600; text-align: right; }
         
-        /* Edit mode highlight */
         .row-editing { background: #fff8e1 !important; }
         .row-editing td { background: #fff8e1 !important; }
         
@@ -277,14 +276,14 @@
                 </div>
             </div>
 
-            <!-- FINANCIAL FIELDS WITH AUTO-CALC -->
+            <!-- FINANCIAL FIELDS - Plain numbers for entry -->
             <div class="field-group">
-                <label><i class="fas fa-coins"></i> Liability (GHS) <span class="auto-calc-badge">enter</span></label>
-                <input type="text" id="totalLiabilityInput" placeholder="0.00" class="money-input" oninput="formatMoneyInput(this)" onkeyup="calculateOutstanding()" />
+                <label><i class="fas fa-coins"></i> Liability (GHS) <span class="auto-calc-badge">enter number</span></label>
+                <input type="number" id="totalLiabilityInput" placeholder="0.00" step="0.01" min="0" class="money-input" oninput="calculateOutstanding()" />
             </div>
             <div class="field-group">
-                <label><i class="fas fa-hand-holding-usd"></i> Payment (GHS) <span class="auto-calc-badge">enter</span></label>
-                <input type="text" id="totalPaymentInput" placeholder="0.00" class="money-input" oninput="formatMoneyInput(this)" onkeyup="calculateOutstanding()" />
+                <label><i class="fas fa-hand-holding-usd"></i> Payment (GHS) <span class="auto-calc-badge">enter number</span></label>
+                <input type="number" id="totalPaymentInput" placeholder="0.00" step="0.01" min="0" class="money-input" oninput="calculateOutstanding()" />
             </div>
             <div class="field-group">
                 <label><i class="fas fa-exclamation-triangle"></i> Outstanding (GHS) <span class="auto-calc-badge">auto-calc</span></label>
@@ -347,7 +346,7 @@
 
     <div class="footer-bar">
         <span style="font-size:0.75rem; color:#6a8ba0;">
-            <i class="fas fa-edit"></i> Click <strong>✏️ Edit</strong> to modify a record · 
+            <i class="fas fa-edit"></i> Click <strong>✏️ Edit</strong> to modify · 
             <i class="fas fa-calculator"></i> Outstanding = Liability - Payment · 
             <i class="fas fa-save"></i> Data stored in your browser · 
             <span id="lastUpdated">Ready</span>
@@ -357,12 +356,12 @@
 
 <script>
 // =============================================
-// LOCAL-ONLY CENSUS APP - WITH EDIT FUNCTIONALITY
+// LOCAL-ONLY CENSUS APP - PLAIN NUMBER ENTRY
 // =============================================
 
 let records = [];
 let userName = '';
-let editingIndex = null; // Track which record is being edited
+let editingIndex = null;
 
 // DOM refs
 const tinInput = document.getElementById('tin');
@@ -413,7 +412,7 @@ function showToast(message, isError = false) {
 }
 
 // =============================================
-// MONEY FORMATTING FUNCTIONS
+// MONEY FORMATTING - Display only (not for entry)
 // =============================================
 function formatMoney(value) {
     if (isNaN(value) || value === null || value === undefined) return '0.00';
@@ -423,48 +422,18 @@ function formatMoney(value) {
     });
 }
 
-function formatMoneyInput(input) {
-    let value = input.value.replace(/[^0-9.]/g, '');
-    const parts = value.split('.');
-    if (parts.length > 2) {
-        value = parts[0] + '.' + parts.slice(1).join('');
-    }
-    const num = parseFloat(value);
-    if (!isNaN(num) && value !== '') {
-        input.value = formatMoney(num);
-        input.dataset.rawValue = num;
-    } else {
-        input.value = '';
-        input.dataset.rawValue = 0;
-    }
-}
-
-function getRawValue(input) {
-    if (input.value === '') return 0;
-    const cleaned = input.value.replace(/,/g, '');
-    return parseFloat(cleaned) || 0;
-}
-
-function setFormattedValue(input, value) {
-    if (value !== undefined && value !== null && !isNaN(value)) {
-        input.value = formatMoney(value);
-        input.dataset.rawValue = value;
-    } else {
-        input.value = '';
-        input.dataset.rawValue = 0;
-    }
-}
-
 // =============================================
 // AUTO-CALCULATE OUTSTANDING
 // =============================================
 function calculateOutstanding() {
-    const liability = getRawValue(liabilityInput);
-    const payment = getRawValue(paymentInput);
+    const liability = parseFloat(liabilityInput.value) || 0;
+    const payment = parseFloat(paymentInput.value) || 0;
     const outstanding = Math.max(liability - payment, 0);
     
+    // Display with commas in the readonly field
     outstandingInput.value = formatMoney(outstanding);
     
+    // Update display message with formatted numbers
     if (liability > 0 || payment > 0) {
         calcOutstandingDisplay.innerHTML = `💰 Outstanding = <span class="value">${formatMoney(outstanding)}</span> GHS (${formatMoney(liability)} - ${formatMoney(payment)})`;
     } else {
@@ -556,7 +525,6 @@ function resetForm() {
     document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
     
-    // Reset edit mode
     editingIndex = null;
     addBtn.style.display = 'inline-flex';
     updateBtn.style.display = 'none';
@@ -590,8 +558,8 @@ function fillSample1() {
     taxpayerTypeSelect.value = 'Individual';
     sectorSelect.value = 'A';
     fileStatusSelect.value = 'Active';
-    setFormattedValue(liabilityInput, 12500);
-    setFormattedValue(paymentInput, 8000);
+    liabilityInput.value = '12500';
+    paymentInput.value = '8000';
     calculateOutstanding();
     setTaxTypes('Personal Income Tax, VAT, NHIL & GETFUND');
     showToast('📋 Sample 1 loaded! Click Add Record');
@@ -612,8 +580,8 @@ function fillSample2() {
     taxpayerTypeSelect.value = 'Company';
     sectorSelect.value = 'B';
     fileStatusSelect.value = 'Pending';
-    setFormattedValue(liabilityInput, 34200.50);
-    setFormattedValue(paymentInput, 20000);
+    liabilityInput.value = '34200.50';
+    paymentInput.value = '20000';
     calculateOutstanding();
     setTaxTypes('Corporate Income Tax, VAT, NHIL & GETFUND, Customs');
     showToast('📋 Sample 2 loaded! Click Add Record');
@@ -676,7 +644,6 @@ function startEdit(index) {
     
     editingIndex = index;
     
-    // Fill form with record data
     tinInput.value = record.tin || '';
     nameInput.value = record.name || '';
     telephoneInput.value = record.telephone || '';
@@ -686,18 +653,16 @@ function startEdit(index) {
     taxpayerTypeSelect.value = record.taxpayerType || 'Individual';
     sectorSelect.value = record.sector || '';
     fileStatusSelect.value = record.fileStatus || 'Active';
-    setFormattedValue(liabilityInput, record.liability || 0);
-    setFormattedValue(paymentInput, record.payment || 0);
+    liabilityInput.value = record.liability || '';
+    paymentInput.value = record.payment || '';
     calculateOutstanding();
     setTaxTypes(record.taxTypes || '');
     
-    // Switch to edit mode
     addBtn.style.display = 'none';
     updateBtn.style.display = 'inline-flex';
     cancelEditBtn.style.display = 'inline-flex';
     formMode.innerHTML = 'Mode: <strong style="color:#6f42c1;">Editing Record #' + (index + 1) + '</strong>';
     
-    // Scroll to form
     document.getElementById('censusForm').scrollIntoView({ behavior: 'smooth' });
     
     showToast('✏️ Editing record ' + (index + 1));
@@ -721,7 +686,6 @@ function updateRecord() {
     const name = nameInput.value.trim();
     const sector = sectorSelect.value;
     
-    // Validate
     document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
     
@@ -750,11 +714,10 @@ function updateRecord() {
         return;
     }
 
-    const liability = getRawValue(liabilityInput);
-    const payment = getRawValue(paymentInput);
+    const liability = parseFloat(liabilityInput.value) || 0;
+    const payment = parseFloat(paymentInput.value) || 0;
     const outstanding = Math.max(liability - payment, 0);
 
-    // Update the record
     records[editingIndex] = {
         ...records[editingIndex],
         tin,
@@ -781,7 +744,7 @@ function updateRecord() {
 }
 
 // =============================================
-// ADD RECORD (LOCAL)
+// ADD RECORD
 // =============================================
 function addRecord() {
     const tin = tinInput.value.trim();
@@ -816,8 +779,8 @@ function addRecord() {
         return;
     }
 
-    const liability = getRawValue(liabilityInput);
-    const payment = getRawValue(paymentInput);
+    const liability = parseFloat(liabilityInput.value) || 0;
+    const payment = parseFloat(paymentInput.value) || 0;
     const outstanding = Math.max(liability - payment, 0);
 
     const record = {
@@ -884,7 +847,7 @@ function clearAllRecords() {
 }
 
 // =============================================
-// RENDER TABLE
+// RENDER TABLE - WITH COMMAS IN DISPLAY
 // =============================================
 function renderTable() {
     tableBody.innerHTML = '';
@@ -903,7 +866,7 @@ function renderTable() {
     
     const sorted = [...records].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     
-    sorted.forEach((rec, displayIndex) => {
+    sorted.forEach((rec) => {
         const row = document.createElement('tr');
         const actualIndex = records.findIndex(r => r.id === rec.id);
         
@@ -919,6 +882,7 @@ function renderTable() {
             row.appendChild(td);
         });
 
+        // Financial cells with formatted commas
         const liabilityCell = document.createElement('td');
         liabilityCell.innerHTML = `<span class="amount liability">${formatMoney(rec.liability || 0)}</span>`;
         row.appendChild(liabilityCell);
@@ -945,11 +909,9 @@ function renderTable() {
         addedByCell.appendChild(span);
         row.appendChild(addedByCell);
 
-        // Actions cell with Edit and Delete buttons
         const actionCell = document.createElement('td');
         actionCell.style.whiteSpace = 'nowrap';
         
-        // Edit button
         const editBtn = document.createElement('button');
         editBtn.className = 'action-btn edit-btn';
         editBtn.innerHTML = '<i class="fas fa-edit"></i>';
@@ -960,7 +922,6 @@ function renderTable() {
         });
         actionCell.appendChild(editBtn);
         
-        // Delete button
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'action-btn delete-btn';
         deleteBtn.innerHTML = '<i class="fas fa-times-circle"></i>';
@@ -981,7 +942,7 @@ function renderTable() {
 }
 
 // =============================================
-// UPDATE STATS
+// UPDATE STATS - WITH COMMAS
 // =============================================
 function updateStats() {
     let totalLiab = 0, totalPay = 0, totalOut = 0;
@@ -1315,14 +1276,15 @@ if (!loaded || records.length === 0) {
 
 renderTable();
 
-console.log('📊 GRA Census - With Edit Functionality');
+console.log('📊 GRA Census - Plain Number Entry');
 console.log('👤 Current User:', userName);
 console.log('📈 Records:', records.length);
 console.log('✏️ Click the edit button (✏️) to modify any record');
 console.log('💾 Data saved in your browser (localStorage)');
 console.log('📋 All 18 tax types available');
 console.log('🧮 Outstanding = Liability - Payment (auto-calculated)');
-console.log('💰 Numbers formatted with commas: 12,500.00');
+console.log('💰 Numbers displayed with commas in table and dashboard only');
+console.log('⌨️ Enter numbers without commas: e.g., 12500');
 </script>
 </body>
 </html>
