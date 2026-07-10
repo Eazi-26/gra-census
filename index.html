@@ -58,10 +58,10 @@
         .stat-card { background: #f8fafc; padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid #e2ebf3; }
         .stat-card .number { font-size: 1.8rem; font-weight: 700; color: #0d3b52; font-family: 'Courier New', monospace; }
         .stat-card .label { font-size: 0.75rem; color: #6a8ba0; text-transform: uppercase; }
-        .tax-check { display: inline-flex; align-items: center; gap: 5px; margin-right: 12px; font-size: 0.85rem; cursor: pointer; }
+        .tax-check { display: inline-flex; align-items: center; gap: 5px; margin-right: 8px; font-size: 0.82rem; cursor: pointer; }
         .tax-check:hover { color: #0d3b52; }
         .tax-types-group { grid-column: 1 / -1; background: #f2f7fd; padding: 0.7rem 1.2rem; border-radius: 40px; }
-        .tax-types-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 4px 10px; margin-top: 4px; }
+        .tax-types-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 3px 8px; margin-top: 4px; }
         .merge-section { background: #f0f7fe; border: 2px dashed #1b6f9c; border-radius: 16px; padding: 1.2rem; margin-top: 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
         .merge-section input[type="file"] { flex: 1; min-width: 200px; padding: 8px; border: 1px solid #d4e0ea; border-radius: 8px; background: white; }
         .footer-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 10px; }
@@ -188,9 +188,8 @@
         </div>
     </div>
 
-    <!-- NEW: 3 Dashboard Cards -->
+    <!-- 3 Dashboard Cards -->
     <div class="dashboard-grid-3" id="dashboardStatsExtra">
-        <!-- Sector Distribution -->
         <div class="dash-card" id="sectorDashboard">
             <h4><i class="fas fa-layer-group" style="color:#1b6f9c;"></i> Sector Distribution (A - U)</h4>
             <div class="sector-grid" id="sectorGrid">
@@ -199,7 +198,6 @@
             <div class="total-row"><span>Total</span><span id="sectorTotal">0</span></div>
         </div>
 
-        <!-- Taxpayer Type Distribution -->
         <div class="dash-card" id="taxpayerTypeDashboard">
             <h4><i class="fas fa-users" style="color:#6f42c1;"></i> Taxpayer Type</h4>
             <div id="taxpayerTypeList">
@@ -208,7 +206,6 @@
             <div class="total-row"><span>Total</span><span id="taxpayerTypeTotal">0</span></div>
         </div>
 
-        <!-- File Status Distribution -->
         <div class="dash-card" id="statusDashboard">
             <h4><i class="fas fa-flag" style="color:#d4a017;"></i> File Status</h4>
             <div id="statusList">
@@ -220,7 +217,6 @@
 
     <!-- FORM -->
     <div class="card">
-        <!-- Quick Fill Buttons -->
         <div class="quick-fill">
             <span style="font-size:0.75rem; color:#6a8ba0; font-weight:600;">Quick Fill:</span>
             <button class="btn-sm" onclick="fillSample1()">📋 Sample 1 <span class="sample-badge">demo</span></button>
@@ -259,7 +255,6 @@
                 <input type="text" id="taxOffice" placeholder="GRA-Accra" />
             </div>
             
-            <!-- TAXPAYER TYPE -->
             <div class="field-group">
                 <label><i class="fas fa-users"></i> Taxpayer Type</label>
                 <select id="taxpayerType">
@@ -270,7 +265,6 @@
                 </select>
             </div>
 
-            <!-- SECTOR A - U -->
             <div class="field-group" id="sectorGroup">
                 <label><i class="fas fa-layer-group"></i> Sector <span class="sector-badge">A - U</span> <span class="required-star">*</span></label>
                 <select id="sectorSelect">
@@ -300,7 +294,6 @@
                 <span class="error-msg" id="sectorError">Please select a sector (A - U)</span>
             </div>
 
-            <!-- FILE STATUS -->
             <div class="field-group">
                 <label><i class="fas fa-flag"></i> File Status</label>
                 <select id="fileStatus">
@@ -311,13 +304,13 @@
                 </select>
             </div>
 
-            <!-- ALL TAX TYPES -->
+            <!-- ALL TAX TYPES - UPDATED -->
             <div class="tax-types-group">
                 <span style="font-weight:600; color:#1d4b63;"><i class="fas fa-check-square"></i> Tax Types Registered:</span>
                 <div class="tax-types-grid">
                     <label class="tax-check"><input type="checkbox" value="Personal Income Tax" checked> Personal Income Tax</label>
                     <label class="tax-check"><input type="checkbox" value="Corporate Income Tax"> Corporate Income Tax</label>
-                    <label class="tax-check"><input type="checkbox" value="VAT, NHIL & GETFUND"> VAT, NHIL & GETFUND</label>
+                    <label class="tax-check"><input type="checkbox" value="VAT Standard, NHIL & GETFUND"> VAT Standard, NHIL & GETFUND</label>
                     <label class="tax-check"><input type="checkbox" value="PAYE"> PAYE</label>
                     <label class="tax-check"><input type="checkbox" value="Customs"> Customs</label>
                     <label class="tax-check"><input type="checkbox" value="Excise"> Excise</label>
@@ -327,7 +320,15 @@
                     <label class="tax-check"><input type="checkbox" value="Rent Tax"> Rent Tax</label>
                     <label class="tax-check"><input type="checkbox" value="Stamp Duty"> Stamp Duty</label>
                     <label class="tax-check"><input type="checkbox" value="VIT"> VIT</label>
-                    <label class="tax-check"><input type="checkbox" value="COVID-19 Levy"> COVID-19 Levy</label>
+                    <label class="tax-check"><input type="checkbox" value="Financial Sector Recovery Levy"> Financial Sector Recovery Levy</label>
+                    <label class="tax-check"><input type="checkbox" value="Growth and Sustainability Levy"> Growth and Sustainability Levy</label>
+                    <label class="tax-check"><input type="checkbox" value="Flat / COVID-19"> Flat / COVID-19</label>
+                    <label class="tax-check"><input type="checkbox" value="NHIL/GETFUND/COVID-19"> NHIL/GETFUND/COVID-19</label>
+                    <label class="tax-check"><input type="checkbox" value="NHIL/GETFUND"> NHIL/GETFUND</label>
+                    <label class="tax-check"><input type="checkbox" value="Minerals Royalties"> Minerals Royalties</label>
+                    <label class="tax-check"><input type="checkbox" value="Tax Stamp"> Tax Stamp</label>
+                    <label class="tax-check"><input type="checkbox" value="Modified Taxation"> Modified Taxation</label>
+                    <label class="tax-check"><input type="checkbox" value="Standard"> Standard</label>
                     <label class="tax-check"><input type="checkbox" value="Petroleum Tax"> Petroleum Tax</label>
                     <label class="tax-check"><input type="checkbox" value="Mining Tax"> Mining Tax</label>
                     <label class="tax-check"><input type="checkbox" value="Communication Service Tax"> Communication Service Tax</label>
@@ -338,7 +339,6 @@
                 </div>
             </div>
 
-            <!-- FINANCIAL FIELDS -->
             <div class="field-group">
                 <label><i class="fas fa-coins"></i> Liability (GHS) <span class="auto-calc-badge">enter number</span></label>
                 <input type="number" id="totalLiabilityInput" placeholder="0.00" step="0.01" min="0" class="money-input" oninput="calculateOutstanding()" />
@@ -418,7 +418,7 @@
 
 <script>
 // =============================================
-// LOCAL-ONLY CENSUS APP - WITH EXTRA DASHBOARDS
+// LOCAL-ONLY CENSUS APP - UPDATED TAX TYPES
 // =============================================
 
 let records = [];
@@ -621,7 +621,7 @@ function fillSample1() {
     liabilityInput.value = '12500';
     paymentInput.value = '8000';
     calculateOutstanding();
-    setTaxTypes('Personal Income Tax, VAT, NHIL & GETFUND');
+    setTaxTypes('Personal Income Tax, VAT Standard, NHIL & GETFUND');
     showToast('📋 Sample 1 loaded! Click Add Record');
     tinInput.focus();
 }
@@ -643,7 +643,7 @@ function fillSample2() {
     liabilityInput.value = '34200.50';
     paymentInput.value = '20000';
     calculateOutstanding();
-    setTaxTypes('Corporate Income Tax, VAT, NHIL & GETFUND, Customs');
+    setTaxTypes('Corporate Income Tax, VAT Standard, NHIL & GETFUND, Customs');
     showToast('📋 Sample 2 loaded! Click Add Record');
     tinInput.focus();
 }
@@ -929,7 +929,7 @@ function clearAllRecords() {
 }
 
 // =============================================
-// UPDATE DASHBOARD STATS - NEW!
+// UPDATE DASHBOARD STATS
 // =============================================
 function updateDashboardStats() {
     // Sector Distribution (A - U)
@@ -1034,19 +1034,16 @@ function renderTable() {
             row.appendChild(td);
         });
 
-        // Status cell with color coding
         const statusCell = document.createElement('td');
         const status = rec.fileStatus || '—';
         const statusClass = status.toLowerCase();
         statusCell.innerHTML = `<span class="status-${statusClass}">${status}</span>`;
         row.appendChild(statusCell);
 
-        // Tax Types
         const taxTypesCell = document.createElement('td');
         taxTypesCell.textContent = rec.taxTypes || '—';
         row.appendChild(taxTypesCell);
 
-        // Financial cells with formatted commas
         const liabilityCell = document.createElement('td');
         liabilityCell.innerHTML = `<span class="amount liability">${formatMoney(rec.liability || 0)}</span>`;
         row.appendChild(liabilityCell);
@@ -1421,7 +1418,7 @@ if (!loaded || records.length === 0) {
             tin: 'GRA-1001', name: 'Afia Mensah', telephone: '024 123 4567', 
             email: 'afia@example.com', location: 'Accra', taxOffice: 'GRA-Accra Central',
             taxpayerType: 'Individual', sector: 'A', fileStatus: 'Active',
-            taxTypes: 'Personal Income Tax, VAT, NHIL & GETFUND', 
+            taxTypes: 'Personal Income Tax, VAT Standard, NHIL & GETFUND', 
             liability: 12500, payment: 8000, outstanding: 4500, 
             timestamp: Date.now() - 3600000, addedBy: userName, addedDate: new Date().toISOString(),
             id: Date.now() + Math.random(),
@@ -1431,7 +1428,7 @@ if (!loaded || records.length === 0) {
             tin: 'GC-2024-5678', name: 'Kofi Trading Ltd', telephone: '020 987 6543',
             email: 'info@kofitrading.com', location: 'Tema', taxOffice: 'GRA-Tema',
             taxpayerType: 'Company', sector: 'B', fileStatus: 'Active',
-            taxTypes: 'Corporate Income Tax, VAT, NHIL & GETFUND, Customs',
+            taxTypes: 'Corporate Income Tax, VAT Standard, NHIL & GETFUND, Customs',
             liability: 34200.50, payment: 20000, outstanding: 14200.50, 
             timestamp: Date.now() - 7200000, addedBy: userName, addedDate: new Date().toISOString(),
             id: Date.now() + Math.random(),
@@ -1454,14 +1451,14 @@ if (!loaded || records.length === 0) {
 
 renderTable();
 
-console.log('📊 GRA Census - With Extra Dashboards');
+console.log('📊 GRA Census - Updated Tax Types');
 console.log('👤 Current User:', userName);
 console.log('📈 Records:', records.length);
 console.log('📌 File Status: Active, Inactive, Dormant, Deregistered');
-console.log('📊 New Dashboards: Sector Distribution, Taxpayer Type, File Status');
+console.log('📊 New Tax Types Added: Financial Sector Recovery Levy, Growth and Sustainability Levy, Flat / COVID-19, NHIL/GETFUND/COVID-19, NHIL/GETFUND, Minerals Royalties, Tax Stamp, Modified Taxation, Standard');
+console.log('📝 VAT Standard, NHIL & GETFUND (renamed)');
 console.log('✏️ Click the edit button (✏️) to modify any record');
 console.log('💾 Data saved in your browser (localStorage)');
-console.log('📋 All 18 tax types available');
 console.log('🧮 Outstanding = Liability - Payment (auto-calculated)');
 </script>
 </body>
