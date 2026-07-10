@@ -103,6 +103,12 @@
         .row-editing { background: #fff8e1 !important; }
         .row-editing td { background: #fff8e1 !important; }
         
+        /* Status color badges in table */
+        .status-active { color: #1f7b4b; font-weight: 600; }
+        .status-inactive { color: #6c757d; font-weight: 600; }
+        .status-dormant { color: #d4a017; font-weight: 600; }
+        .status-deregistered { color: #b13e4b; font-weight: 600; }
+        
         @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } .tax-types-group { flex-direction: column; align-items: flex-start; gap: 0.4rem; } .actions { flex-direction: column; align-items: stretch; } .tax-types-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
 </head>
@@ -238,14 +244,14 @@
                 <span class="error-msg" id="sectorError">Please select a sector (A - U)</span>
             </div>
 
+            <!-- FILE STATUS - UPDATED -->
             <div class="field-group">
                 <label><i class="fas fa-flag"></i> File Status</label>
                 <select id="fileStatus">
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Audit">Audit</option>
-                    <option value="Closed">Closed</option>
+                    <option value="Dormant">Dormant</option>
+                    <option value="Deregistered">Deregistered</option>
                 </select>
             </div>
 
@@ -276,7 +282,7 @@
                 </div>
             </div>
 
-            <!-- FINANCIAL FIELDS - Plain numbers for entry -->
+            <!-- FINANCIAL FIELDS -->
             <div class="field-group">
                 <label><i class="fas fa-coins"></i> Liability (GHS) <span class="auto-calc-badge">enter number</span></label>
                 <input type="number" id="totalLiabilityInput" placeholder="0.00" step="0.01" min="0" class="money-input" oninput="calculateOutstanding()" />
@@ -356,7 +362,7 @@
 
 <script>
 // =============================================
-// LOCAL-ONLY CENSUS APP - PLAIN NUMBER ENTRY
+// LOCAL-ONLY CENSUS APP - UPDATED FILE STATUS
 // =============================================
 
 let records = [];
@@ -412,7 +418,7 @@ function showToast(message, isError = false) {
 }
 
 // =============================================
-// MONEY FORMATTING - Display only (not for entry)
+// MONEY FORMATTING
 // =============================================
 function formatMoney(value) {
     if (isNaN(value) || value === null || value === undefined) return '0.00';
@@ -430,10 +436,8 @@ function calculateOutstanding() {
     const payment = parseFloat(paymentInput.value) || 0;
     const outstanding = Math.max(liability - payment, 0);
     
-    // Display with commas in the readonly field
     outstandingInput.value = formatMoney(outstanding);
     
-    // Update display message with formatted numbers
     if (liability > 0 || payment > 0) {
         calcOutstandingDisplay.innerHTML = `💰 Outstanding = <span class="value">${formatMoney(outstanding)}</span> GHS (${formatMoney(liability)} - ${formatMoney(payment)})`;
     } else {
@@ -579,7 +583,7 @@ function fillSample2() {
     taxOfficeInput.value = 'GRA-Tema';
     taxpayerTypeSelect.value = 'Company';
     sectorSelect.value = 'B';
-    fileStatusSelect.value = 'Pending';
+    fileStatusSelect.value = 'Active';
     liabilityInput.value = '34200.50';
     paymentInput.value = '20000';
     calculateOutstanding();
@@ -847,7 +851,7 @@ function clearAllRecords() {
 }
 
 // =============================================
-// RENDER TABLE - WITH COMMAS IN DISPLAY
+// RENDER TABLE
 // =============================================
 function renderTable() {
     tableBody.innerHTML = '';
@@ -872,8 +876,7 @@ function renderTable() {
         
         const cells = [
             rec.tin || '—', rec.name || '—', rec.telephone || '—', rec.email || '—',
-            rec.location || '—', rec.taxOffice || '—', rec.taxpayerType || '—', rec.sector || '—',
-            rec.fileStatus || '—', rec.taxTypes || '—'
+            rec.location || '—', rec.taxOffice || '—', rec.taxpayerType || '—', rec.sector || '—'
         ];
         
         cells.forEach(text => {
@@ -881,6 +884,18 @@ function renderTable() {
             td.textContent = text;
             row.appendChild(td);
         });
+
+        // Status cell with color coding
+        const statusCell = document.createElement('td');
+        const status = rec.fileStatus || '—';
+        const statusClass = status.toLowerCase();
+        statusCell.innerHTML = `<span class="status-${statusClass}">${status}</span>`;
+        row.appendChild(statusCell);
+
+        // Tax Types
+        const taxTypesCell = document.createElement('td');
+        taxTypesCell.textContent = rec.taxTypes || '—';
+        row.appendChild(taxTypesCell);
 
         // Financial cells with formatted commas
         const liabilityCell = document.createElement('td');
@@ -942,7 +957,7 @@ function renderTable() {
 }
 
 // =============================================
-// UPDATE STATS - WITH COMMAS
+// UPDATE STATS
 // =============================================
 function updateStats() {
     let totalLiab = 0, totalPay = 0, totalOut = 0;
@@ -1131,6 +1146,7 @@ function downloadAllData() {
         const taxTypes = new Set();
         const sectors = new Set();
         const taxpayerTypes = new Set();
+        const statusTypes = new Set();
         records.forEach(r => {
             totalLiab += parseFloat(r.liability) || 0;
             totalPay += parseFloat(r.payment) || 0;
@@ -1138,6 +1154,7 @@ function downloadAllData() {
             if (r.addedBy) users.add(r.addedBy);
             if (r.sector) sectors.add(r.sector);
             if (r.taxpayerType) taxpayerTypes.add(r.taxpayerType);
+            if (r.fileStatus) statusTypes.add(r.fileStatus);
             if (r.taxTypes) {
                 r.taxTypes.split(',').forEach(t => taxTypes.add(t.trim()));
             }
@@ -1150,6 +1167,7 @@ function downloadAllData() {
         summary += `👤 Team Members (${users.size}): ${Array.from(users).join(', ')}\n`;
         summary += `🏢 Taxpayer Types (${taxpayerTypes.size}): ${Array.from(taxpayerTypes).join(', ')}\n`;
         summary += `📋 Sectors (${sectors.size}): ${Array.from(sectors).sort().join(', ')}\n`;
+        summary += `📌 File Statuses (${statusTypes.size}): ${Array.from(statusTypes).join(', ')}\n`;
         summary += `🏷️ Tax Types (${taxTypes.size}): ${Array.from(taxTypes).join(', ')}\n`;
         summary += '='.repeat(50) + '\n';
 
@@ -1262,23 +1280,34 @@ if (!loaded || records.length === 0) {
         { 
             tin: 'GC-2024-5678', name: 'Kofi Trading Ltd', telephone: '020 987 6543',
             email: 'info@kofitrading.com', location: 'Tema', taxOffice: 'GRA-Tema',
-            taxpayerType: 'Company', sector: 'B', fileStatus: 'Pending',
+            taxpayerType: 'Company', sector: 'B', fileStatus: 'Active',
             taxTypes: 'Corporate Income Tax, VAT, NHIL & GETFUND, Customs',
             liability: 34200.50, payment: 20000, outstanding: 14200.50, 
             timestamp: Date.now() - 7200000, addedBy: userName, addedDate: new Date().toISOString(),
             id: Date.now() + Math.random(),
             isDemo: true
+        },
+        { 
+            tin: 'GRA-7890', name: 'Ama Serwaa Foundation', telephone: '024 555 6789',
+            email: 'ama@foundation.org', location: 'Kumasi', taxOffice: 'GRA-Kumasi',
+            taxpayerType: 'NGO', sector: 'D', fileStatus: 'Dormant',
+            taxTypes: 'Personal Income Tax, Gift Tax, Withholding Tax',
+            liability: 5600, payment: 5600, outstanding: 0, 
+            timestamp: Date.now() - 14400000, addedBy: userName, addedDate: new Date().toISOString(),
+            id: Date.now() + Math.random(),
+            isDemo: true
         }
     ];
     saveToLocalStorage();
-    showToast('📋 2 demo records loaded. Click "Remove Demo Data" to delete them.');
+    showToast('📋 3 demo records loaded. Click "Remove Demo Data" to delete them.');
 }
 
 renderTable();
 
-console.log('📊 GRA Census - Plain Number Entry');
+console.log('📊 GRA Census - Updated File Status');
 console.log('👤 Current User:', userName);
 console.log('📈 Records:', records.length);
+console.log('📌 File Status: Active, Inactive, Dormant, Deregistered');
 console.log('✏️ Click the edit button (✏️) to modify any record');
 console.log('💾 Data saved in your browser (localStorage)');
 console.log('📋 All 18 tax types available');
