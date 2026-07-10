@@ -32,6 +32,10 @@
         .btn-warning:hover { background: #e6b422; }
         .btn-info { background: #17a2b8; color: white; }
         .btn-info:hover { background: #138496; }
+        .btn-edit { background: #6f42c1; color: white; }
+        .btn-edit:hover { background: #7e4fd4; }
+        .btn-cancel { background: #6c757d; color: white; }
+        .btn-cancel:hover { background: #5a6268; }
         .table-wrapper { overflow-x: auto; border-radius: 16px; border: 1px solid #deeaf3; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th { background: #eaf2f9; padding: 12px; text-align: left; }
@@ -40,8 +44,12 @@
         td .amount.liability { color: #1b6f9c; }
         td .amount.payment { color: #1f7b4b; }
         td .amount.outstanding { color: #b13e4b; }
-        .delete-row { background: none; border: none; color: #b13e4b; cursor: pointer; font-size: 1.1rem; }
-        .delete-row:hover { color: #a12936; }
+        .action-btn { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 4px 8px; border-radius: 30px; transition: 0.15s; }
+        .action-btn:hover { background: #eef4fa; }
+        .action-btn.edit-btn { color: #6f42c1; }
+        .action-btn.edit-btn:hover { background: #f0e8f8; }
+        .action-btn.delete-btn { color: #b13e4b; }
+        .action-btn.delete-btn:hover { background: #fce8ea; }
         .actions { display: flex; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; align-items: center; }
         .online-badge { background: #d4edda; color: #155724; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px; }
         .offline-badge { background: #f8d7da; color: #721c24; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px; }
@@ -90,8 +98,11 @@
         
         .auto-calc-badge { background: #e8f0fe; color: #1b6f9c; font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; margin-left: 6px; }
         
-        /* Number input with comma formatting */
         .field-group input[type="text"].money-input { font-family: 'Courier New', monospace; font-weight: 600; text-align: right; }
+        
+        /* Edit mode highlight */
+        .row-editing { background: #fff8e1 !important; }
+        .row-editing td { background: #fff8e1 !important; }
         
         @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } .tax-types-group { flex-direction: column; align-items: flex-start; gap: 0.4rem; } .actions { flex-direction: column; align-items: stretch; } .tax-types-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
@@ -127,7 +138,7 @@
         </div>
     </div>
 
-    <!-- STATS - Now with commas! -->
+    <!-- STATS -->
     <div class="stats" id="statsGrid">
         <div class="stat-card">
             <div class="number" id="totalRecords">0</div>
@@ -156,9 +167,10 @@
             <button class="btn-sm" onclick="fillSample2()">📋 Sample 2 <span class="sample-badge">demo</span></button>
             <button class="btn-sm" onclick="clearForm()">🗑️ Clear Form</button>
             <button class="btn-sm danger" onclick="deleteAllSamples()">❌ Remove Demo Data</button>
+            <span style="font-size:0.7rem; color:#6a8ba0; margin-left:auto;" id="formMode">Mode: <strong style="color:#0d3b52;">Add New</strong></span>
         </div>
 
-        <div class="form-grid">
+        <div class="form-grid" id="censusForm">
             <div class="field-group" id="tinGroup">
                 <label><i class="fas fa-id-card"></i> TIN / Ghana Card <span class="required-star">*</span></label>
                 <input type="text" id="tin" placeholder="GRA-12345" />
@@ -284,6 +296,8 @@
         <div class="actions">
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <button class="btn btn-primary" id="addBtn"><i class="fas fa-plus"></i> Add Record</button>
+                <button class="btn btn-warning" id="updateBtn" style="display:none;"><i class="fas fa-save"></i> Update Record</button>
+                <button class="btn btn-secondary btn-cancel" id="cancelEditBtn" style="display:none;"><i class="fas fa-times"></i> Cancel</button>
                 <button class="btn btn-success" id="exportBtn"><i class="fas fa-download"></i> Export My Data</button>
                 <button class="btn btn-danger" id="clearAllBtn"><i class="fas fa-trash"></i> Clear All</button>
             </div>
@@ -308,7 +322,7 @@
                         <th style="color:#1f7b4b;">Payment</th>
                         <th style="color:#b13e4b;">Outstanding</th>
                         <th style="background:#d4e6f7;">👤 Added By</th>
-                        <th style="width:50px;">Action</th>
+                        <th style="width:100px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -333,6 +347,7 @@
 
     <div class="footer-bar">
         <span style="font-size:0.75rem; color:#6a8ba0;">
+            <i class="fas fa-edit"></i> Click <strong>✏️ Edit</strong> to modify a record · 
             <i class="fas fa-calculator"></i> Outstanding = Liability - Payment · 
             <i class="fas fa-save"></i> Data stored in your browser · 
             <span id="lastUpdated">Ready</span>
@@ -342,11 +357,12 @@
 
 <script>
 // =============================================
-// LOCAL-ONLY CENSUS APP - WITH AUTO-CALC & FORMATTING
+// LOCAL-ONLY CENSUS APP - WITH EDIT FUNCTIONALITY
 // =============================================
 
 let records = [];
 let userName = '';
+let editingIndex = null; // Track which record is being edited
 
 // DOM refs
 const tinInput = document.getElementById('tin');
@@ -374,6 +390,10 @@ const lastUpdatedSpan = document.getElementById('lastUpdated');
 const downloadBtn = document.getElementById('downloadBtn');
 const downloadAllBtn = document.getElementById('downloadAllBtn');
 const userListSpan = document.getElementById('userList');
+const addBtn = document.getElementById('addBtn');
+const updateBtn = document.getElementById('updateBtn');
+const cancelEditBtn = document.getElementById('cancelEditBtn');
+const formMode = document.getElementById('formMode');
 
 // Toast
 const toast = document.getElementById('toast');
@@ -404,21 +424,14 @@ function formatMoney(value) {
 }
 
 function formatMoneyInput(input) {
-    // Remove all non-numeric characters except decimal point
     let value = input.value.replace(/[^0-9.]/g, '');
-    
-    // Ensure only one decimal point
     const parts = value.split('.');
     if (parts.length > 2) {
         value = parts[0] + '.' + parts.slice(1).join('');
     }
-    
-    // Parse as number
     const num = parseFloat(value);
     if (!isNaN(num) && value !== '') {
-        // Show formatted value
         input.value = formatMoney(num);
-        // Store raw value for calculation
         input.dataset.rawValue = num;
     } else {
         input.value = '';
@@ -427,11 +440,19 @@ function formatMoneyInput(input) {
 }
 
 function getRawValue(input) {
-    // Get the raw number from the formatted input
     if (input.value === '') return 0;
-    // Remove commas and parse
     const cleaned = input.value.replace(/,/g, '');
     return parseFloat(cleaned) || 0;
+}
+
+function setFormattedValue(input, value) {
+    if (value !== undefined && value !== null && !isNaN(value)) {
+        input.value = formatMoney(value);
+        input.dataset.rawValue = value;
+    } else {
+        input.value = '';
+        input.dataset.rawValue = 0;
+    }
 }
 
 // =============================================
@@ -442,10 +463,8 @@ function calculateOutstanding() {
     const payment = getRawValue(paymentInput);
     const outstanding = Math.max(liability - payment, 0);
     
-    // Format and display
     outstandingInput.value = formatMoney(outstanding);
     
-    // Update display message
     if (liability > 0 || payment > 0) {
         calcOutstandingDisplay.innerHTML = `💰 Outstanding = <span class="value">${formatMoney(outstanding)}</span> GHS (${formatMoney(liability)} - ${formatMoney(payment)})`;
     } else {
@@ -508,6 +527,17 @@ function getSelectedTaxTypes() {
     return selected.join(', ') || 'None';
 }
 
+function setTaxTypes(taxTypesStr) {
+    if (!taxTypesStr || taxTypesStr === 'None') {
+        taxCheckboxes.forEach(cb => { cb.checked = false; });
+        return;
+    }
+    const types = taxTypesStr.split(',').map(t => t.trim());
+    taxCheckboxes.forEach(cb => {
+        cb.checked = types.includes(cb.value);
+    });
+}
+
 function resetForm() {
     tinInput.value = '';
     nameInput.value = '';
@@ -525,6 +555,14 @@ function resetForm() {
     taxCheckboxes.forEach(cb => { cb.checked = (cb.value === 'Personal Income Tax'); });
     document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
+    
+    // Reset edit mode
+    editingIndex = null;
+    addBtn.style.display = 'inline-flex';
+    updateBtn.style.display = 'none';
+    cancelEditBtn.style.display = 'none';
+    formMode.innerHTML = 'Mode: <strong style="color:#0d3b52;">Add New</strong>';
+    
     tinInput.focus();
 }
 
@@ -539,6 +577,10 @@ function getTimestamp() {
 // QUICK FILL FUNCTIONS
 // =============================================
 function fillSample1() {
+    if (editingIndex !== null) {
+        if (!confirm('You are currently editing a record. Cancel editing?')) return;
+        resetForm();
+    }
     tinInput.value = 'GRA-1001';
     nameInput.value = 'Afia Mensah';
     telephoneInput.value = '024 123 4567';
@@ -548,19 +590,19 @@ function fillSample1() {
     taxpayerTypeSelect.value = 'Individual';
     sectorSelect.value = 'A';
     fileStatusSelect.value = 'Active';
-    liabilityInput.value = '12,500.00';
-    liabilityInput.dataset.rawValue = 12500;
-    paymentInput.value = '8,000.00';
-    paymentInput.dataset.rawValue = 8000;
+    setFormattedValue(liabilityInput, 12500);
+    setFormattedValue(paymentInput, 8000);
     calculateOutstanding();
-    taxCheckboxes.forEach(cb => {
-        cb.checked = ['Personal Income Tax', 'VAT, NHIL & GETFUND'].includes(cb.value);
-    });
+    setTaxTypes('Personal Income Tax, VAT, NHIL & GETFUND');
     showToast('📋 Sample 1 loaded! Click Add Record');
     tinInput.focus();
 }
 
 function fillSample2() {
+    if (editingIndex !== null) {
+        if (!confirm('You are currently editing a record. Cancel editing?')) return;
+        resetForm();
+    }
     tinInput.value = 'GC-2024-5678';
     nameInput.value = 'Kofi Trading Ltd';
     telephoneInput.value = '020 987 6543';
@@ -570,36 +612,19 @@ function fillSample2() {
     taxpayerTypeSelect.value = 'Company';
     sectorSelect.value = 'B';
     fileStatusSelect.value = 'Pending';
-    liabilityInput.value = '34,200.50';
-    liabilityInput.dataset.rawValue = 34200.50;
-    paymentInput.value = '20,000.00';
-    paymentInput.dataset.rawValue = 20000;
+    setFormattedValue(liabilityInput, 34200.50);
+    setFormattedValue(paymentInput, 20000);
     calculateOutstanding();
-    taxCheckboxes.forEach(cb => {
-        cb.checked = ['Corporate Income Tax', 'VAT, NHIL & GETFUND', 'Customs'].includes(cb.value);
-    });
+    setTaxTypes('Corporate Income Tax, VAT, NHIL & GETFUND, Customs');
     showToast('📋 Sample 2 loaded! Click Add Record');
     tinInput.focus();
 }
 
 function clearForm() {
-    tinInput.value = '';
-    nameInput.value = '';
-    telephoneInput.value = '';
-    emailInput.value = '';
-    locationInput.value = '';
-    taxOfficeInput.value = '';
-    taxpayerTypeSelect.value = 'Individual';
-    sectorSelect.value = '';
-    fileStatusSelect.value = 'Active';
-    liabilityInput.value = '';
-    paymentInput.value = '';
-    outstandingInput.value = '';
-    calcOutstandingDisplay.innerHTML = 'Outstanding = Liability - Payment';
-    taxCheckboxes.forEach(cb => { cb.checked = (cb.value === 'Personal Income Tax'); });
-    document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
-    document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
-    tinInput.focus();
+    if (editingIndex !== null) {
+        if (!confirm('You are currently editing a record. Cancel editing?')) return;
+    }
+    resetForm();
     showToast('🗑️ Form cleared');
 }
 
@@ -643,14 +668,60 @@ function updateUserList() {
 }
 
 // =============================================
-// ADD RECORD (LOCAL)
+// EDIT MODE FUNCTIONS
 // =============================================
-function addRecord() {
+function startEdit(index) {
+    const record = records[index];
+    if (!record) return;
+    
+    editingIndex = index;
+    
+    // Fill form with record data
+    tinInput.value = record.tin || '';
+    nameInput.value = record.name || '';
+    telephoneInput.value = record.telephone || '';
+    emailInput.value = record.email || '';
+    locationInput.value = record.location || '';
+    taxOfficeInput.value = record.taxOffice || '';
+    taxpayerTypeSelect.value = record.taxpayerType || 'Individual';
+    sectorSelect.value = record.sector || '';
+    fileStatusSelect.value = record.fileStatus || 'Active';
+    setFormattedValue(liabilityInput, record.liability || 0);
+    setFormattedValue(paymentInput, record.payment || 0);
+    calculateOutstanding();
+    setTaxTypes(record.taxTypes || '');
+    
+    // Switch to edit mode
+    addBtn.style.display = 'none';
+    updateBtn.style.display = 'inline-flex';
+    cancelEditBtn.style.display = 'inline-flex';
+    formMode.innerHTML = 'Mode: <strong style="color:#6f42c1;">Editing Record #' + (index + 1) + '</strong>';
+    
+    // Scroll to form
+    document.getElementById('censusForm').scrollIntoView({ behavior: 'smooth' });
+    
+    showToast('✏️ Editing record ' + (index + 1));
+    tinInput.focus();
+}
+
+function cancelEdit() {
+    if (confirm('Cancel editing? Changes will be lost.')) {
+        resetForm();
+        showToast('❌ Edit cancelled');
+    }
+}
+
+function updateRecord() {
+    if (editingIndex === null) {
+        showToast('No record is being edited.', true);
+        return;
+    }
+    
     const tin = tinInput.value.trim();
     const name = nameInput.value.trim();
     const sector = sectorSelect.value;
     
-    // Clear previous errors
+    // Validate
     document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
     
@@ -679,7 +750,72 @@ function addRecord() {
         return;
     }
 
-    // Get values (outstanding is auto-calculated)
+    const liability = getRawValue(liabilityInput);
+    const payment = getRawValue(paymentInput);
+    const outstanding = Math.max(liability - payment, 0);
+
+    // Update the record
+    records[editingIndex] = {
+        ...records[editingIndex],
+        tin,
+        name,
+        telephone: telephoneInput.value.trim(),
+        email: emailInput.value.trim(),
+        location: locationInput.value.trim(),
+        taxOffice: taxOfficeInput.value.trim(),
+        taxpayerType: taxpayerTypeSelect.value,
+        sector: sector,
+        fileStatus: fileStatusSelect.value,
+        taxTypes: getSelectedTaxTypes(),
+        liability: liability,
+        payment: payment,
+        outstanding: outstanding,
+        lastEdited: new Date().toISOString(),
+        editedBy: userName
+    };
+
+    saveToLocalStorage();
+    renderTable();
+    resetForm();
+    showToast('✅ Record updated successfully!');
+}
+
+// =============================================
+// ADD RECORD (LOCAL)
+// =============================================
+function addRecord() {
+    const tin = tinInput.value.trim();
+    const name = nameInput.value.trim();
+    const sector = sectorSelect.value;
+    
+    document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
+    
+    let hasError = false;
+    
+    if (tin === '') {
+        document.getElementById('tinGroup').querySelector('.error-msg').style.display = 'block';
+        document.getElementById('tin').classList.add('error');
+        hasError = true;
+    }
+    
+    if (name === '') {
+        document.getElementById('nameGroup').querySelector('.error-msg').style.display = 'block';
+        document.getElementById('taxpayerName').classList.add('error');
+        hasError = true;
+    }
+    
+    if (sector === '' || sector === null) {
+        document.getElementById('sectorGroup').querySelector('.error-msg').style.display = 'block';
+        document.getElementById('sectorSelect').classList.add('error');
+        hasError = true;
+    }
+    
+    if (hasError) {
+        showToast('⚠️ Please fill in all required fields (marked with *)', true);
+        return;
+    }
+
     const liability = getRawValue(liabilityInput);
     const payment = getRawValue(paymentInput);
     const outstanding = Math.max(liability - payment, 0);
@@ -765,11 +901,11 @@ function renderTable() {
     downloadBtn.disabled = false;
     downloadAllBtn.disabled = false;
     
-    // Sort by newest first
     const sorted = [...records].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     
-    sorted.forEach((rec) => {
+    sorted.forEach((rec, displayIndex) => {
         const row = document.createElement('tr');
+        const actualIndex = records.findIndex(r => r.id === rec.id);
         
         const cells = [
             rec.tin || '—', rec.name || '—', rec.telephone || '—', rec.email || '—',
@@ -783,7 +919,6 @@ function renderTable() {
             row.appendChild(td);
         });
 
-        // Financial cells with formatting
         const liabilityCell = document.createElement('td');
         liabilityCell.innerHTML = `<span class="amount liability">${formatMoney(rec.liability || 0)}</span>`;
         row.appendChild(liabilityCell);
@@ -796,7 +931,6 @@ function renderTable() {
         outstandingCell.innerHTML = `<span class="amount outstanding">${formatMoney(rec.outstanding || 0)}</span>`;
         row.appendChild(outstandingCell);
 
-        // Added By cell
         const addedByCell = document.createElement('td');
         const addedBy = rec.addedBy || '—';
         const span = document.createElement('span');
@@ -811,17 +945,33 @@ function renderTable() {
         addedByCell.appendChild(span);
         row.appendChild(addedByCell);
 
-        // Action cell - find the actual index in the original array
+        // Actions cell with Edit and Delete buttons
         const actionCell = document.createElement('td');
+        actionCell.style.whiteSpace = 'nowrap';
+        
+        // Edit button
+        const editBtn = document.createElement('button');
+        editBtn.className = 'action-btn edit-btn';
+        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+        editBtn.title = 'Edit record';
+        editBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            startEdit(actualIndex);
+        });
+        actionCell.appendChild(editBtn);
+        
+        // Delete button
         const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-row';
+        deleteBtn.className = 'action-btn delete-btn';
         deleteBtn.innerHTML = '<i class="fas fa-times-circle"></i>';
         deleteBtn.title = 'Delete record';
-        const actualIndex = records.findIndex(r => r.id === rec.id);
-        deleteBtn.addEventListener('click', () => deleteRecord(actualIndex));
+        deleteBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            deleteRecord(actualIndex);
+        });
         actionCell.appendChild(deleteBtn);
-        row.appendChild(actionCell);
         
+        row.appendChild(actionCell);
         tableBody.appendChild(row);
     });
     
@@ -831,7 +981,7 @@ function renderTable() {
 }
 
 // =============================================
-// UPDATE STATS - NOW WITH COMMAS!
+// UPDATE STATS
 // =============================================
 function updateStats() {
     let totalLiab = 0, totalPay = 0, totalOut = 0;
@@ -893,7 +1043,6 @@ function mergeData(files) {
                         existing.name === imported.name
                     );
                     if (!exists) {
-                        // Ensure outstanding is calculated correctly
                         const liability = parseFloat(imported.liability) || 0;
                         const payment = parseFloat(imported.payment) || 0;
                         const outstanding = Math.max(liability - payment, 0);
@@ -972,7 +1121,7 @@ function downloadExcel() {
 }
 
 // =============================================
-// DOWNLOAD ALL DATA (Complete Export)
+// DOWNLOAD ALL DATA
 // =============================================
 function downloadAllData() {
     if (records.length === 0) { showToast('No records to export.', true); return; }
@@ -1011,7 +1160,6 @@ function downloadAllData() {
             csvContent += escaped.join(',') + '\n';
         });
 
-        // Summary report - NOW WITH COMMAS!
         let summary = '\n📊 GRA CENSUS SUMMARY REPORT\n';
         summary += '='.repeat(50) + '\n';
         summary += `📅 Export Date: ${new Date().toLocaleString()}\n`;
@@ -1079,7 +1227,9 @@ function checkConnection() {
 // =============================================
 // EVENT LISTENERS
 // =============================================
-document.getElementById('addBtn').addEventListener('click', addRecord);
+addBtn.addEventListener('click', addRecord);
+updateBtn.addEventListener('click', updateRecord);
+cancelEditBtn.addEventListener('click', cancelEdit);
 document.getElementById('clearAllBtn').addEventListener('click', clearAllRecords);
 document.getElementById('exportBtn').addEventListener('click', exportData);
 document.getElementById('mergeBtn').addEventListener('click', function() {
@@ -1096,12 +1246,16 @@ document.querySelectorAll('input, select').forEach(input => {
     input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            addRecord();
+            if (editingIndex !== null) {
+                updateRecord();
+            } else {
+                addRecord();
+            }
         }
     });
 });
 
-// Real-time validation - clear errors when user types
+// Real-time validation
 tinInput.addEventListener('input', function() {
     if (this.value.trim() !== '') {
         this.classList.remove('error');
@@ -1130,10 +1284,8 @@ setupUser();
 checkConnection();
 setInterval(checkConnection, 10000);
 
-// Load data from localStorage
 const loaded = loadFromLocalStorage();
 
-// Seed with sample data if empty
 if (!loaded || records.length === 0) {
     records = [
         { 
@@ -1163,17 +1315,14 @@ if (!loaded || records.length === 0) {
 
 renderTable();
 
-console.log('📊 GRA Census - Local Only with Auto-Calc & Formatting');
+console.log('📊 GRA Census - With Edit Functionality');
 console.log('👤 Current User:', userName);
 console.log('📈 Records:', records.length);
+console.log('✏️ Click the edit button (✏️) to modify any record');
 console.log('💾 Data saved in your browser (localStorage)');
 console.log('📋 All 18 tax types available');
 console.log('🧮 Outstanding = Liability - Payment (auto-calculated)');
 console.log('💰 Numbers formatted with commas: 12,500.00');
-console.log('🏢 Taxpayer Type: Company, Individual, NGO, Other');
-console.log('📂 Sector: A - U dropdown');
-console.log('🔀 Merge team data using JSON files');
-console.log('🗑️ Click "Remove Demo Data" to delete sample records');
 </script>
 </body>
 </html>
