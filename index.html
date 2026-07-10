@@ -109,7 +109,32 @@
         .status-dormant { color: #d4a017; font-weight: 600; }
         .status-deregistered { color: #b13e4b; font-weight: 600; }
         
-        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } .tax-types-group { flex-direction: column; align-items: flex-start; gap: 0.4rem; } .actions { flex-direction: column; align-items: stretch; } .tax-types-grid { grid-template-columns: repeat(2, 1fr); } }
+        /* Dashboard Cards */
+        .dashboard-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .dash-card { background: #f8fafc; padding: 1.2rem; border-radius: 16px; border: 1px solid #e2ebf3; }
+        .dash-card h4 { font-size: 0.8rem; color: #6a8ba0; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.8rem; }
+        .dash-card .item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eef3f8; font-size: 0.85rem; }
+        .dash-card .item:last-child { border-bottom: none; }
+        .dash-card .item .count { font-weight: 700; color: #0d3b52; font-family: 'Courier New', monospace; }
+        .dash-card .item .label { color: #1d3d4f; }
+        .dash-card .item .label .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+        
+        .dash-card .total-row { display: flex; justify-content: space-between; padding: 6px 0 0 0; margin-top: 6px; border-top: 2px solid #d4e0ea; font-weight: 700; color: #0d3b52; font-size: 0.9rem; }
+        
+        .dash-card .sector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px 8px; }
+        .dash-card .sector-grid .item { border-bottom: none; padding: 2px 0; font-size: 0.8rem; }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid-3 { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+            .tax-types-group { flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+            .actions { flex-direction: column; align-items: stretch; }
+            .tax-types-grid { grid-template-columns: repeat(2, 1fr); }
+            .dash-card .sector-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 480px) {
+            .dash-card .sector-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -143,7 +168,7 @@
         </div>
     </div>
 
-    <!-- STATS -->
+    <!-- FINANCIAL STATS -->
     <div class="stats" id="statsGrid">
         <div class="stat-card">
             <div class="number" id="totalRecords">0</div>
@@ -163,6 +188,36 @@
         </div>
     </div>
 
+    <!-- NEW: 3 Dashboard Cards -->
+    <div class="dashboard-grid-3" id="dashboardStatsExtra">
+        <!-- Sector Distribution -->
+        <div class="dash-card" id="sectorDashboard">
+            <h4><i class="fas fa-layer-group" style="color:#1b6f9c;"></i> Sector Distribution (A - U)</h4>
+            <div class="sector-grid" id="sectorGrid">
+                <div class="item"><span class="label">No data</span></div>
+            </div>
+            <div class="total-row"><span>Total</span><span id="sectorTotal">0</span></div>
+        </div>
+
+        <!-- Taxpayer Type Distribution -->
+        <div class="dash-card" id="taxpayerTypeDashboard">
+            <h4><i class="fas fa-users" style="color:#6f42c1;"></i> Taxpayer Type</h4>
+            <div id="taxpayerTypeList">
+                <div class="item"><span class="label">No data</span></div>
+            </div>
+            <div class="total-row"><span>Total</span><span id="taxpayerTypeTotal">0</span></div>
+        </div>
+
+        <!-- File Status Distribution -->
+        <div class="dash-card" id="statusDashboard">
+            <h4><i class="fas fa-flag" style="color:#d4a017;"></i> File Status</h4>
+            <div id="statusList">
+                <div class="item"><span class="label">No data</span></div>
+            </div>
+            <div class="total-row"><span>Total</span><span id="statusTotal">0</span></div>
+        </div>
+    </div>
+
     <!-- FORM -->
     <div class="card">
         <!-- Quick Fill Buttons -->
@@ -170,6 +225,7 @@
             <span style="font-size:0.75rem; color:#6a8ba0; font-weight:600;">Quick Fill:</span>
             <button class="btn-sm" onclick="fillSample1()">📋 Sample 1 <span class="sample-badge">demo</span></button>
             <button class="btn-sm" onclick="fillSample2()">📋 Sample 2 <span class="sample-badge">demo</span></button>
+            <button class="btn-sm" onclick="fillSample3()">📋 Sample 3 <span class="sample-badge">demo</span></button>
             <button class="btn-sm" onclick="clearForm()">🗑️ Clear Form</button>
             <button class="btn-sm danger" onclick="deleteAllSamples()">❌ Remove Demo Data</button>
             <span style="font-size:0.7rem; color:#6a8ba0; margin-left:auto;" id="formMode">Mode: <strong style="color:#0d3b52;">Add New</strong></span>
@@ -244,7 +300,7 @@
                 <span class="error-msg" id="sectorError">Please select a sector (A - U)</span>
             </div>
 
-            <!-- FILE STATUS - UPDATED -->
+            <!-- FILE STATUS -->
             <div class="field-group">
                 <label><i class="fas fa-flag"></i> File Status</label>
                 <select id="fileStatus">
@@ -362,7 +418,7 @@
 
 <script>
 // =============================================
-// LOCAL-ONLY CENSUS APP - UPDATED FILE STATUS
+// LOCAL-ONLY CENSUS APP - WITH EXTRA DASHBOARDS
 // =============================================
 
 let records = [];
@@ -589,6 +645,28 @@ function fillSample2() {
     calculateOutstanding();
     setTaxTypes('Corporate Income Tax, VAT, NHIL & GETFUND, Customs');
     showToast('📋 Sample 2 loaded! Click Add Record');
+    tinInput.focus();
+}
+
+function fillSample3() {
+    if (editingIndex !== null) {
+        if (!confirm('You are currently editing a record. Cancel editing?')) return;
+        resetForm();
+    }
+    tinInput.value = 'GRA-7890';
+    nameInput.value = 'Ama Serwaa Foundation';
+    telephoneInput.value = '024 555 6789';
+    emailInput.value = 'ama@foundation.org';
+    locationInput.value = 'Kumasi';
+    taxOfficeInput.value = 'GRA-Kumasi';
+    taxpayerTypeSelect.value = 'NGO';
+    sectorSelect.value = 'D';
+    fileStatusSelect.value = 'Dormant';
+    liabilityInput.value = '5600';
+    paymentInput.value = '5600';
+    calculateOutstanding();
+    setTaxTypes('Personal Income Tax, Gift Tax, Withholding Tax');
+    showToast('📋 Sample 3 loaded! Click Add Record');
     tinInput.focus();
 }
 
@@ -851,6 +929,76 @@ function clearAllRecords() {
 }
 
 // =============================================
+// UPDATE DASHBOARD STATS - NEW!
+// =============================================
+function updateDashboardStats() {
+    // Sector Distribution (A - U)
+    const sectorMap = {};
+    const sectorLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U'];
+    sectorLetters.forEach(letter => { sectorMap[letter] = 0; });
+    
+    let sectorTotal = 0;
+    records.forEach(r => {
+        if (r.sector && sectorMap.hasOwnProperty(r.sector)) {
+            sectorMap[r.sector]++;
+            sectorTotal++;
+        }
+    });
+    
+    const sectorGrid = document.getElementById('sectorGrid');
+    sectorGrid.innerHTML = '';
+    sectorLetters.forEach(letter => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<span class="label">Sector ${letter}</span><span class="count">${sectorMap[letter]}</span>`;
+        sectorGrid.appendChild(div);
+    });
+    document.getElementById('sectorTotal').textContent = sectorTotal;
+
+    // Taxpayer Type Distribution
+    const typeMap = { 'Company': 0, 'Individual': 0, 'NGO': 0, 'Other': 0 };
+    let typeTotal = 0;
+    records.forEach(r => {
+        if (r.taxpayerType && typeMap.hasOwnProperty(r.taxpayerType)) {
+            typeMap[r.taxpayerType]++;
+            typeTotal++;
+        }
+    });
+    
+    const typeList = document.getElementById('taxpayerTypeList');
+    typeList.innerHTML = '';
+    const typeColors = { 'Company': '#1b6f9c', 'Individual': '#6f42c1', 'NGO': '#20c997', 'Other': '#d4a017' };
+    Object.keys(typeMap).forEach(key => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<span class="label"><span class="dot" style="background:${typeColors[key]}"></span>${key}</span><span class="count">${typeMap[key]}</span>`;
+        typeList.appendChild(div);
+    });
+    document.getElementById('taxpayerTypeTotal').textContent = typeTotal;
+
+    // File Status Distribution
+    const statusMap = { 'Active': 0, 'Inactive': 0, 'Dormant': 0, 'Deregistered': 0 };
+    let statusTotal = 0;
+    records.forEach(r => {
+        if (r.fileStatus && statusMap.hasOwnProperty(r.fileStatus)) {
+            statusMap[r.fileStatus]++;
+            statusTotal++;
+        }
+    });
+    
+    const statusList = document.getElementById('statusList');
+    statusList.innerHTML = '';
+    const statusColors = { 'Active': '#1f7b4b', 'Inactive': '#6c757d', 'Dormant': '#d4a017', 'Deregistered': '#b13e4b' };
+    Object.keys(statusMap).forEach(key => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<span class="label"><span class="dot" style="background:${statusColors[key]}"></span>${key}</span><span class="count">${statusMap[key]}</span>`;
+        statusList.appendChild(div);
+    });
+    document.getElementById('statusTotal').textContent = statusTotal;
+}
+
+// =============================================
 // RENDER TABLE
 // =============================================
 function renderTable() {
@@ -862,6 +1010,7 @@ function renderTable() {
         downloadAllBtn.disabled = true;
         updateStats();
         updateUserList();
+        updateDashboardStats();
         return;
     }
 
@@ -954,6 +1103,7 @@ function renderTable() {
     recordCountSpan.textContent = records.length + ' records';
     updateStats();
     updateUserList();
+    updateDashboardStats();
 }
 
 // =============================================
@@ -1304,16 +1454,15 @@ if (!loaded || records.length === 0) {
 
 renderTable();
 
-console.log('📊 GRA Census - Updated File Status');
+console.log('📊 GRA Census - With Extra Dashboards');
 console.log('👤 Current User:', userName);
 console.log('📈 Records:', records.length);
 console.log('📌 File Status: Active, Inactive, Dormant, Deregistered');
+console.log('📊 New Dashboards: Sector Distribution, Taxpayer Type, File Status');
 console.log('✏️ Click the edit button (✏️) to modify any record');
 console.log('💾 Data saved in your browser (localStorage)');
 console.log('📋 All 18 tax types available');
 console.log('🧮 Outstanding = Liability - Payment (auto-calculated)');
-console.log('💰 Numbers displayed with commas in table and dashboard only');
-console.log('⌨️ Enter numbers without commas: e.g., 12500');
 </script>
 </body>
 </html>
