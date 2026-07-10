@@ -110,7 +110,7 @@
         .status-deregistered { color: #b13e4b; font-weight: 600; }
         
         /* Dashboard Cards */
-        .dashboard-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .dashboard-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
         .dash-card { background: #f8fafc; padding: 1.2rem; border-radius: 16px; border: 1px solid #e2ebf3; }
         .dash-card h4 { font-size: 0.8rem; color: #6a8ba0; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.8rem; }
         .dash-card .item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eef3f8; font-size: 0.85rem; }
@@ -124,13 +124,23 @@
         .dash-card .sector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px 8px; }
         .dash-card .sector-grid .item { border-bottom: none; padding: 2px 0; font-size: 0.8rem; }
         
+        .dash-card .tax-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; }
+        .dash-card .tax-grid .item { border-bottom: none; padding: 2px 0; font-size: 0.78rem; }
+        .dash-card .tax-grid .item .count { font-size: 0.8rem; }
+        
+        .dash-card .tax-grid .item .label { font-size: 0.75rem; }
+        
+        @media (max-width: 1024px) {
+            .dashboard-grid-4 { grid-template-columns: repeat(2, 1fr); }
+        }
         @media (max-width: 768px) {
-            .dashboard-grid-3 { grid-template-columns: 1fr; }
+            .dashboard-grid-4 { grid-template-columns: 1fr; }
             .form-grid { grid-template-columns: 1fr; }
             .tax-types-group { flex-direction: column; align-items: flex-start; gap: 0.4rem; }
             .actions { flex-direction: column; align-items: stretch; }
             .tax-types-grid { grid-template-columns: repeat(2, 1fr); }
             .dash-card .sector-grid { grid-template-columns: repeat(2, 1fr); }
+            .dash-card .tax-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 480px) {
             .dash-card .sector-grid { grid-template-columns: 1fr; }
@@ -188,8 +198,9 @@
         </div>
     </div>
 
-    <!-- 3 Dashboard Cards -->
-    <div class="dashboard-grid-3" id="dashboardStatsExtra">
+    <!-- 4 Dashboard Cards -->
+    <div class="dashboard-grid-4" id="dashboardStatsExtra">
+        <!-- Sector Distribution -->
         <div class="dash-card" id="sectorDashboard">
             <h4><i class="fas fa-layer-group" style="color:#1b6f9c;"></i> Sector Distribution (A - U)</h4>
             <div class="sector-grid" id="sectorGrid">
@@ -198,6 +209,7 @@
             <div class="total-row"><span>Total</span><span id="sectorTotal">0</span></div>
         </div>
 
+        <!-- Taxpayer Type Distribution -->
         <div class="dash-card" id="taxpayerTypeDashboard">
             <h4><i class="fas fa-users" style="color:#6f42c1;"></i> Taxpayer Type</h4>
             <div id="taxpayerTypeList">
@@ -206,12 +218,22 @@
             <div class="total-row"><span>Total</span><span id="taxpayerTypeTotal">0</span></div>
         </div>
 
+        <!-- File Status Distribution -->
         <div class="dash-card" id="statusDashboard">
             <h4><i class="fas fa-flag" style="color:#d4a017;"></i> File Status</h4>
             <div id="statusList">
                 <div class="item"><span class="label">No data</span></div>
             </div>
             <div class="total-row"><span>Total</span><span id="statusTotal">0</span></div>
+        </div>
+
+        <!-- Tax Types Summary - NEW! -->
+        <div class="dash-card" id="taxTypesDashboard">
+            <h4><i class="fas fa-check-square" style="color:#20c997;"></i> Tax Types Summary</h4>
+            <div id="taxTypesList">
+                <div class="item"><span class="label">No data</span></div>
+            </div>
+            <div class="total-row"><span>Total Registrations</span><span id="taxTypesTotal">0</span></div>
         </div>
     </div>
 
@@ -304,7 +326,7 @@
                 </select>
             </div>
 
-            <!-- ALL TAX TYPES - UPDATED -->
+            <!-- ALL TAX TYPES -->
             <div class="tax-types-group">
                 <span style="font-weight:600; color:#1d4b63;"><i class="fas fa-check-square"></i> Tax Types Registered:</span>
                 <div class="tax-types-grid">
@@ -322,6 +344,7 @@
                     <label class="tax-check"><input type="checkbox" value="VIT"> VIT</label>
                     <label class="tax-check"><input type="checkbox" value="Financial Sector Recovery Levy"> Financial Sector Recovery Levy</label>
                     <label class="tax-check"><input type="checkbox" value="Growth and Sustainability Levy"> Growth and Sustainability Levy</label>
+                    <label class="tax-check"><input type="checkbox" value="Flat"> Flat</label>
                     <label class="tax-check"><input type="checkbox" value="Flat / COVID-19"> Flat / COVID-19</label>
                     <label class="tax-check"><input type="checkbox" value="NHIL/GETFUND/COVID-19"> NHIL/GETFUND/COVID-19</label>
                     <label class="tax-check"><input type="checkbox" value="NHIL/GETFUND"> NHIL/GETFUND</label>
@@ -418,7 +441,7 @@
 
 <script>
 // =============================================
-// LOCAL-ONLY CENSUS APP - UPDATED TAX TYPES
+// LOCAL-ONLY CENSUS APP - WITH TAX TYPES SUMMARY
 // =============================================
 
 let records = [];
@@ -929,7 +952,7 @@ function clearAllRecords() {
 }
 
 // =============================================
-// UPDATE DASHBOARD STATS
+// UPDATE DASHBOARD STATS - WITH TAX TYPES SUMMARY
 // =============================================
 function updateDashboardStats() {
     // Sector Distribution (A - U)
@@ -996,6 +1019,56 @@ function updateDashboardStats() {
         statusList.appendChild(div);
     });
     document.getElementById('statusTotal').textContent = statusTotal;
+
+    // Tax Types Summary - NEW!
+    const taxTypeMap = {};
+    const allTaxTypes = [
+        'Personal Income Tax', 'Corporate Income Tax', 'VAT Standard, NHIL & GETFUND',
+        'PAYE', 'Customs', 'Excise', 'Capital Gains Tax', 'Withholding Tax',
+        'Gift Tax', 'Rent Tax', 'Stamp Duty', 'VIT',
+        'Financial Sector Recovery Levy', 'Growth and Sustainability Levy',
+        'Flat', 'Flat / COVID-19', 'NHIL/GETFUND/COVID-19', 'NHIL/GETFUND',
+        'Minerals Royalties', 'Tax Stamp', 'Modified Taxation', 'Standard',
+        'Petroleum Tax', 'Mining Tax', 'Communication Service Tax',
+        'Suspense', 'Other'
+    ];
+    
+    allTaxTypes.forEach(type => { taxTypeMap[type] = 0; });
+    
+    let totalRegistrations = 0;
+    records.forEach(r => {
+        if (r.taxTypes && r.taxTypes !== 'None') {
+            const types = r.taxTypes.split(',').map(t => t.trim());
+            types.forEach(type => {
+                if (taxTypeMap.hasOwnProperty(type)) {
+                    taxTypeMap[type]++;
+                    totalRegistrations++;
+                }
+            });
+        }
+    });
+    
+    const taxTypesList = document.getElementById('taxTypesList');
+    taxTypesList.innerHTML = '';
+    
+    // Sort by count (highest first)
+    const sortedTaxTypes = Object.keys(taxTypeMap)
+        .filter(key => taxTypeMap[key] > 0 || true) // Show all, including zeros
+        .sort((a, b) => taxTypeMap[b] - taxTypeMap[a]);
+    
+    if (sortedTaxTypes.length === 0 || sortedTaxTypes.every(key => taxTypeMap[key] === 0)) {
+        taxTypesList.innerHTML = '<div class="item"><span class="label">No tax types registered yet</span></div>';
+    } else {
+        sortedTaxTypes.forEach(key => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            const count = taxTypeMap[key];
+            const dotColor = count > 0 ? '#20c997' : '#dee2e6';
+            div.innerHTML = `<span class="label"><span class="dot" style="background:${dotColor}"></span>${key}</span><span class="count">${count}</span>`;
+            taxTypesList.appendChild(div);
+        });
+    }
+    document.getElementById('taxTypesTotal').textContent = totalRegistrations;
 }
 
 // =============================================
@@ -1451,11 +1524,11 @@ if (!loaded || records.length === 0) {
 
 renderTable();
 
-console.log('📊 GRA Census - Updated Tax Types');
+console.log('📊 GRA Census - With Tax Types Summary Dashboard');
 console.log('👤 Current User:', userName);
 console.log('📈 Records:', records.length);
 console.log('📌 File Status: Active, Inactive, Dormant, Deregistered');
-console.log('📊 New Tax Types Added: Financial Sector Recovery Levy, Growth and Sustainability Levy, Flat / COVID-19, NHIL/GETFUND/COVID-19, NHIL/GETFUND, Minerals Royalties, Tax Stamp, Modified Taxation, Standard');
+console.log('📊 New Dashboard: Tax Types Summary - shows all tax types and counts');
 console.log('📝 VAT Standard, NHIL & GETFUND (renamed)');
 console.log('✏️ Click the edit button (✏️) to modify any record');
 console.log('💾 Data saved in your browser (localStorage)');
