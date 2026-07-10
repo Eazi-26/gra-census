@@ -19,6 +19,8 @@
         .field-group input:focus, .field-group select:focus { border-color: #1b6f9c; outline: none; box-shadow: 0 0 0 3px rgba(27,111,156,0.1); }
         .field-group input.error, .field-group select.error { border-color: #b13e4b; background: #fff5f5; }
         .field-group .error-msg { color: #b13e4b; font-size: 0.7rem; display: none; margin-top: 2px; }
+        .field-group .calculated { font-size: 0.7rem; color: #6a8ba0; margin-top: 2px; }
+        .field-group .calculated .value { font-weight: 700; color: #0d3b52; }
         .btn { padding: 10px 20px; border: none; border-radius: 30px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn-primary { background: #0d3b52; color: white; }
         .btn-primary:hover { background: #134b66; }
@@ -82,10 +84,7 @@
         .toast.show { display: flex; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
-        /* Amount formatting in table */
-        .amount { font-weight: 600; color: #0d3b52; }
-        .amount.positive { color: #1f7b4b; }
-        .amount.negative { color: #b13e4b; }
+        .auto-calc-badge { background: #e8f0fe; color: #1b6f9c; font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; margin-left: 6px; }
         
         @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } .tax-types-group { flex-direction: column; align-items: flex-start; gap: 0.4rem; } .actions { flex-direction: column; align-items: stretch; } .tax-types-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
@@ -107,6 +106,7 @@
                     <i class="fas fa-user"></i> <span id="userNameDisplay" style="font-weight:700; color:#1b6f9c;">User</span> · 
                     <span id="connectionStatus" class="online-badge"><i class="fas fa-wifi"></i> Online</span>
                     <span class="local-badge" style="margin-left:10px;"><i class="fas fa-server"></i> Local Only</span>
+                    <span class="auto-calc-badge" style="margin-left:8px;"><i class="fas fa-calculator"></i> Auto-Calc</span>
                 </p>
             </div>
             <div>
@@ -246,17 +246,19 @@
                 </div>
             </div>
 
+            <!-- FINANCIAL FIELDS WITH AUTO-CALC -->
             <div class="field-group">
-                <label><i class="fas fa-coins"></i> Liability (GHS)</label>
-                <input type="number" id="totalLiabilityInput" placeholder="0.00" step="0.01" />
+                <label><i class="fas fa-coins"></i> Liability (GHS) <span class="auto-calc-badge">enter</span></label>
+                <input type="number" id="totalLiabilityInput" placeholder="0.00" step="0.01" oninput="calculateOutstanding()" />
             </div>
             <div class="field-group">
-                <label><i class="fas fa-hand-holding-usd"></i> Payment (GHS)</label>
-                <input type="number" id="totalPaymentInput" placeholder="0.00" step="0.01" />
+                <label><i class="fas fa-hand-holding-usd"></i> Payment (GHS) <span class="auto-calc-badge">enter</span></label>
+                <input type="number" id="totalPaymentInput" placeholder="0.00" step="0.01" oninput="calculateOutstanding()" />
             </div>
             <div class="field-group">
-                <label><i class="fas fa-exclamation-triangle"></i> Outstanding (GHS)</label>
-                <input type="number" id="totalOutstandingInput" placeholder="0.00" step="0.01" />
+                <label><i class="fas fa-exclamation-triangle"></i> Outstanding (GHS) <span class="auto-calc-badge">auto-calc</span></label>
+                <input type="number" id="totalOutstandingInput" placeholder="0.00" step="0.01" readonly style="background:#f0f7fe; font-weight:600; color:#0d3b52;" />
+                <span class="calculated" id="calcOutstandingDisplay">Outstanding = Liability - Payment</span>
             </div>
         </div>
 
@@ -283,9 +285,9 @@
                         <th>Location</th><th>Tax Office</th>
                         <th>Taxpayer Type</th><th>Sector</th><th>Status</th>
                         <th>Tax Types</th>
-                        <th style="text-align:right;">Liability</th>
-                        <th style="text-align:right;">Payment</th>
-                        <th style="text-align:right;">Outstanding</th>
+                        <th style="color:#1b6f9c;">Liability</th>
+                        <th style="color:#1f7b4b;">Payment</th>
+                        <th style="color:#b13e4b;">Outstanding</th>
                         <th style="background:#d4e6f7;">👤 Added By</th>
                         <th style="width:50px;">Action</th>
                     </tr>
@@ -312,6 +314,7 @@
 
     <div class="footer-bar">
         <span style="font-size:0.75rem; color:#6a8ba0;">
+            <i class="fas fa-calculator"></i> Outstanding = Liability - Payment · 
             <i class="fas fa-save"></i> Data stored in your browser · 
             <span id="lastUpdated">Ready</span>
         </span>
@@ -320,7 +323,7 @@
 
 <script>
 // =============================================
-// LOCAL-ONLY CENSUS APP - NO FIREBASE
+// LOCAL-ONLY CENSUS APP - WITH AUTO-CALC
 // =============================================
 
 let records = [];
@@ -339,6 +342,7 @@ const fileStatusSelect = document.getElementById('fileStatus');
 const liabilityInput = document.getElementById('totalLiabilityInput');
 const paymentInput = document.getElementById('totalPaymentInput');
 const outstandingInput = document.getElementById('totalOutstandingInput');
+const calcOutstandingDisplay = document.getElementById('calcOutstandingDisplay');
 const taxCheckboxes = document.querySelectorAll('.tax-types-group input[type="checkbox"]');
 const tableBody = document.getElementById('tableBody');
 const recordCountSpan = document.getElementById('recordCount');
@@ -370,18 +374,21 @@ function showToast(message, isError = false) {
 }
 
 // =============================================
-// NUMBER FORMATTING FUNCTIONS
+// AUTO-CALCULATE OUTSTANDING
 // =============================================
-function formatNumber(num) {
-    if (num === undefined || num === null || isNaN(num)) return '0.00';
-    return Number(num).toLocaleString('en-GH', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
-}
-
-function formatNumberWithGHS(num) {
-    return 'GHS ' + formatNumber(num);
+function calculateOutstanding() {
+    const liability = parseFloat(liabilityInput.value) || 0;
+    const payment = parseFloat(paymentInput.value) || 0;
+    const outstanding = Math.max(liability - payment, 0);
+    
+    outstandingInput.value = outstanding.toFixed(2);
+    
+    // Update display message
+    if (liability > 0 || payment > 0) {
+        calcOutstandingDisplay.innerHTML = `💰 Outstanding = <span class="value">${outstanding.toFixed(2)}</span> GHS (${liability.toFixed(2)} - ${payment.toFixed(2)})`;
+    } else {
+        calcOutstandingDisplay.innerHTML = 'Outstanding = Liability - Payment';
+    }
 }
 
 // =============================================
@@ -452,6 +459,7 @@ function resetForm() {
     liabilityInput.value = '';
     paymentInput.value = '';
     outstandingInput.value = '';
+    calcOutstandingDisplay.innerHTML = 'Outstanding = Liability - Payment';
     taxCheckboxes.forEach(cb => { cb.checked = (cb.value === 'Personal Income Tax'); });
     document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
@@ -480,7 +488,7 @@ function fillSample1() {
     fileStatusSelect.value = 'Active';
     liabilityInput.value = '12500.00';
     paymentInput.value = '8000.00';
-    outstandingInput.value = '4500.00';
+    calculateOutstanding();
     taxCheckboxes.forEach(cb => {
         cb.checked = ['Personal Income Tax', 'VAT, NHIL & GETFUND'].includes(cb.value);
     });
@@ -500,7 +508,7 @@ function fillSample2() {
     fileStatusSelect.value = 'Pending';
     liabilityInput.value = '34200.50';
     paymentInput.value = '20000.00';
-    outstandingInput.value = '14200.50';
+    calculateOutstanding();
     taxCheckboxes.forEach(cb => {
         cb.checked = ['Corporate Income Tax', 'VAT, NHIL & GETFUND', 'Customs'].includes(cb.value);
     });
@@ -521,6 +529,7 @@ function clearForm() {
     liabilityInput.value = '';
     paymentInput.value = '';
     outstandingInput.value = '';
+    calcOutstandingDisplay.innerHTML = 'Outstanding = Liability - Payment';
     taxCheckboxes.forEach(cb => { cb.checked = (cb.value === 'Personal Income Tax'); });
     document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
@@ -604,6 +613,11 @@ function addRecord() {
         return;
     }
 
+    // Get values (outstanding is auto-calculated)
+    const liability = parseFloat(liabilityInput.value) || 0;
+    const payment = parseFloat(paymentInput.value) || 0;
+    const outstanding = Math.max(liability - payment, 0);
+
     const record = {
         tin,
         name,
@@ -615,9 +629,9 @@ function addRecord() {
         sector: sector,
         fileStatus: fileStatusSelect.value,
         taxTypes: getSelectedTaxTypes(),
-        liability: parseFloat(liabilityInput.value) || 0,
-        payment: parseFloat(paymentInput.value) || 0,
-        outstanding: parseFloat(outstandingInput.value) || 0,
+        liability: liability,
+        payment: payment,
+        outstanding: outstanding,
         timestamp: Date.now(),
         addedBy: userName,
         addedDate: new Date().toISOString(),
@@ -691,30 +705,18 @@ function renderTable() {
     sorted.forEach((rec) => {
         const row = document.createElement('tr');
         
-        // Text cells
-        const textCells = [
+        const cells = [
             rec.tin || '—', rec.name || '—', rec.telephone || '—', rec.email || '—',
             rec.location || '—', rec.taxOffice || '—', rec.taxpayerType || '—', rec.sector || '—',
-            rec.fileStatus || '—', rec.taxTypes || '—'
+            rec.fileStatus || '—', rec.taxTypes || '—',
+            parseFloat(rec.liability || 0).toFixed(2),
+            parseFloat(rec.payment || 0).toFixed(2),
+            parseFloat(rec.outstanding || 0).toFixed(2)
         ];
         
-        textCells.forEach(text => {
+        cells.forEach(text => {
             const td = document.createElement('td');
             td.textContent = text;
-            row.appendChild(td);
-        });
-
-        // Amount cells with formatting
-        const amountCells = [
-            { value: rec.liability || 0, className: 'amount' },
-            { value: rec.payment || 0, className: 'amount' },
-            { value: rec.outstanding || 0, className: 'amount' }
-        ];
-        
-        amountCells.forEach(item => {
-            const td = document.createElement('td');
-            td.style.textAlign = 'right';
-            td.textContent = formatNumber(item.value);
             row.appendChild(td);
         });
 
@@ -763,9 +765,9 @@ function updateStats() {
         totalOut += parseFloat(r.outstanding) || 0;
     });
     totalRecordsSpan.textContent = records.length;
-    totalLiabilitySpan.textContent = formatNumber(totalLiab);
-    totalPaymentSpan.textContent = formatNumber(totalPay);
-    totalOutstandingSpan.textContent = formatNumber(totalOut);
+    totalLiabilitySpan.textContent = totalLiab.toFixed(2);
+    totalPaymentSpan.textContent = totalPay.toFixed(2);
+    totalOutstandingSpan.textContent = totalOut.toFixed(2);
 }
 
 // =============================================
@@ -815,8 +817,14 @@ function mergeData(files) {
                         existing.name === imported.name
                     );
                     if (!exists) {
+                        // Ensure outstanding is calculated correctly
+                        const liability = parseFloat(imported.liability) || 0;
+                        const payment = parseFloat(imported.payment) || 0;
+                        const outstanding = Math.max(liability - payment, 0);
+                        
                         records.push({
                             ...imported,
+                            outstanding: outstanding,
                             mergedFrom: data.exportedBy || 'Unknown',
                             mergedAt: new Date().toISOString(),
                             id: Date.now() + Math.random(),
@@ -950,9 +958,9 @@ function downloadAllData() {
             }
         });
         
-        summary += `💰 Total Liability: GHS ${formatNumber(totalLiab)}\n`;
-        summary += `💳 Total Payment: GHS ${formatNumber(totalPay)}\n`;
-        summary += `⚠️ Total Outstanding: GHS ${formatNumber(totalOut)}\n`;
+        summary += `💰 Total Liability: GHS ${totalLiab.toFixed(2)}\n`;
+        summary += `💳 Total Payment: GHS ${totalPay.toFixed(2)}\n`;
+        summary += `⚠️ Total Outstanding: GHS ${totalOut.toFixed(2)}\n`;
         summary += `📊 Collection Rate: ${totalLiab > 0 ? ((totalPay/totalLiab)*100).toFixed(1) : 0}%\n`;
         summary += `👤 Team Members (${users.size}): ${Array.from(users).join(', ')}\n`;
         summary += `🏢 Taxpayer Types (${taxpayerTypes.size}): ${Array.from(taxpayerTypes).join(', ')}\n`;
@@ -1057,7 +1065,7 @@ if (!loaded || records.length === 0) {
             email: 'afia@example.com', location: 'Accra', taxOffice: 'GRA-Accra Central',
             taxpayerType: 'Individual', sector: 'A', fileStatus: 'Active',
             taxTypes: 'Personal Income Tax, VAT, NHIL & GETFUND', 
-            liability: 12500.00, payment: 8000.00, outstanding: 4500.00, 
+            liability: 12500, payment: 8000, outstanding: 4500, 
             timestamp: Date.now() - 3600000, addedBy: userName, addedDate: new Date().toISOString(),
             id: Date.now() + Math.random(),
             isDemo: true
@@ -1067,7 +1075,7 @@ if (!loaded || records.length === 0) {
             email: 'info@kofitrading.com', location: 'Tema', taxOffice: 'GRA-Tema',
             taxpayerType: 'Company', sector: 'B', fileStatus: 'Pending',
             taxTypes: 'Corporate Income Tax, VAT, NHIL & GETFUND, Customs',
-            liability: 34200.50, payment: 20000.00, outstanding: 14200.50, 
+            liability: 34200.50, payment: 20000, outstanding: 14200.50, 
             timestamp: Date.now() - 7200000, addedBy: userName, addedDate: new Date().toISOString(),
             id: Date.now() + Math.random(),
             isDemo: true
@@ -1079,11 +1087,12 @@ if (!loaded || records.length === 0) {
 
 renderTable();
 
-console.log('📊 GRA Census - Local Only');
+console.log('📊 GRA Census - Local Only with Auto-Calc');
 console.log('👤 Current User:', userName);
 console.log('📈 Records:', records.length);
 console.log('💾 Data saved in your browser (localStorage)');
 console.log('📋 All 18 tax types available');
+console.log('🧮 Outstanding = Liability - Payment (auto-calculated)');
 console.log('🏢 Taxpayer Type: Company, Individual, NGO, Other');
 console.log('📂 Sector: A - U dropdown');
 console.log('🔀 Merge team data using JSON files');
