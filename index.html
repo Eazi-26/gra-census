@@ -32,10 +32,8 @@
         .btn-warning:hover { background: #e6b422; }
         .btn-info { background: #17a2b8; color: white; }
         .btn-info:hover { background: #138496; }
-        .btn-edit { background: #6f42c1; color: white; }
-        .btn-edit:hover { background: #7e4fd4; }
-        .btn-cancel { background: #6c757d; color: white; }
-        .btn-cancel:hover { background: #5a6268; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
         .table-wrapper { overflow-x: auto; border-radius: 16px; border: 1px solid #deeaf3; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th { background: #eaf2f9; padding: 12px; text-align: left; }
@@ -50,10 +48,13 @@
         .action-btn.edit-btn:hover { background: #f0e8f8; }
         .action-btn.delete-btn { color: #b13e4b; }
         .action-btn.delete-btn:hover { background: #fce8ea; }
+        .action-btn.disabled { color: #adb5bd !important; cursor: not-allowed; }
+        .action-btn.disabled:hover { background: none; }
         .actions { display: flex; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; align-items: center; }
         .online-badge { background: #d4edda; color: #155724; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px; }
         .offline-badge { background: #f8d7da; color: #721c24; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px; }
         .firebase-badge { background: #cce5ff; color: #004085; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px; }
+        .admin-badge { background: #f8d7da; color: #721c24; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
         .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
         .stat-card { background: #f8fafc; padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid #e2ebf3; }
         .stat-card .number { font-size: 1.8rem; font-weight: 700; color: #0d3b52; font-family: 'Courier New', monospace; }
@@ -76,6 +77,7 @@
         .user-name { font-weight: 600; }
         .user-name.current-user { color: #1b6f9c; background: #e6f0f8; padding: 2px 8px; border-radius: 12px; }
         .user-name.other-user { color: #6f42c1; }
+        .user-name.admin-user { color: #b13e4b; background: #fce8ea; padding: 2px 8px; border-radius: 12px; }
         
         .user-legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; padding: 0.5rem 1rem; background: #f8fafc; border-radius: 12px; margin-top: 0.5rem; }
         
@@ -134,6 +136,26 @@
         .sync-status.syncing { background: #fff3cd; color: #856404; }
         .sync-status.error { background: #f8d7da; color: #721c24; }
         
+        /* Chat Styles */
+        .chat-section { margin-top: 1.5rem; border-top: 2px solid #e6edf4; padding-top: 1.5rem; }
+        .chat-container { display: flex; flex-direction: column; height: 350px; background: #f8fafc; border-radius: 16px; border: 1px solid #deeaf3; overflow: hidden; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 1rem; }
+        .chat-message { margin-bottom: 0.8rem; display: flex; flex-direction: column; max-width: 80%; }
+        .chat-message.self { align-self: flex-end; align-items: flex-end; }
+        .chat-message.other { align-self: flex-start; align-items: flex-start; }
+        .chat-message .sender { font-size: 0.7rem; font-weight: 600; color: #6a8ba0; margin-bottom: 2px; padding: 0 4px; }
+        .chat-message .bubble { padding: 8px 14px; border-radius: 16px; font-size: 0.9rem; word-wrap: break-word; max-width: 100%; }
+        .chat-message.self .bubble { background: #0d3b52; color: white; border-bottom-right-radius: 4px; }
+        .chat-message.other .bubble { background: white; color: #1d3d4f; border: 1px solid #d4e0ea; border-bottom-left-radius: 4px; }
+        .chat-message .time { font-size: 0.6rem; color: #8aa9c0; margin-top: 2px; padding: 0 4px; }
+        .chat-input-area { display: flex; gap: 0.5rem; padding: 0.8rem 1rem; background: white; border-top: 1px solid #deeaf3; }
+        .chat-input-area input { flex: 1; padding: 8px 14px; border: 1px solid #d4e0ea; border-radius: 30px; font-size: 0.9rem; outline: none; }
+        .chat-input-area input:focus { border-color: #1b6f9c; }
+        .chat-input-area .btn { padding: 8px 20px; border-radius: 30px; font-size: 0.85rem; }
+        .chat-online-users { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem 1rem; background: white; border-bottom: 1px solid #deeaf3; }
+        .chat-online-users .online-user { font-size: 0.75rem; background: #d4edda; color: #155724; padding: 2px 10px; border-radius: 30px; display: inline-flex; align-items: center; gap: 4px; }
+        .chat-online-users .online-user .dot { width: 6px; height: 6px; background: #1f7b4b; border-radius: 50%; display: inline-block; }
+        
         @media (max-width: 1024px) { .dashboard-grid-4 { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) {
             .dashboard-grid-4 { grid-template-columns: 1fr; }
@@ -143,6 +165,7 @@
             .tax-types-grid { grid-template-columns: repeat(2, 1fr); }
             .dash-card .sector-grid { grid-template-columns: repeat(2, 1fr); }
             .dash-card .tax-grid { grid-template-columns: 1fr; }
+            .chat-message { max-width: 95%; }
         }
         @media (max-width: 480px) { .dash-card .sector-grid { grid-template-columns: 1fr; } }
     </style>
@@ -162,6 +185,7 @@
                 <h1><i class="fas fa-database" style="color:#1b6f9c;"></i> GRA Census</h1>
                 <p style="color: #6a8ba0; margin-top: 4px;">
                     <i class="fas fa-user"></i> <span id="userNameDisplay" style="font-weight:700; color:#1b6f9c;">User</span> · 
+                    <span id="userRoleDisplay" class="badge" style="background:#e8f0fe; color:#1b6f9c;">User</span>
                     <span id="connectionStatus" class="online-badge"><i class="fas fa-wifi"></i> Online</span>
                     <span class="firebase-badge" style="margin-left:8px;"><i class="fas fa-fire"></i> Live Sync</span>
                     <span id="syncStatus" class="sync-status synced"><i class="fas fa-check-circle"></i> Synced</span>
@@ -174,6 +198,9 @@
         <div class="user-legend" id="userLegend">
             <span style="font-weight:600; color:#0d3b52; font-size:0.8rem;"><i class="fas fa-users"></i> Team Members:</span>
             <span style="color:#6a8ba0; font-size:0.8rem;" id="userList">Loading...</span>
+            <span style="font-size:0.7rem; color:#6a8ba0; margin-left:auto;" id="permissionInfo">
+                <i class="fas fa-info-circle"></i> You can only edit/delete your own records
+            </span>
         </div>
     </div>
 
@@ -310,9 +337,9 @@
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <button class="btn btn-primary" id="addBtn"><i class="fas fa-plus"></i> Add Record</button>
                 <button class="btn btn-warning" id="updateBtn" style="display:none;"><i class="fas fa-save"></i> Update Record</button>
-                <button class="btn btn-secondary btn-cancel" id="cancelEditBtn" style="display:none;"><i class="fas fa-times"></i> Cancel</button>
+                <button class="btn btn-secondary" id="cancelEditBtn" style="display:none;"><i class="fas fa-times"></i> Cancel</button>
                 <button class="btn btn-success" id="exportBtn"><i class="fas fa-download"></i> Export My Data</button>
-                <button class="btn btn-danger" id="clearAllBtn"><i class="fas fa-trash"></i> Clear All</button>
+                <button class="btn btn-danger" id="clearAllBtn" style="display:none;"><i class="fas fa-trash"></i> Clear All</button>
             </div>
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <button class="download-btn" id="downloadBtn" disabled><i class="fas fa-file-excel"></i> Download Excel</button>
@@ -358,6 +385,31 @@
         </div>
     </div>
 
+    <!-- CHAT SECTION -->
+    <div class="card chat-section">
+        <h4 style="display: flex; align-items: center; gap: 10px; color: #0d3b52; margin-bottom: 0.5rem;">
+            <i class="fas fa-comments" style="color:#1b6f9c;"></i> Team Chat
+            <span id="chatOnlineCount" style="font-size:0.75rem; color:#6a8ba0; font-weight:normal;"></span>
+        </h4>
+        <div class="chat-container" id="chatContainer">
+            <div class="chat-online-users" id="chatOnlineUsers">
+                <span style="font-size:0.7rem; color:#6a8ba0;">Online:</span>
+                <span id="onlineUsersList" style="font-size:0.7rem; color:#6a8ba0;">No one online</span>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div style="text-align:center; color:#6a8ba0; font-size:0.85rem; padding:2rem;">
+                    <i class="fas fa-comment-dots"></i> No messages yet. Start the conversation!
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()" />
+                <button class="btn btn-primary" onclick="sendMessage()" style="padding:8px 20px; font-size:0.85rem;">
+                    <i class="fas fa-paper-plane"></i> Send
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="footer-bar">
         <span style="font-size:0.75rem; color:#6a8ba0;">
             <i class="fas fa-fire"></i> Firebase Realtime Database · Live Sync · 
@@ -372,7 +424,7 @@
 
 <script>
 // =============================================
-// FIREBASE CONFIG - USING YOUR CORRECT DATABASE URL
+// FIREBASE CONFIG
 // =============================================
 const firebaseConfig = {
     apiKey: "AIzaSyCS_khPEUXXhFgan2WXvhjMCaQBPHfOAwU",
@@ -394,7 +446,9 @@ const database = firebase.database();
 // =============================================
 let records = [];
 let userName = '';
+let isAdmin = false;
 let editingIndex = null;
+let chatInitialized = false;
 
 // DOM refs
 const tinInput = document.getElementById('tin');
@@ -427,6 +481,15 @@ const updateBtn = document.getElementById('updateBtn');
 const cancelEditBtn = document.getElementById('cancelEditBtn');
 const formMode = document.getElementById('formMode');
 const syncStatus = document.getElementById('syncStatus');
+const userRoleDisplay = document.getElementById('userRoleDisplay');
+const permissionInfo = document.getElementById('permissionInfo');
+const clearAllBtn = document.getElementById('clearAllBtn');
+
+// Chat DOM refs
+const chatMessages = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const onlineUsersList = document.getElementById('onlineUsersList');
+const chatOnlineCount = document.getElementById('chatOnlineCount');
 
 // Toast
 const toast = document.getElementById('toast');
@@ -450,6 +513,40 @@ function setSyncStatus(status, type) {
     if (type === 'synced') syncStatus.innerHTML = '<i class="fas fa-check-circle"></i> Synced';
     else if (type === 'syncing') syncStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
     else if (type === 'error') syncStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error';
+}
+
+// =============================================
+// ADMIN PASSWORD VERIFICATION
+// =============================================
+const ADMIN_PASSWORD = 'Eazi_2605';
+
+function verifyAdminPassword() {
+    const enteredPassword = prompt('🔑 Admin Access Required\n\nPlease enter the Admin password:');
+    if (enteredPassword === null) return false;
+    if (enteredPassword === ADMIN_PASSWORD) {
+        return true;
+    } else {
+        showToast('❌ Incorrect password!', true);
+        return false;
+    }
+}
+
+// =============================================
+// PERMISSION CHECKS
+// =============================================
+function canEditRecord(record) {
+    if (isAdmin) return true;
+    return record.addedBy === userName;
+}
+
+function canDeleteRecord(record) {
+    if (isAdmin) return true;
+    return record.addedBy === userName;
+}
+
+function canViewRecord(record) {
+    if (isAdmin) return true;
+    return record.addedBy === userName;
 }
 
 // =============================================
@@ -486,7 +583,38 @@ function setupUser() {
         else storedName = 'User' + Math.floor(Math.random() * 1000);
     }
     userName = storedName;
+    
+    // Check if user is Admin
+    if (userName.toLowerCase() === 'admin') {
+        if (verifyAdminPassword()) {
+            isAdmin = true;
+        } else {
+            // If password fails, revert to regular user
+            localStorage.removeItem('censusUserName');
+            userName = prompt('Enter your name (e.g., Kwame, Ama):', 'User' + Math.floor(Math.random() * 100));
+            if (!userName) userName = 'User' + Math.floor(Math.random() * 1000);
+            localStorage.setItem('censusUserName', userName);
+            isAdmin = false;
+        }
+    }
+    
     document.getElementById('userNameDisplay').textContent = userName;
+    
+    if (isAdmin) {
+        userRoleDisplay.textContent = '🔑 Admin';
+        userRoleDisplay.style.background = '#f8d7da';
+        userRoleDisplay.style.color = '#721c24';
+        permissionInfo.innerHTML = '<i class="fas fa-crown"></i> Admin: Can view, edit and delete ALL records';
+        clearAllBtn.style.display = 'inline-flex';
+        showToast('👑 Welcome Admin! You have full access.');
+    } else {
+        userRoleDisplay.textContent = '👤 User';
+        userRoleDisplay.style.background = '#e8f0fe';
+        userRoleDisplay.style.color = '#1b6f9c';
+        permissionInfo.innerHTML = '<i class="fas fa-info-circle"></i> You can only view, edit and delete your own records';
+        clearAllBtn.style.display = 'none';
+        showToast('👤 Welcome ' + userName + '! You can manage your own records.');
+    }
 }
 
 // =============================================
@@ -616,11 +744,96 @@ function updateUserList() {
     if (users.size === 0) { userListSpan.textContent = 'No team members yet'; return; }
     const sortedUsers = Array.from(users).sort();
     userListSpan.innerHTML = sortedUsers.map(u => {
+        const isAdminUser = u.toLowerCase() === 'admin';
         if (u === userName) {
-            return `<span style="background:#1b6f9c; color:white; padding:2px 10px; border-radius:12px; font-weight:600;">${u} (You)</span>`;
+            return `<span style="background:#1b6f9c; color:white; padding:2px 10px; border-radius:12px; font-weight:600;">${u} (You)${isAdminUser ? ' 🔑' : ''}</span>`;
+        }
+        if (isAdminUser) {
+            return `<span style="background:#f8d7da; color:#721c24; padding:2px 10px; border-radius:12px;">${u} 🔑</span>`;
         }
         return `<span style="background:#e8e0f0; color:#6f42c1; padding:2px 10px; border-radius:12px;">${u}</span>`;
     }).join(' ');
+}
+
+// =============================================
+// CHAT FUNCTIONS
+// =============================================
+function setupChat() {
+    if (chatInitialized) return;
+    chatInitialized = true;
+    
+    // Listen for chat messages
+    database.ref('chatMessages').orderByChild('timestamp').limitToLast(100).on('value', (snapshot) => {
+        const data = snapshot.val();
+        chatMessages.innerHTML = '';
+        
+        if (!data) {
+            chatMessages.innerHTML = '<div style="text-align:center; color:#6a8ba0; font-size:0.85rem; padding:2rem;"><i class="fas fa-comment-dots"></i> No messages yet. Start the conversation!</div>';
+            return;
+        }
+        
+        const messages = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
+        messages.forEach(msg => {
+            const div = document.createElement('div');
+            div.className = 'chat-message ' + (msg.sender === userName ? 'self' : 'other');
+            
+            const senderSpan = document.createElement('div');
+            senderSpan.className = 'sender';
+            senderSpan.textContent = msg.sender + (msg.sender.toLowerCase() === 'admin' ? ' 🔑' : '');
+            
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'bubble';
+            bubbleDiv.textContent = msg.text;
+            
+            const timeSpan = document.createElement('div');
+            timeSpan.className = 'time';
+            timeSpan.textContent = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
+            
+            div.appendChild(senderSpan);
+            div.appendChild(bubbleDiv);
+            div.appendChild(timeSpan);
+            chatMessages.appendChild(div);
+        });
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+    
+    // Update online users
+    const userRef = database.ref('onlineUsers/' + userName);
+    userRef.onDisconnect().remove();
+    userRef.set({ name: userName, online: true, timestamp: Date.now() });
+    
+    database.ref('onlineUsers').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) {
+            onlineUsersList.textContent = 'No one online';
+            chatOnlineCount.textContent = '';
+            return;
+        }
+        const users = Object.keys(data).filter(key => data[key].online);
+        const count = users.length;
+        chatOnlineCount.textContent = '· ' + count + ' online';
+        if (count === 0) {
+            onlineUsersList.textContent = 'No one online';
+        } else {
+            const userNames = users.map(u => u + (u.toLowerCase() === 'admin' ? ' 🔑' : ''));
+            onlineUsersList.textContent = userNames.join(', ');
+        }
+    });
+}
+
+function sendMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    
+    database.ref('chatMessages').push({
+        sender: userName,
+        text: text,
+        timestamp: Date.now()
+    });
+    
+    chatInput.value = '';
 }
 
 // =============================================
@@ -635,10 +848,14 @@ function setupFirebaseListener() {
         
         if (data) {
             Object.keys(data).forEach(key => {
-                records.push({
+                const record = {
                     ...data[key],
                     _firebaseKey: key
-                });
+                };
+                // Only add record if user can view it
+                if (canViewRecord(record)) {
+                    records.push(record);
+                }
             });
             records.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
         }
@@ -712,13 +929,12 @@ function addRecord() {
         addedDate: new Date().toISOString()
     };
 
-    console.log('Saving record to Firebase:', record);
     setSyncStatus('Saving...', 'syncing');
     
     database.ref('censusRecords').push(record)
         .then(() => {
             resetForm();
-            showToast('✅ Record added successfully! Everyone can see it now.');
+            showToast('✅ Record added successfully!');
             setSyncStatus('Synced', 'synced');
             const btn = document.getElementById('addBtn');
             btn.innerHTML = '<i class="fas fa-check"></i> Added!';
@@ -736,10 +952,16 @@ function addRecord() {
 }
 
 // =============================================
-// FIREBASE - DELETE RECORD
+// FIREBASE - DELETE RECORD (with permission check)
 // =============================================
-function deleteRecord(firebaseKey) {
+function deleteRecord(firebaseKey, record) {
     if (!firebaseKey) return;
+    
+    if (!canDeleteRecord(record)) {
+        showToast('⛔ You do not have permission to delete this record.', true);
+        return;
+    }
+    
     if (confirm('Delete this record?')) {
         setSyncStatus('Deleting...', 'syncing');
         database.ref('censusRecords/' + firebaseKey).remove()
@@ -755,9 +977,13 @@ function deleteRecord(firebaseKey) {
 }
 
 // =============================================
-// FIREBASE - CLEAR ALL
+// FIREBASE - CLEAR ALL (Admin only)
 // =============================================
 function clearAllRecords() {
+    if (!isAdmin) {
+        showToast('⛔ Only Admin can clear all records.', true);
+        return;
+    }
     if (records.length === 0) return;
     if (confirm('⚠️ Delete ALL records? This cannot be undone.')) {
         if (confirm('Are you sure? All data will be permanently removed.')) {
@@ -776,10 +1002,21 @@ function clearAllRecords() {
 }
 
 // =============================================
-// FIREBASE - UPDATE RECORD
+// FIREBASE - UPDATE RECORD (with permission check)
 // =============================================
 function updateRecord() {
-    if (editingIndex === null) { showToast('No record is being edited.', true); return; }
+    if (editingIndex === null) {
+        showToast('No record is being edited.', true);
+        return;
+    }
+    
+    const recordToEdit = records[editingIndex];
+    
+    if (!canEditRecord(recordToEdit)) {
+        showToast('⛔ You do not have permission to edit this record.', true);
+        resetForm();
+        return;
+    }
     
     const tin = tinInput.value.trim();
     const name = nameInput.value.trim();
@@ -848,11 +1085,17 @@ function updateRecord() {
 }
 
 // =============================================
-// EDIT MODE FUNCTIONS
+// EDIT MODE FUNCTIONS (with permission check)
 // =============================================
 function startEdit(index) {
     const record = records[index];
     if (!record) return;
+    
+    if (!canEditRecord(record)) {
+        showToast('⛔ You do not have permission to edit this record.', true);
+        return;
+    }
+    
     editingIndex = index;
     tinInput.value = record.tin || '';
     nameInput.value = record.name || '';
@@ -884,12 +1127,20 @@ function cancelEdit() {
 }
 
 // =============================================
-// RENDER TABLE
+// RENDER TABLE (with permission-based filtering)
 // =============================================
 function renderTable() {
     tableBody.innerHTML = '';
-    if (records.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="15" class="empty-state"><i class="fas fa-box-open"></i> No records yet</td></tr>';
+    
+    // Filter records based on permissions
+    const visibleRecords = records.filter(rec => canViewRecord(rec));
+    
+    if (visibleRecords.length === 0) {
+        if (isAdmin) {
+            tableBody.innerHTML = '<tr><td colspan="15" class="empty-state"><i class="fas fa-box-open"></i> No records in the system yet</td></tr>';
+        } else {
+            tableBody.innerHTML = '<tr><td colspan="15" class="empty-state"><i class="fas fa-box-open"></i> You have no records yet. Add your first record!</td></tr>';
+        }
         downloadBtn.disabled = true;
         downloadAllBtn.disabled = true;
         updateStats();
@@ -899,22 +1150,28 @@ function renderTable() {
     }
     downloadBtn.disabled = false;
     downloadAllBtn.disabled = false;
-    const sorted = [...records].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    const sorted = [...visibleRecords].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     sorted.forEach((rec) => {
         const row = document.createElement('tr');
         const actualIndex = records.findIndex(r => r._firebaseKey === rec._firebaseKey);
+        const canEdit = canEditRecord(rec);
+        const canDelete = canDeleteRecord(rec);
+        
         const cells = [
             rec.tin || '—', rec.name || '—', rec.telephone || '—', rec.email || '—',
             rec.location || '—', rec.taxOffice || '—', rec.taxpayerType || '—', rec.sector || '—'
         ];
         cells.forEach(text => { const td = document.createElement('td'); td.textContent = text; row.appendChild(td); });
+        
         const statusCell = document.createElement('td');
         const status = rec.fileStatus || '—';
         statusCell.innerHTML = `<span class="status-${status.toLowerCase()}">${status}</span>`;
         row.appendChild(statusCell);
+        
         const taxTypesCell = document.createElement('td');
         taxTypesCell.textContent = rec.taxTypes || '—';
         row.appendChild(taxTypesCell);
+        
         const liabilityCell = document.createElement('td');
         liabilityCell.innerHTML = `<span class="amount liability">${formatMoney(rec.liability || 0)}</span>`;
         row.appendChild(liabilityCell);
@@ -924,12 +1181,16 @@ function renderTable() {
         const outstandingCell = document.createElement('td');
         outstandingCell.innerHTML = `<span class="amount outstanding">${formatMoney(rec.outstanding || 0)}</span>`;
         row.appendChild(outstandingCell);
+        
         const addedByCell = document.createElement('td');
         const addedBy = rec.addedBy || '—';
         const span = document.createElement('span');
         span.textContent = addedBy;
         span.className = 'user-name';
-        if (addedBy === userName) {
+        if (addedBy.toLowerCase() === 'admin') {
+            span.className += ' admin-user';
+            span.textContent = addedBy + ' 🔑';
+        } else if (addedBy === userName) {
             span.className += ' current-user';
             span.textContent = addedBy + ' ★';
         } else {
@@ -937,55 +1198,72 @@ function renderTable() {
         }
         addedByCell.appendChild(span);
         row.appendChild(addedByCell);
+        
         const actionCell = document.createElement('td');
         actionCell.style.whiteSpace = 'nowrap';
+        
         const editBtn = document.createElement('button');
         editBtn.className = 'action-btn edit-btn';
         editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-        editBtn.title = 'Edit record';
-        editBtn.addEventListener('click', function(e) { e.stopPropagation(); startEdit(actualIndex); });
+        editBtn.title = canEdit ? 'Edit record' : '🔒 Only the owner or Admin can edit';
+        if (!canEdit) editBtn.classList.add('disabled');
+        editBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (canEdit) startEdit(actualIndex);
+            else showToast('⛔ You do not have permission to edit this record.', true);
+        });
         actionCell.appendChild(editBtn);
+        
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'action-btn delete-btn';
         deleteBtn.innerHTML = '<i class="fas fa-times-circle"></i>';
-        deleteBtn.title = 'Delete record';
-        deleteBtn.addEventListener('click', function(e) { e.stopPropagation(); deleteRecord(rec._firebaseKey); });
+        deleteBtn.title = canDelete ? 'Delete record' : '🔒 Only the owner or Admin can delete';
+        if (!canDelete) deleteBtn.classList.add('disabled');
+        deleteBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (canDelete) deleteRecord(rec._firebaseKey, rec);
+            else showToast('⛔ You do not have permission to delete this record.', true);
+        });
         actionCell.appendChild(deleteBtn);
+        
         row.appendChild(actionCell);
         tableBody.appendChild(row);
     });
-    recordCountSpan.textContent = records.length + ' records';
+    recordCountSpan.textContent = visibleRecords.length + ' records';
     updateStats();
     updateUserList();
     updateDashboardStats();
 }
 
 // =============================================
-// UPDATE STATS
+// UPDATE STATS (only for visible records)
 // =============================================
 function updateStats() {
+    const visibleRecords = records.filter(rec => canViewRecord(rec));
     let totalLiab = 0, totalPay = 0, totalOut = 0;
-    records.forEach(r => {
+    visibleRecords.forEach(r => {
         totalLiab += parseFloat(r.liability) || 0;
         totalPay += parseFloat(r.payment) || 0;
         totalOut += parseFloat(r.outstanding) || 0;
     });
-    totalRecordsSpan.textContent = records.length;
+    totalRecordsSpan.textContent = visibleRecords.length;
     totalLiabilitySpan.textContent = formatMoney(totalLiab);
     totalPaymentSpan.textContent = formatMoney(totalPay);
     totalOutstandingSpan.textContent = formatMoney(totalOut);
 }
 
 // =============================================
-// UPDATE DASHBOARD STATS
+// UPDATE DASHBOARD STATS (only for visible records)
 // =============================================
 function updateDashboardStats() {
+    const visibleRecords = records.filter(rec => canViewRecord(rec));
+    
     // Sector Distribution
     const sectorMap = {};
     const sectorLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U'];
     sectorLetters.forEach(letter => { sectorMap[letter] = 0; });
     let sectorTotal = 0;
-    records.forEach(r => {
+    visibleRecords.forEach(r => {
         if (r.sector && sectorMap.hasOwnProperty(r.sector)) {
             sectorMap[r.sector]++;
             sectorTotal++;
@@ -1004,7 +1282,7 @@ function updateDashboardStats() {
     // Taxpayer Type Distribution
     const typeMap = { 'Company': 0, 'Individual': 0, 'NGO': 0, 'Other': 0 };
     let typeTotal = 0;
-    records.forEach(r => {
+    visibleRecords.forEach(r => {
         if (r.taxpayerType && typeMap.hasOwnProperty(r.taxpayerType)) {
             typeMap[r.taxpayerType]++;
             typeTotal++;
@@ -1024,7 +1302,7 @@ function updateDashboardStats() {
     // File Status Distribution
     const statusMap = { 'Active': 0, 'Inactive': 0, 'Dormant': 0, 'Deregistered': 0 };
     let statusTotal = 0;
-    records.forEach(r => {
+    visibleRecords.forEach(r => {
         if (r.fileStatus && statusMap.hasOwnProperty(r.fileStatus)) {
             statusMap[r.fileStatus]++;
             statusTotal++;
@@ -1055,7 +1333,7 @@ function updateDashboardStats() {
     ];
     allTaxTypes.forEach(type => { taxTypeMap[type] = 0; });
     let totalRegistrations = 0;
-    records.forEach(r => {
+    visibleRecords.forEach(r => {
         if (r.taxTypes && r.taxTypes !== 'None') {
             const types = r.taxTypes.split(',').map(t => t.trim());
             types.forEach(type => {
@@ -1091,12 +1369,13 @@ function updateDashboardStats() {
 // EXPORT / MERGE / DOWNLOAD
 // =============================================
 function exportData() {
-    if (records.length === 0) { showToast('No records to export.', true); return; }
+    const visibleRecords = records.filter(rec => canViewRecord(rec));
+    if (visibleRecords.length === 0) { showToast('No records to export.', true); return; }
     const data = { 
         exportedBy: userName, 
         exportDate: new Date().toISOString(), 
-        totalRecords: records.length, 
-        records: records.map(r => {
+        totalRecords: visibleRecords.length, 
+        records: visibleRecords.map(r => {
             const { _firebaseKey, ...rest } = r;
             return rest;
         })
@@ -1111,7 +1390,7 @@ function exportData() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    showToast('✅ Exported ' + records.length + ' records for ' + userName);
+    showToast('✅ Exported ' + visibleRecords.length + ' records for ' + userName);
 }
 
 function mergeData(files) {
@@ -1157,9 +1436,10 @@ function mergeData(files) {
 }
 
 function downloadExcel() {
-    if (records.length === 0) { showToast('No records to export.', true); return; }
+    const visibleRecords = records.filter(rec => canViewRecord(rec));
+    if (visibleRecords.length === 0) { showToast('No records to export.', true); return; }
     const headers = ['TIN/Ghana Card', 'Name', 'Telephone', 'Email', 'Location', 'Tax Office', 'Taxpayer Type', 'Sector', 'File Status', 'Tax Types', 'Liability (GHS)', 'Payment (GHS)', 'Outstanding (GHS)', 'Added By', 'Date Added'];
-    const rows = records.map(r => [
+    const rows = visibleRecords.map(r => [
         r.tin || '', r.name || '', r.telephone || '', r.email || '',
         r.location || '', r.taxOffice || '', r.taxpayerType || '', r.sector || '', r.fileStatus || '', r.taxTypes || '',
         parseFloat(r.liability || 0).toFixed(2),
@@ -1191,12 +1471,13 @@ function downloadExcel() {
 }
 
 function downloadAllData() {
-    if (records.length === 0) { showToast('No records to export.', true); return; }
+    const visibleRecords = records.filter(rec => canViewRecord(rec));
+    if (visibleRecords.length === 0) { showToast('No records to export.', true); return; }
     downloadAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
     downloadAllBtn.disabled = true;
     setTimeout(() => {
         const headers = ['TIN/Ghana Card', 'Name', 'Telephone', 'Email', 'Location', 'Tax Office', 'Taxpayer Type', 'Sector', 'File Status', 'Tax Types', 'Liability (GHS)', 'Payment (GHS)', 'Outstanding (GHS)', 'Added By', 'Date Added', 'Merged From', 'Merged At'];
-        const rows = records.map(r => [
+        const rows = visibleRecords.map(r => [
             r.tin || '', r.name || '', r.telephone || '', r.email || '',
             r.location || '', r.taxOffice || '', r.taxpayerType || '', r.sector || '', r.fileStatus || '', r.taxTypes || '',
             parseFloat(r.liability || 0).toFixed(2),
@@ -1220,14 +1501,14 @@ function downloadAllData() {
         let summary = '\n📊 GRA CENSUS SUMMARY REPORT\n';
         summary += '='.repeat(50) + '\n';
         summary += `📅 Export Date: ${new Date().toLocaleString()}\n`;
-        summary += `📈 Total Records: ${records.length}\n`;
+        summary += `📈 Total Records: ${visibleRecords.length}\n`;
         let totalLiab = 0, totalPay = 0, totalOut = 0;
         const users = new Set();
         const taxTypes = new Set();
         const sectors = new Set();
         const taxpayerTypes = new Set();
         const statusTypes = new Set();
-        records.forEach(r => {
+        visibleRecords.forEach(r => {
             totalLiab += parseFloat(r.liability) || 0;
             totalPay += parseFloat(r.payment) || 0;
             totalOut += parseFloat(r.outstanding) || 0;
@@ -1262,7 +1543,7 @@ function downloadAllData() {
         URL.revokeObjectURL(url);
         downloadAllBtn.innerHTML = '<i class="fas fa-users"></i> Download All Data';
         downloadAllBtn.disabled = false;
-        showToast(`✅ Complete data exported! ${records.length} records`);
+        showToast(`✅ Complete data exported! ${visibleRecords.length} records`);
     }, 500);
 }
 
@@ -1285,7 +1566,7 @@ function checkConnection() {
 addBtn.addEventListener('click', addRecord);
 updateBtn.addEventListener('click', updateRecord);
 cancelEditBtn.addEventListener('click', cancelEdit);
-document.getElementById('clearAllBtn').addEventListener('click', clearAllRecords);
+clearAllBtn.addEventListener('click', clearAllRecords);
 document.getElementById('exportBtn').addEventListener('click', exportData);
 document.getElementById('mergeBtn').addEventListener('click', function() {
     const files = document.getElementById('mergeFile').files;
@@ -1331,11 +1612,14 @@ setupUser();
 checkConnection();
 setInterval(checkConnection, 10000);
 setupFirebaseListener();
+setupChat();
 
 console.log('🔥 Firebase Connected!');
 console.log('👤 Current User:', userName);
-console.log('📊 All team members will see updates in real-time!');
-console.log('🔗 Database: gra-census-default-rtdb.europe-west1.firebasedatabase.app');
+console.log('🔑 Admin Mode:', isAdmin);
+console.log('📊 Users can only see their own records');
+console.log('👑 Admin can see ALL records and manage everything');
+console.log('💬 Chat feature enabled for team communication');
 console.log('✅ Click "Add Record" to save to Firebase');
 </script>
 </body>
