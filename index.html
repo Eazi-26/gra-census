@@ -855,11 +855,11 @@
                         <button class="btn btn-primary" id="addBtn"><i class="fas fa-plus"></i> Add Record</button>
                         <button class="btn btn-warning" id="updateBtn" style="display:none;"><i class="fas fa-save"></i> Update</button>
                         <button class="btn btn-secondary" id="cancelEditBtn" style="display:none;"><i class="fas fa-times"></i> Cancel</button>
-                        <button class="btn btn-success" id="exportBtn"><i class="fas fa-download"></i> Export</button>
+                        <button class="btn btn-success" id="exportBtn"><i class="fas fa-download"></i> Export JSON</button>
                         <button class="btn btn-danger" id="clearAllBtn" style="display:none;"><i class="fas fa-trash"></i> Clear All</button>
                     </div>
                     <div class="action-group">
-                        <button class="download-btn" id="downloadBtn" disabled><i class="fas fa-file-excel"></i> Excel</button>
+                        <button class="download-btn" id="downloadBtn" disabled><i class="fas fa-file-excel"></i> Download Excel</button>
                         <button class="download-all-btn" id="downloadAllBtn" disabled><i class="fas fa-users"></i> All Data</button>
                     </div>
                 </div>
@@ -986,6 +986,7 @@
     const userRoleDisplay = document.getElementById('userRoleDisplay');
     const permissionInfo = document.getElementById('permissionInfo');
     const clearAllBtn = document.getElementById('clearAllBtn');
+    const exportBtn = document.getElementById('exportBtn');
 
     const toast = document.getElementById('toast');
     const toastMessage = document.getElementById('toastMessage');
@@ -1860,7 +1861,7 @@
     }
 
     // =============================================
-    // EXPORT / MERGE / DOWNLOAD
+    // EXPORT JSON - RESTORED!
     // =============================================
     function exportData() {
         const visibleRecords = records.filter(rec => canViewRecord(rec));
@@ -1884,9 +1885,12 @@
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        showToast('✅ Exported ' + visibleRecords.length + ' records for ' + userName);
+        showToast('✅ Exported ' + visibleRecords.length + ' records as JSON for ' + userName);
     }
 
+    // =============================================
+    // MERGE DATA
+    // =============================================
     function mergeData(files) {
         if (!files || files.length === 0) { showToast('Please select JSON files to merge.', true); return; }
         let totalMerged = 0, duplicateCount = 0;
@@ -1929,6 +1933,9 @@
         });
     }
 
+    // =============================================
+    // DOWNLOAD EXCEL (CSV)
+    // =============================================
     function downloadExcel() {
         const visibleRecords = records.filter(rec => canViewRecord(rec));
         if (visibleRecords.length === 0) { showToast('No records to export.', true); return; }
@@ -1964,6 +1971,9 @@
         showToast('✅ Excel downloaded successfully!');
     }
 
+    // =============================================
+    // DOWNLOAD ALL DATA
+    // =============================================
     function downloadAllData() {
         const visibleRecords = records.filter(rec => canViewRecord(rec));
         if (visibleRecords.length === 0) { showToast('No records to export.', true); return; }
@@ -2061,7 +2071,7 @@
     updateBtn.addEventListener('click', updateRecord);
     cancelEditBtn.addEventListener('click', cancelEdit);
     clearAllBtn.addEventListener('click', clearAllRecords);
-    document.getElementById('exportBtn').addEventListener('click', exportData);
+    exportBtn.addEventListener('click', exportData);
     document.getElementById('mergeBtn').addEventListener('click', function() {
         const files = document.getElementById('mergeFile').files;
         if (files.length === 0) { showToast('Please select JSON files to merge.', true); return; }
@@ -2116,6 +2126,8 @@
     console.log('🔑 Admin password: Eazi_2605');
     console.log('📱 Fully responsive design');
     console.log('💰 Using Ghana Cedi sign: ₵');
+    console.log('📤 Export JSON: Available');
+    console.log('📊 Download Excel: Available');
     </script>
 </body>
 </html>
