@@ -7,10 +7,108 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
-        body { background: #eef3f7; padding: 1.5rem; }
-        .container { max-width: 1200px; margin: 0 auto; }
+        body { background: #eef3f7; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 1.5rem; }
+        
+        /* Login Screen */
+        #loginScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+        #loginScreen .login-box {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 24px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        #loginScreen .login-box h2 {
+            color: #0b2b3b;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #loginScreen .login-box p.subtitle {
+            color: #6a8ba0;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+        #loginScreen .login-box .field-group {
+            margin-bottom: 1rem;
+        }
+        #loginScreen .login-box label {
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #1e4a62;
+            display: block;
+            margin-bottom: 4px;
+        }
+        #loginScreen .login-box input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #d4e0ea;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: 0.2s;
+            outline: none;
+        }
+        #loginScreen .login-box input:focus {
+            border-color: #1b6f9c;
+            box-shadow: 0 0 0 3px rgba(27,111,156,0.1);
+        }
+        #loginScreen .login-box .login-error {
+            color: #b13e4b;
+            font-size: 0.8rem;
+            display: none;
+            margin-top: 4px;
+        }
+        #loginScreen .login-box .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #0d3b52;
+            color: white;
+        }
+        #loginScreen .login-box .btn:hover {
+            background: #134b66;
+        }
+        #loginScreen .login-box .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #loginScreen .login-box .login-hint {
+            font-size: 0.75rem;
+            color: #8aa9c0;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        #loginScreen .login-box .login-hint strong {
+            color: #1b6f9c;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; width: 100%; }
         .card { background: white; border-radius: 24px; padding: 2rem; margin-bottom: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
-        h1 { color: #0b2b3b; margin-bottom: 0.5rem; }
+        h1 { color: #0b2b3b; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 10px; }
         .badge { background: #d4edda; color: #155724; padding: 4px 12px; border-radius: 30px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px; }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
         .field-group { display: flex; flex-direction: column; gap: 4px; }
@@ -30,10 +128,10 @@
         .btn-danger:hover { background: #c44a58; }
         .btn-warning { background: #d4a017; color: white; }
         .btn-warning:hover { background: #e6b422; }
-        .btn-info { background: #17a2b8; color: white; }
-        .btn-info:hover { background: #138496; }
         .btn-secondary { background: #6c757d; color: white; }
         .btn-secondary:hover { background: #5a6268; }
+        .btn-logout { background: #b13e4b; color: white; padding: 6px 16px; font-size: 0.8rem; }
+        .btn-logout:hover { background: #c44a58; }
         .table-wrapper { overflow-x: auto; border-radius: 16px; border: 1px solid #deeaf3; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th { background: #eaf2f9; padding: 12px; text-align: left; }
@@ -156,6 +254,9 @@
         .chat-online-users .online-user { font-size: 0.75rem; background: #d4edda; color: #155724; padding: 2px 10px; border-radius: 30px; display: inline-flex; align-items: center; gap: 4px; }
         .chat-online-users .online-user .dot { width: 6px; height: 6px; background: #1f7b4b; border-radius: 50%; display: inline-block; }
         
+        /* Hide main content when not logged in */
+        #mainContent { display: none; }
+        
         @media (max-width: 1024px) { .dashboard-grid-4 { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) {
             .dashboard-grid-4 { grid-template-columns: 1fr; }
@@ -166,1317 +267,1430 @@
             .dash-card .sector-grid { grid-template-columns: repeat(2, 1fr); }
             .dash-card .tax-grid { grid-template-columns: 1fr; }
             .chat-message { max-width: 95%; }
+            #loginScreen .login-box { padding: 1.5rem; margin: 1rem; }
         }
         @media (max-width: 480px) { .dash-card .sector-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
-<div class="container">
-    <!-- Toast Notification -->
-    <div id="toast" class="toast">
-        <i class="fas fa-check-circle"></i>
-        <span id="toastMessage">Record added successfully!</span>
-    </div>
-
-    <!-- HEADER -->
-    <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-            <div>
-                <h1><i class="fas fa-database" style="color:#1b6f9c;"></i> GRA Census</h1>
-                <p style="color: #6a8ba0; margin-top: 4px;">
-                    <i class="fas fa-user"></i> <span id="userNameDisplay" style="font-weight:700; color:#1b6f9c;">User</span> · 
-                    <span id="userRoleDisplay" class="badge" style="background:#e8f0fe; color:#1b6f9c;">User</span>
-                    <span id="connectionStatus" class="online-badge"><i class="fas fa-wifi"></i> Online</span>
-                    <span class="firebase-badge" style="margin-left:8px;"><i class="fas fa-fire"></i> Live Sync</span>
-                    <span id="syncStatus" class="sync-status synced"><i class="fas fa-check-circle"></i> Synced</span>
-                </p>
-            </div>
-            <div>
-                <span class="badge" id="recordCount">0 records</span>
-            </div>
-        </div>
-        <div class="user-legend" id="userLegend">
-            <span style="font-weight:600; color:#0d3b52; font-size:0.8rem;"><i class="fas fa-users"></i> Team Members:</span>
-            <span style="color:#6a8ba0; font-size:0.8rem;" id="userList">Loading...</span>
-            <span style="font-size:0.7rem; color:#6a8ba0; margin-left:auto;" id="permissionInfo">
-                <i class="fas fa-info-circle"></i> You can only edit/delete your own records
-            </span>
-        </div>
-    </div>
-
-    <!-- FINANCIAL STATS -->
-    <div class="stats" id="statsGrid">
-        <div class="stat-card"><div class="number" id="totalRecords">0</div><div class="label">Total Records</div></div>
-        <div class="stat-card"><div class="number" id="totalLiability">0.00</div><div class="label">Liability (GHS)</div></div>
-        <div class="stat-card"><div class="number" id="totalPayment">0.00</div><div class="label">Payment (GHS)</div></div>
-        <div class="stat-card"><div class="number" id="totalOutstanding">0.00</div><div class="label">Outstanding (GHS)</div></div>
-    </div>
-
-    <!-- 4 Dashboard Cards -->
-    <div class="dashboard-grid-4" id="dashboardStatsExtra">
-        <div class="dash-card" id="sectorDashboard">
-            <h4><i class="fas fa-layer-group" style="color:#1b6f9c;"></i> Sector (A - U)</h4>
-            <div class="sector-grid" id="sectorGrid"><div class="item"><span class="label">No data</span></div></div>
-            <div class="total-row"><span>Total</span><span id="sectorTotal">0</span></div>
-        </div>
-        <div class="dash-card" id="taxpayerTypeDashboard">
-            <h4><i class="fas fa-users" style="color:#6f42c1;"></i> Taxpayer Type</h4>
-            <div id="taxpayerTypeList"><div class="item"><span class="label">No data</span></div></div>
-            <div class="total-row"><span>Total</span><span id="taxpayerTypeTotal">0</span></div>
-        </div>
-        <div class="dash-card" id="statusDashboard">
-            <h4><i class="fas fa-flag" style="color:#d4a017;"></i> File Status</h4>
-            <div id="statusList"><div class="item"><span class="label">No data</span></div></div>
-            <div class="total-row"><span>Total</span><span id="statusTotal">0</span></div>
-        </div>
-        <div class="dash-card" id="taxTypesDashboard">
-            <h4><i class="fas fa-check-square" style="color:#20c997;"></i> Tax Types Summary</h4>
-            <div class="tax-grid" id="taxTypesList"><div class="item"><span class="label">No data</span></div></div>
-            <div class="total-row"><span>Total Registrations</span><span id="taxTypesTotal">0</span></div>
-        </div>
-    </div>
-
-    <!-- FORM -->
-    <div class="card">
-        <div class="quick-fill">
-            <span style="font-size:0.75rem; color:#6a8ba0; font-weight:600;">Quick Fill:</span>
-            <button class="btn-sm" onclick="fillSample1()">📋 Sample 1 <span class="sample-badge">demo</span></button>
-            <button class="btn-sm" onclick="fillSample2()">📋 Sample 2 <span class="sample-badge">demo</span></button>
-            <button class="btn-sm" onclick="fillSample3()">📋 Sample 3 <span class="sample-badge">demo</span></button>
-            <button class="btn-sm" onclick="clearForm()">🗑️ Clear Form</button>
-            <span style="font-size:0.7rem; color:#6a8ba0; margin-left:auto;" id="formMode">Mode: <strong style="color:#0d3b52;">Add New</strong></span>
-        </div>
-
-        <div class="form-grid" id="censusForm">
-            <div class="field-group" id="tinGroup">
-                <label><i class="fas fa-id-card"></i> TIN / Ghana Card <span class="required-star">*</span></label>
-                <input type="text" id="tin" placeholder="GRA-12345" />
-                <span class="error-msg" id="tinError">Please enter TIN / Ghana Card</span>
-            </div>
-            <div class="field-group" id="nameGroup">
-                <label><i class="fas fa-user-tie"></i> Name <span class="required-star">*</span></label>
-                <input type="text" id="taxpayerName" placeholder="Full name" />
-                <span class="error-msg" id="nameError">Please enter the taxpayer name</span>
-            </div>
-            <div class="field-group"><label><i class="fas fa-phone-alt"></i> Telephone</label><input type="text" id="telephone" placeholder="024 123 4567" /></div>
-            <div class="field-group"><label><i class="fas fa-envelope"></i> Email</label><input type="email" id="email" placeholder="name@domain.com" /></div>
-            <div class="field-group"><label><i class="fas fa-map-pin"></i> Location</label><input type="text" id="location" placeholder="Accra, Kumasi..." /></div>
-            <div class="field-group"><label><i class="fas fa-building"></i> Tax Office</label><input type="text" id="taxOffice" placeholder="GRA-Accra" /></div>
+    <!-- ============================================= -->
+    <!-- LOGIN SCREEN -->
+    <!-- ============================================= -->
+    <div id="loginScreen">
+        <div class="login-box">
+            <h2><i class="fas fa-lock" style="color:#1b6f9c;"></i> GRA Census</h2>
+            <p class="subtitle">Enter your name to continue</p>
             
-            <div class="field-group"><label><i class="fas fa-users"></i> Taxpayer Type</label>
-                <select id="taxpayerType"><option value="Company">Company</option><option value="Individual" selected>Individual</option><option value="NGO">NGO</option><option value="Other">Other</option></select>
+            <div class="field-group">
+                <label><i class="fas fa-user"></i> Your Name</label>
+                <input type="text" id="loginName" placeholder="e.g. Kwame, Ama, Admin" autofocus />
+            </div>
+            
+            <div class="field-group" id="adminPasswordGroup" style="display: none;">
+                <label><i class="fas fa-key"></i> Admin Password <span style="color:#b13e4b;">*</span></label>
+                <input type="password" id="loginPassword" placeholder="Enter admin password" />
+                <div class="login-error" id="loginError">Incorrect password. Please try again.</div>
+            </div>
+            
+            <button class="btn" id="loginBtn"><i class="fas fa-sign-in-alt"></i> Continue</button>
+            
+            <div class="login-hint">
+                <i class="fas fa-info-circle"></i> Regular users: Just enter your name<br>
+                <strong>Admin:</strong> Enter name as <strong>"Admin"</strong> and password required
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- MAIN CONTENT -->
+    <!-- ============================================= -->
+    <div id="mainContent">
+        <div class="container">
+            <!-- Toast Notification -->
+            <div id="toast" class="toast">
+                <i class="fas fa-check-circle"></i>
+                <span id="toastMessage">Record added successfully!</span>
             </div>
 
-            <div class="field-group" id="sectorGroup">
-                <label><i class="fas fa-layer-group"></i> Sector <span class="sector-badge">A - U</span> <span class="required-star">*</span></label>
-                <select id="sectorSelect">
-                    <option value="">-- Select Sector --</option>
-                    <option value="A">A</option><option value="B">B</option><option value="C">C</option>
-                    <option value="D">D</option><option value="E">E</option><option value="F">F</option>
-                    <option value="G">G</option><option value="H">H</option><option value="I">I</option>
-                    <option value="J">J</option><option value="K">K</option><option value="L">L</option>
-                    <option value="M">M</option><option value="N">N</option><option value="O">O</option>
-                    <option value="P">P</option><option value="Q">Q</option><option value="R">R</option>
-                    <option value="S">S</option><option value="T">T</option><option value="U">U</option>
-                </select>
-                <span class="error-msg" id="sectorError">Please select a sector (A - U)</span>
-            </div>
-
-            <div class="field-group"><label><i class="fas fa-flag"></i> File Status</label>
-                <select id="fileStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Dormant">Dormant</option><option value="Deregistered">Deregistered</option></select>
-            </div>
-
-            <div class="tax-types-group">
-                <span style="font-weight:600; color:#1d4b63;"><i class="fas fa-check-square"></i> Tax Types Registered:</span>
-                <div class="tax-types-grid">
-                    <label class="tax-check"><input type="checkbox" value="Personal Income Tax" checked> Personal Income Tax</label>
-                    <label class="tax-check"><input type="checkbox" value="Corporate Income Tax"> Corporate Income Tax</label>
-                    <label class="tax-check"><input type="checkbox" value="VAT Standard, NHIL & GETFUND"> VAT Standard, NHIL & GETFUND</label>
-                    <label class="tax-check"><input type="checkbox" value="PAYE"> PAYE</label>
-                    <label class="tax-check"><input type="checkbox" value="Customs"> Customs</label>
-                    <label class="tax-check"><input type="checkbox" value="Excise"> Excise</label>
-                    <label class="tax-check"><input type="checkbox" value="Capital Gains Tax"> Capital Gains Tax</label>
-                    <label class="tax-check"><input type="checkbox" value="Withholding Tax"> Withholding Tax</label>
-                    <label class="tax-check"><input type="checkbox" value="Gift Tax"> Gift Tax</label>
-                    <label class="tax-check"><input type="checkbox" value="Rent Tax"> Rent Tax</label>
-                    <label class="tax-check"><input type="checkbox" value="Stamp Duty"> Stamp Duty</label>
-                    <label class="tax-check"><input type="checkbox" value="VIT"> VIT</label>
-                    <label class="tax-check"><input type="checkbox" value="Financial Sector Recovery Levy"> Financial Sector Recovery Levy</label>
-                    <label class="tax-check"><input type="checkbox" value="Growth and Sustainability Levy"> Growth and Sustainability Levy</label>
-                    <label class="tax-check"><input type="checkbox" value="Flat"> Flat</label>
-                    <label class="tax-check"><input type="checkbox" value="Flat / COVID-19"> Flat / COVID-19</label>
-                    <label class="tax-check"><input type="checkbox" value="NHIL/GETFUND/COVID-19"> NHIL/GETFUND/COVID-19</label>
-                    <label class="tax-check"><input type="checkbox" value="NHIL/GETFUND"> NHIL/GETFUND</label>
-                    <label class="tax-check"><input type="checkbox" value="Minerals Royalties"> Minerals Royalties</label>
-                    <label class="tax-check"><input type="checkbox" value="Tax Stamp"> Tax Stamp</label>
-                    <label class="tax-check"><input type="checkbox" value="Modified Taxation"> Modified Taxation</label>
-                    <label class="tax-check"><input type="checkbox" value="Standard"> Standard</label>
-                    <label class="tax-check"><input type="checkbox" value="Petroleum Tax"> Petroleum Tax</label>
-                    <label class="tax-check"><input type="checkbox" value="Mining Tax"> Mining Tax</label>
-                    <label class="tax-check"><input type="checkbox" value="Communication Service Tax"> Communication Service Tax</label>
-                    <label class="tax-check" style="background: #fff3cd; padding: 2px 10px; border-radius: 12px; margin-right: 8px;">
-                        <input type="checkbox" value="Suspense"> Suspense <span class="suspense-badge">⚠️</span>
-                    </label>
-                    <label class="tax-check"><input type="checkbox" value="Other"> Other</label>
+            <!-- HEADER -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                    <div>
+                        <h1><i class="fas fa-database" style="color:#1b6f9c;"></i> GRA Census</h1>
+                        <p style="color: #6a8ba0; margin-top: 4px;">
+                            <i class="fas fa-user"></i> <span id="userNameDisplay" style="font-weight:700; color:#1b6f9c;">User</span> · 
+                            <span id="userRoleDisplay" class="badge" style="background:#e8f0fe; color:#1b6f9c;">User</span>
+                            <span id="connectionStatus" class="online-badge"><i class="fas fa-wifi"></i> Online</span>
+                            <span class="firebase-badge" style="margin-left:8px;"><i class="fas fa-fire"></i> Live Sync</span>
+                            <span id="syncStatus" class="sync-status synced"><i class="fas fa-check-circle"></i> Synced</span>
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <span class="badge" id="recordCount">0 records</span>
+                        <button class="btn btn-logout" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                    </div>
+                </div>
+                <div class="user-legend" id="userLegend">
+                    <span style="font-weight:600; color:#0d3b52; font-size:0.8rem;"><i class="fas fa-users"></i> Team Members:</span>
+                    <span style="color:#6a8ba0; font-size:0.8rem;" id="userList">Loading...</span>
+                    <span style="font-size:0.7rem; color:#6a8ba0; margin-left:auto;" id="permissionInfo">
+                        <i class="fas fa-info-circle"></i> You can only edit/delete your own records
+                    </span>
                 </div>
             </div>
 
-            <div class="field-group"><label><i class="fas fa-coins"></i> Liability (GHS) <span class="auto-calc-badge">enter number</span></label>
-                <input type="number" id="totalLiabilityInput" placeholder="0.00" step="0.01" min="0" class="money-input" oninput="calculateOutstanding()" />
+            <!-- FINANCIAL STATS -->
+            <div class="stats" id="statsGrid">
+                <div class="stat-card"><div class="number" id="totalRecords">0</div><div class="label">Total Records</div></div>
+                <div class="stat-card"><div class="number" id="totalLiability">0.00</div><div class="label">Liability (GHS)</div></div>
+                <div class="stat-card"><div class="number" id="totalPayment">0.00</div><div class="label">Payment (GHS)</div></div>
+                <div class="stat-card"><div class="number" id="totalOutstanding">0.00</div><div class="label">Outstanding (GHS)</div></div>
             </div>
-            <div class="field-group"><label><i class="fas fa-hand-holding-usd"></i> Payment (GHS) <span class="auto-calc-badge">enter number</span></label>
-                <input type="number" id="totalPaymentInput" placeholder="0.00" step="0.01" min="0" class="money-input" oninput="calculateOutstanding()" />
-            </div>
-            <div class="field-group"><label><i class="fas fa-exclamation-triangle"></i> Outstanding (GHS) <span class="auto-calc-badge">auto-calc</span></label>
-                <input type="text" id="totalOutstandingInput" placeholder="0.00" readonly style="background:#f0f7fe; font-weight:600; color:#0d3b52; font-family:'Courier New', monospace; text-align:right;" />
-                <span class="calculated" id="calcOutstandingDisplay">Outstanding = Liability - Payment</span>
-            </div>
-        </div>
 
-        <div class="actions">
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <button class="btn btn-primary" id="addBtn"><i class="fas fa-plus"></i> Add Record</button>
-                <button class="btn btn-warning" id="updateBtn" style="display:none;"><i class="fas fa-save"></i> Update Record</button>
-                <button class="btn btn-secondary" id="cancelEditBtn" style="display:none;"><i class="fas fa-times"></i> Cancel</button>
-                <button class="btn btn-success" id="exportBtn"><i class="fas fa-download"></i> Export My Data</button>
-                <button class="btn btn-danger" id="clearAllBtn" style="display:none;"><i class="fas fa-trash"></i> Clear All</button>
-            </div>
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <button class="download-btn" id="downloadBtn" disabled><i class="fas fa-file-excel"></i> Download Excel</button>
-                <button class="download-all-btn" id="downloadAllBtn" disabled><i class="fas fa-users"></i> Download All Data</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- TABLE -->
-    <div class="card">
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>TIN</th><th>Name</th><th>Telephone</th><th>Email</th>
-                        <th>Location</th><th>Tax Office</th>
-                        <th>Taxpayer Type</th><th>Sector</th><th>Status</th>
-                        <th>Tax Types</th>
-                        <th style="color:#1b6f9c;">Liability</th>
-                        <th style="color:#1f7b4b;">Payment</th>
-                        <th style="color:#b13e4b;">Outstanding</th>
-                        <th style="background:#d4e6f7;">👤 Added By</th>
-                        <th style="width:100px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <tr><td colspan="15" class="empty-state"><i class="fas fa-box-open"></i> No records yet</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- MERGE SECTION -->
-    <div class="card">
-        <div class="merge-section">
-            <i class="fas fa-merge" style="color:#1b6f9c; font-size:1.2rem;"></i>
-            <span style="font-weight:600; color:#0d3b52;">Merge Team Data:</span>
-            <input type="file" id="mergeFile" accept=".json" multiple />
-            <button class="btn btn-warning" id="mergeBtn"><i class="fas fa-file-import"></i> Merge Files</button>
-            <span style="font-size:0.75rem; color:#6a8ba0; margin-left:auto;">
-                <i class="fas fa-info-circle"></i> Select JSON files from team members
-            </span>
-        </div>
-    </div>
-
-    <!-- CHAT SECTION -->
-    <div class="card chat-section">
-        <h4 style="display: flex; align-items: center; gap: 10px; color: #0d3b52; margin-bottom: 0.5rem;">
-            <i class="fas fa-comments" style="color:#1b6f9c;"></i> Team Chat
-            <span id="chatOnlineCount" style="font-size:0.75rem; color:#6a8ba0; font-weight:normal;"></span>
-        </h4>
-        <div class="chat-container" id="chatContainer">
-            <div class="chat-online-users" id="chatOnlineUsers">
-                <span style="font-size:0.7rem; color:#6a8ba0;">Online:</span>
-                <span id="onlineUsersList" style="font-size:0.7rem; color:#6a8ba0;">No one online</span>
-            </div>
-            <div class="chat-messages" id="chatMessages">
-                <div style="text-align:center; color:#6a8ba0; font-size:0.85rem; padding:2rem;">
-                    <i class="fas fa-comment-dots"></i> No messages yet. Start the conversation!
+            <!-- 4 Dashboard Cards -->
+            <div class="dashboard-grid-4" id="dashboardStatsExtra">
+                <div class="dash-card" id="sectorDashboard">
+                    <h4><i class="fas fa-layer-group" style="color:#1b6f9c;"></i> Sector (A - U)</h4>
+                    <div class="sector-grid" id="sectorGrid"><div class="item"><span class="label">No data</span></div></div>
+                    <div class="total-row"><span>Total</span><span id="sectorTotal">0</span></div>
+                </div>
+                <div class="dash-card" id="taxpayerTypeDashboard">
+                    <h4><i class="fas fa-users" style="color:#6f42c1;"></i> Taxpayer Type</h4>
+                    <div id="taxpayerTypeList"><div class="item"><span class="label">No data</span></div></div>
+                    <div class="total-row"><span>Total</span><span id="taxpayerTypeTotal">0</span></div>
+                </div>
+                <div class="dash-card" id="statusDashboard">
+                    <h4><i class="fas fa-flag" style="color:#d4a017;"></i> File Status</h4>
+                    <div id="statusList"><div class="item"><span class="label">No data</span></div></div>
+                    <div class="total-row"><span>Total</span><span id="statusTotal">0</span></div>
+                </div>
+                <div class="dash-card" id="taxTypesDashboard">
+                    <h4><i class="fas fa-check-square" style="color:#20c997;"></i> Tax Types Summary</h4>
+                    <div class="tax-grid" id="taxTypesList"><div class="item"><span class="label">No data</span></div></div>
+                    <div class="total-row"><span>Total Registrations</span><span id="taxTypesTotal">0</span></div>
                 </div>
             </div>
-            <div class="chat-input-area">
-                <input type="text" id="chatInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()" />
-                <button class="btn btn-primary" onclick="sendMessage()" style="padding:8px 20px; font-size:0.85rem;">
-                    <i class="fas fa-paper-plane"></i> Send
-                </button>
+
+            <!-- FORM -->
+            <div class="card">
+                <div class="quick-fill">
+                    <span style="font-size:0.75rem; color:#6a8ba0; font-weight:600;">Quick Fill:</span>
+                    <button class="btn-sm" onclick="fillSample1()">📋 Sample 1 <span class="sample-badge">demo</span></button>
+                    <button class="btn-sm" onclick="fillSample2()">📋 Sample 2 <span class="sample-badge">demo</span></button>
+                    <button class="btn-sm" onclick="fillSample3()">📋 Sample 3 <span class="sample-badge">demo</span></button>
+                    <button class="btn-sm" onclick="clearForm()">🗑️ Clear Form</button>
+                    <span style="font-size:0.7rem; color:#6a8ba0; margin-left:auto;" id="formMode">Mode: <strong style="color:#0d3b52;">Add New</strong></span>
+                </div>
+
+                <div class="form-grid" id="censusForm">
+                    <div class="field-group" id="tinGroup">
+                        <label><i class="fas fa-id-card"></i> TIN / Ghana Card <span class="required-star">*</span></label>
+                        <input type="text" id="tin" placeholder="GRA-12345" />
+                        <span class="error-msg" id="tinError">Please enter TIN / Ghana Card</span>
+                    </div>
+                    <div class="field-group" id="nameGroup">
+                        <label><i class="fas fa-user-tie"></i> Name <span class="required-star">*</span></label>
+                        <input type="text" id="taxpayerName" placeholder="Full name" />
+                        <span class="error-msg" id="nameError">Please enter the taxpayer name</span>
+                    </div>
+                    <div class="field-group"><label><i class="fas fa-phone-alt"></i> Telephone</label><input type="text" id="telephone" placeholder="024 123 4567" /></div>
+                    <div class="field-group"><label><i class="fas fa-envelope"></i> Email</label><input type="email" id="email" placeholder="name@domain.com" /></div>
+                    <div class="field-group"><label><i class="fas fa-map-pin"></i> Location</label><input type="text" id="location" placeholder="Accra, Kumasi..." /></div>
+                    <div class="field-group"><label><i class="fas fa-building"></i> Tax Office</label><input type="text" id="taxOffice" placeholder="GRA-Accra" /></div>
+                    
+                    <div class="field-group"><label><i class="fas fa-users"></i> Taxpayer Type</label>
+                        <select id="taxpayerType"><option value="Company">Company</option><option value="Individual" selected>Individual</option><option value="NGO">NGO</option><option value="Other">Other</option></select>
+                    </div>
+
+                    <div class="field-group" id="sectorGroup">
+                        <label><i class="fas fa-layer-group"></i> Sector <span class="sector-badge">A - U</span> <span class="required-star">*</span></label>
+                        <select id="sectorSelect">
+                            <option value="">-- Select Sector --</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+                            <option value="D">D</option><option value="E">E</option><option value="F">F</option>
+                            <option value="G">G</option><option value="H">H</option><option value="I">I</option>
+                            <option value="J">J</option><option value="K">K</option><option value="L">L</option>
+                            <option value="M">M</option><option value="N">N</option><option value="O">O</option>
+                            <option value="P">P</option><option value="Q">Q</option><option value="R">R</option>
+                            <option value="S">S</option><option value="T">T</option><option value="U">U</option>
+                        </select>
+                        <span class="error-msg" id="sectorError">Please select a sector (A - U)</span>
+                    </div>
+
+                    <div class="field-group"><label><i class="fas fa-flag"></i> File Status</label>
+                        <select id="fileStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Dormant">Dormant</option><option value="Deregistered">Deregistered</option></select>
+                    </div>
+
+                    <div class="tax-types-group">
+                        <span style="font-weight:600; color:#1d4b63;"><i class="fas fa-check-square"></i> Tax Types Registered:</span>
+                        <div class="tax-types-grid">
+                            <label class="tax-check"><input type="checkbox" value="Personal Income Tax" checked> Personal Income Tax</label>
+                            <label class="tax-check"><input type="checkbox" value="Corporate Income Tax"> Corporate Income Tax</label>
+                            <label class="tax-check"><input type="checkbox" value="VAT Standard, NHIL & GETFUND"> VAT Standard, NHIL & GETFUND</label>
+                            <label class="tax-check"><input type="checkbox" value="PAYE"> PAYE</label>
+                            <label class="tax-check"><input type="checkbox" value="Customs"> Customs</label>
+                            <label class="tax-check"><input type="checkbox" value="Excise"> Excise</label>
+                            <label class="tax-check"><input type="checkbox" value="Capital Gains Tax"> Capital Gains Tax</label>
+                            <label class="tax-check"><input type="checkbox" value="Withholding Tax"> Withholding Tax</label>
+                            <label class="tax-check"><input type="checkbox" value="Gift Tax"> Gift Tax</label>
+                            <label class="tax-check"><input type="checkbox" value="Rent Tax"> Rent Tax</label>
+                            <label class="tax-check"><input type="checkbox" value="Stamp Duty"> Stamp Duty</label>
+                            <label class="tax-check"><input type="checkbox" value="VIT"> VIT</label>
+                            <label class="tax-check"><input type="checkbox" value="Financial Sector Recovery Levy"> Financial Sector Recovery Levy</label>
+                            <label class="tax-check"><input type="checkbox" value="Growth and Sustainability Levy"> Growth and Sustainability Levy</label>
+                            <label class="tax-check"><input type="checkbox" value="Flat"> Flat</label>
+                            <label class="tax-check"><input type="checkbox" value="Flat / COVID-19"> Flat / COVID-19</label>
+                            <label class="tax-check"><input type="checkbox" value="NHIL/GETFUND/COVID-19"> NHIL/GETFUND/COVID-19</label>
+                            <label class="tax-check"><input type="checkbox" value="NHIL/GETFUND"> NHIL/GETFUND</label>
+                            <label class="tax-check"><input type="checkbox" value="Minerals Royalties"> Minerals Royalties</label>
+                            <label class="tax-check"><input type="checkbox" value="Tax Stamp"> Tax Stamp</label>
+                            <label class="tax-check"><input type="checkbox" value="Modified Taxation"> Modified Taxation</label>
+                            <label class="tax-check"><input type="checkbox" value="Standard"> Standard</label>
+                            <label class="tax-check"><input type="checkbox" value="Petroleum Tax"> Petroleum Tax</label>
+                            <label class="tax-check"><input type="checkbox" value="Mining Tax"> Mining Tax</label>
+                            <label class="tax-check"><input type="checkbox" value="Communication Service Tax"> Communication Service Tax</label>
+                            <label class="tax-check" style="background: #fff3cd; padding: 2px 10px; border-radius: 12px; margin-right: 8px;">
+                                <input type="checkbox" value="Suspense"> Suspense <span class="suspense-badge">⚠️</span>
+                            </label>
+                            <label class="tax-check"><input type="checkbox" value="Other"> Other</label>
+                        </div>
+                    </div>
+
+                    <div class="field-group"><label><i class="fas fa-coins"></i> Liability (GHS) <span class="auto-calc-badge">enter number</span></label>
+                        <input type="number" id="totalLiabilityInput" placeholder="0.00" step="0.01" min="0" class="money-input" oninput="calculateOutstanding()" />
+                    </div>
+                    <div class="field-group"><label><i class="fas fa-hand-holding-usd"></i> Payment (GHS) <span class="auto-calc-badge">enter number</span></label>
+                        <input type="number" id="totalPaymentInput" placeholder="0.00" step="0.01" min="0" class="money-input" oninput="calculateOutstanding()" />
+                    </div>
+                    <div class="field-group"><label><i class="fas fa-exclamation-triangle"></i> Outstanding (GHS) <span class="auto-calc-badge">auto-calc</span></label>
+                        <input type="text" id="totalOutstandingInput" placeholder="0.00" readonly style="background:#f0f7fe; font-weight:600; color:#0d3b52; font-family:'Courier New', monospace; text-align:right;" />
+                        <span class="calculated" id="calcOutstandingDisplay">Outstanding = Liability - Payment</span>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button class="btn btn-primary" id="addBtn"><i class="fas fa-plus"></i> Add Record</button>
+                        <button class="btn btn-warning" id="updateBtn" style="display:none;"><i class="fas fa-save"></i> Update Record</button>
+                        <button class="btn btn-secondary" id="cancelEditBtn" style="display:none;"><i class="fas fa-times"></i> Cancel</button>
+                        <button class="btn btn-success" id="exportBtn"><i class="fas fa-download"></i> Export My Data</button>
+                        <button class="btn btn-danger" id="clearAllBtn" style="display:none;"><i class="fas fa-trash"></i> Clear All</button>
+                    </div>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button class="download-btn" id="downloadBtn" disabled><i class="fas fa-file-excel"></i> Download Excel</button>
+                        <button class="download-all-btn" id="downloadAllBtn" disabled><i class="fas fa-users"></i> Download All Data</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABLE -->
+            <div class="card">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>TIN</th><th>Name</th><th>Telephone</th><th>Email</th>
+                                <th>Location</th><th>Tax Office</th>
+                                <th>Taxpayer Type</th><th>Sector</th><th>Status</th>
+                                <th>Tax Types</th>
+                                <th style="color:#1b6f9c;">Liability</th>
+                                <th style="color:#1f7b4b;">Payment</th>
+                                <th style="color:#b13e4b;">Outstanding</th>
+                                <th style="background:#d4e6f7;">👤 Added By</th>
+                                <th style="width:100px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr><td colspan="15" class="empty-state"><i class="fas fa-box-open"></i> No records yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MERGE SECTION -->
+            <div class="card">
+                <div class="merge-section">
+                    <i class="fas fa-merge" style="color:#1b6f9c; font-size:1.2rem;"></i>
+                    <span style="font-weight:600; color:#0d3b52;">Merge Team Data:</span>
+                    <input type="file" id="mergeFile" accept=".json" multiple />
+                    <button class="btn btn-warning" id="mergeBtn"><i class="fas fa-file-import"></i> Merge Files</button>
+                    <span style="font-size:0.75rem; color:#6a8ba0; margin-left:auto;">
+                        <i class="fas fa-info-circle"></i> Select JSON files from team members
+                    </span>
+                </div>
+            </div>
+
+            <!-- CHAT SECTION -->
+            <div class="card chat-section">
+                <h4 style="display: flex; align-items: center; gap: 10px; color: #0d3b52; margin-bottom: 0.5rem;">
+                    <i class="fas fa-comments" style="color:#1b6f9c;"></i> Team Chat
+                    <span id="chatOnlineCount" style="font-size:0.75rem; color:#6a8ba0; font-weight:normal;"></span>
+                </h4>
+                <div class="chat-container" id="chatContainer">
+                    <div class="chat-online-users" id="chatOnlineUsers">
+                        <span style="font-size:0.7rem; color:#6a8ba0;">Online:</span>
+                        <span id="onlineUsersList" style="font-size:0.7rem; color:#6a8ba0;">No one online</span>
+                    </div>
+                    <div class="chat-messages" id="chatMessages">
+                        <div style="text-align:center; color:#6a8ba0; font-size:0.85rem; padding:2rem;">
+                            <i class="fas fa-comment-dots"></i> No messages yet. Start the conversation!
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chatInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()" />
+                        <button class="btn btn-primary" onclick="sendMessage()" style="padding:8px 20px; font-size:0.85rem;">
+                            <i class="fas fa-paper-plane"></i> Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bar">
+                <span style="font-size:0.75rem; color:#6a8ba0;">
+                    <i class="fas fa-fire"></i> Firebase Realtime Database · Live Sync · 
+                    <span id="lastUpdated">Ready</span>
+                </span>
             </div>
         </div>
     </div>
 
-    <div class="footer-bar">
-        <span style="font-size:0.75rem; color:#6a8ba0;">
-            <i class="fas fa-fire"></i> Firebase Realtime Database · Live Sync · 
-            <span id="lastUpdated">Ready</span>
-        </span>
-    </div>
-</div>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
-<script>
-// =============================================
-// FIREBASE CONFIG
-// =============================================
-const firebaseConfig = {
-    apiKey: "AIzaSyCS_khPEUXXhFgan2WXvhjMCaQBPHfOAwU",
-    authDomain: "gra-census.firebaseapp.com",
-    databaseURL: "https://gra-census-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "gra-census",
-    storageBucket: "gra-census.firebasestorage.app",
-    messagingSenderId: "332382691282",
-    appId: "1:332382691282:web:21c7dc40178ddea706720b",
-    measurementId: "G-65XLLF4LYB"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-
-// =============================================
-// APP CODE
-// =============================================
-let records = [];
-let userName = '';
-let isAdmin = false;
-let editingIndex = null;
-let chatInitialized = false;
-
-// DOM refs
-const tinInput = document.getElementById('tin');
-const nameInput = document.getElementById('taxpayerName');
-const telephoneInput = document.getElementById('telephone');
-const emailInput = document.getElementById('email');
-const locationInput = document.getElementById('location');
-const taxOfficeInput = document.getElementById('taxOffice');
-const taxpayerTypeSelect = document.getElementById('taxpayerType');
-const sectorSelect = document.getElementById('sectorSelect');
-const fileStatusSelect = document.getElementById('fileStatus');
-const liabilityInput = document.getElementById('totalLiabilityInput');
-const paymentInput = document.getElementById('totalPaymentInput');
-const outstandingInput = document.getElementById('totalOutstandingInput');
-const calcOutstandingDisplay = document.getElementById('calcOutstandingDisplay');
-const taxCheckboxes = document.querySelectorAll('.tax-types-group input[type="checkbox"]');
-const tableBody = document.getElementById('tableBody');
-const recordCountSpan = document.getElementById('recordCount');
-const totalRecordsSpan = document.getElementById('totalRecords');
-const totalLiabilitySpan = document.getElementById('totalLiability');
-const totalPaymentSpan = document.getElementById('totalPayment');
-const totalOutstandingSpan = document.getElementById('totalOutstanding');
-const connectionStatus = document.getElementById('connectionStatus');
-const lastUpdatedSpan = document.getElementById('lastUpdated');
-const downloadBtn = document.getElementById('downloadBtn');
-const downloadAllBtn = document.getElementById('downloadAllBtn');
-const userListSpan = document.getElementById('userList');
-const addBtn = document.getElementById('addBtn');
-const updateBtn = document.getElementById('updateBtn');
-const cancelEditBtn = document.getElementById('cancelEditBtn');
-const formMode = document.getElementById('formMode');
-const syncStatus = document.getElementById('syncStatus');
-const userRoleDisplay = document.getElementById('userRoleDisplay');
-const permissionInfo = document.getElementById('permissionInfo');
-const clearAllBtn = document.getElementById('clearAllBtn');
-
-// Chat DOM refs
-const chatMessages = document.getElementById('chatMessages');
-const chatInput = document.getElementById('chatInput');
-const onlineUsersList = document.getElementById('onlineUsersList');
-const chatOnlineCount = document.getElementById('chatOnlineCount');
-
-// Toast
-const toast = document.getElementById('toast');
-const toastMessage = document.getElementById('toastMessage');
-
-function showToast(message, isError = false) {
-    toastMessage.textContent = message;
-    toast.className = 'toast show';
-    if (isError) {
-        toast.classList.add('error');
-        toast.querySelector('i').className = 'fas fa-exclamation-circle';
-    } else {
-        toast.classList.remove('error');
-        toast.querySelector('i').className = 'fas fa-check-circle';
-    }
-    setTimeout(() => { toast.classList.remove('show'); }, 3000);
-}
-
-function setSyncStatus(status, type) {
-    syncStatus.className = 'sync-status ' + type;
-    if (type === 'synced') syncStatus.innerHTML = '<i class="fas fa-check-circle"></i> Synced';
-    else if (type === 'syncing') syncStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
-    else if (type === 'error') syncStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error';
-}
-
-// =============================================
-// ADMIN PASSWORD VERIFICATION
-// =============================================
-const ADMIN_PASSWORD = 'Eazi_2605';
-
-function verifyAdminPassword() {
-    const enteredPassword = prompt('🔑 Admin Access Required\n\nPlease enter the Admin password:');
-    if (enteredPassword === null) return false;
-    if (enteredPassword === ADMIN_PASSWORD) {
-        return true;
-    } else {
-        showToast('❌ Incorrect password!', true);
-        return false;
-    }
-}
-
-// =============================================
-// PERMISSION CHECKS
-// =============================================
-function canEditRecord(record) {
-    if (isAdmin) return true;
-    return record.addedBy === userName;
-}
-
-function canDeleteRecord(record) {
-    if (isAdmin) return true;
-    return record.addedBy === userName;
-}
-
-function canViewRecord(record) {
-    if (isAdmin) return true;
-    return record.addedBy === userName;
-}
-
-// =============================================
-// MONEY FORMATTING
-// =============================================
-function formatMoney(value) {
-    if (isNaN(value) || value === null || value === undefined) return '0.00';
-    return Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-// =============================================
-// AUTO-CALCULATE OUTSTANDING
-// =============================================
-function calculateOutstanding() {
-    const liability = parseFloat(liabilityInput.value) || 0;
-    const payment = parseFloat(paymentInput.value) || 0;
-    const outstanding = Math.max(liability - payment, 0);
-    outstandingInput.value = formatMoney(outstanding);
-    if (liability > 0 || payment > 0) {
-        calcOutstandingDisplay.innerHTML = `💰 Outstanding = <span class="value">${formatMoney(outstanding)}</span> GHS (${formatMoney(liability)} - ${formatMoney(payment)})`;
-    } else {
-        calcOutstandingDisplay.innerHTML = 'Outstanding = Liability - Payment';
-    }
-}
-
-// =============================================
-// USER SETUP
-// =============================================
-function setupUser() {
-    let storedName = localStorage.getItem('censusUserName');
-    if (!storedName) {
-        storedName = prompt('Enter your name (e.g., Kwame, Ama):', 'User' + Math.floor(Math.random() * 100));
-        if (storedName) localStorage.setItem('censusUserName', storedName);
-        else storedName = 'User' + Math.floor(Math.random() * 1000);
-    }
-    userName = storedName;
-    
-    // Check if user is Admin
-    if (userName.toLowerCase() === 'admin') {
-        if (verifyAdminPassword()) {
-            isAdmin = true;
-        } else {
-            // If password fails, revert to regular user
-            localStorage.removeItem('censusUserName');
-            userName = prompt('Enter your name (e.g., Kwame, Ama):', 'User' + Math.floor(Math.random() * 100));
-            if (!userName) userName = 'User' + Math.floor(Math.random() * 1000);
-            localStorage.setItem('censusUserName', userName);
-            isAdmin = false;
-        }
-    }
-    
-    document.getElementById('userNameDisplay').textContent = userName;
-    
-    if (isAdmin) {
-        userRoleDisplay.textContent = '🔑 Admin';
-        userRoleDisplay.style.background = '#f8d7da';
-        userRoleDisplay.style.color = '#721c24';
-        permissionInfo.innerHTML = '<i class="fas fa-crown"></i> Admin: Can view, edit and delete ALL records';
-        clearAllBtn.style.display = 'inline-flex';
-        showToast('👑 Welcome Admin! You have full access.');
-    } else {
-        userRoleDisplay.textContent = '👤 User';
-        userRoleDisplay.style.background = '#e8f0fe';
-        userRoleDisplay.style.color = '#1b6f9c';
-        permissionInfo.innerHTML = '<i class="fas fa-info-circle"></i> You can only view, edit and delete your own records';
-        clearAllBtn.style.display = 'none';
-        showToast('👤 Welcome ' + userName + '! You can manage your own records.');
-    }
-}
-
-// =============================================
-// HELPERS
-// =============================================
-function getSelectedTaxTypes() {
-    const selected = [];
-    taxCheckboxes.forEach(cb => { if (cb.checked) selected.push(cb.value); });
-    return selected.join(', ') || 'None';
-}
-
-function setTaxTypes(taxTypesStr) {
-    if (!taxTypesStr || taxTypesStr === 'None') {
-        taxCheckboxes.forEach(cb => { cb.checked = false; });
-        return;
-    }
-    const types = taxTypesStr.split(',').map(t => t.trim());
-    taxCheckboxes.forEach(cb => {
-        cb.checked = types.includes(cb.value);
-    });
-}
-
-function resetForm() {
-    tinInput.value = '';
-    nameInput.value = '';
-    telephoneInput.value = '';
-    emailInput.value = '';
-    locationInput.value = '';
-    taxOfficeInput.value = '';
-    taxpayerTypeSelect.value = 'Individual';
-    sectorSelect.value = '';
-    fileStatusSelect.value = 'Active';
-    liabilityInput.value = '';
-    paymentInput.value = '';
-    outstandingInput.value = '';
-    calcOutstandingDisplay.innerHTML = 'Outstanding = Liability - Payment';
-    taxCheckboxes.forEach(cb => { cb.checked = (cb.value === 'Personal Income Tax'); });
-    document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
-    document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
-    editingIndex = null;
-    addBtn.style.display = 'inline-flex';
-    updateBtn.style.display = 'none';
-    cancelEditBtn.style.display = 'none';
-    formMode.innerHTML = 'Mode: <strong style="color:#0d3b52;">Add New</strong>';
-    tinInput.focus();
-}
-
-function getTimestamp() {
-    return new Date().toLocaleString('en-GH', { 
-        day: '2-digit', month: 'short', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-    });
-}
-
-// =============================================
-// QUICK FILL FUNCTIONS
-// =============================================
-function fillSample1() {
-    if (editingIndex !== null) { if (!confirm('Cancel editing?')) return; resetForm(); }
-    tinInput.value = 'GRA-1001';
-    nameInput.value = 'Afia Mensah';
-    telephoneInput.value = '024 123 4567';
-    emailInput.value = 'afia@example.com';
-    locationInput.value = 'Accra';
-    taxOfficeInput.value = 'GRA-Accra Central';
-    taxpayerTypeSelect.value = 'Individual';
-    sectorSelect.value = 'A';
-    fileStatusSelect.value = 'Active';
-    liabilityInput.value = '12500';
-    paymentInput.value = '8000';
-    calculateOutstanding();
-    setTaxTypes('Personal Income Tax, VAT Standard, NHIL & GETFUND');
-    showToast('📋 Sample 1 loaded! Click Add Record');
-    tinInput.focus();
-}
-
-function fillSample2() {
-    if (editingIndex !== null) { if (!confirm('Cancel editing?')) return; resetForm(); }
-    tinInput.value = 'GC-2024-5678';
-    nameInput.value = 'Kofi Trading Ltd';
-    telephoneInput.value = '020 987 6543';
-    emailInput.value = 'info@kofitrading.com';
-    locationInput.value = 'Tema';
-    taxOfficeInput.value = 'GRA-Tema';
-    taxpayerTypeSelect.value = 'Company';
-    sectorSelect.value = 'B';
-    fileStatusSelect.value = 'Active';
-    liabilityInput.value = '34200.50';
-    paymentInput.value = '20000';
-    calculateOutstanding();
-    setTaxTypes('Corporate Income Tax, VAT Standard, NHIL & GETFUND, Customs');
-    showToast('📋 Sample 2 loaded! Click Add Record');
-    tinInput.focus();
-}
-
-function fillSample3() {
-    if (editingIndex !== null) { if (!confirm('Cancel editing?')) return; resetForm(); }
-    tinInput.value = 'GRA-7890';
-    nameInput.value = 'Ama Serwaa Foundation';
-    telephoneInput.value = '024 555 6789';
-    emailInput.value = 'ama@foundation.org';
-    locationInput.value = 'Kumasi';
-    taxOfficeInput.value = 'GRA-Kumasi';
-    taxpayerTypeSelect.value = 'NGO';
-    sectorSelect.value = 'D';
-    fileStatusSelect.value = 'Dormant';
-    liabilityInput.value = '5600';
-    paymentInput.value = '5600';
-    calculateOutstanding();
-    setTaxTypes('Personal Income Tax, Gift Tax, Withholding Tax');
-    showToast('📋 Sample 3 loaded! Click Add Record');
-    tinInput.focus();
-}
-
-function clearForm() {
-    if (editingIndex !== null) { if (!confirm('Cancel editing?')) return; }
-    resetForm();
-    showToast('🗑️ Form cleared');
-}
-
-// =============================================
-// UPDATE USER LIST
-// =============================================
-function updateUserList() {
-    const users = new Set();
-    records.forEach(r => { if (r.addedBy) users.add(r.addedBy); });
-    if (users.size === 0) { userListSpan.textContent = 'No team members yet'; return; }
-    const sortedUsers = Array.from(users).sort();
-    userListSpan.innerHTML = sortedUsers.map(u => {
-        const isAdminUser = u.toLowerCase() === 'admin';
-        if (u === userName) {
-            return `<span style="background:#1b6f9c; color:white; padding:2px 10px; border-radius:12px; font-weight:600;">${u} (You)${isAdminUser ? ' 🔑' : ''}</span>`;
-        }
-        if (isAdminUser) {
-            return `<span style="background:#f8d7da; color:#721c24; padding:2px 10px; border-radius:12px;">${u} 🔑</span>`;
-        }
-        return `<span style="background:#e8e0f0; color:#6f42c1; padding:2px 10px; border-radius:12px;">${u}</span>`;
-    }).join(' ');
-}
-
-// =============================================
-// CHAT FUNCTIONS
-// =============================================
-function setupChat() {
-    if (chatInitialized) return;
-    chatInitialized = true;
-    
-    // Listen for chat messages
-    database.ref('chatMessages').orderByChild('timestamp').limitToLast(100).on('value', (snapshot) => {
-        const data = snapshot.val();
-        chatMessages.innerHTML = '';
-        
-        if (!data) {
-            chatMessages.innerHTML = '<div style="text-align:center; color:#6a8ba0; font-size:0.85rem; padding:2rem;"><i class="fas fa-comment-dots"></i> No messages yet. Start the conversation!</div>';
-            return;
-        }
-        
-        const messages = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
-        messages.forEach(msg => {
-            const div = document.createElement('div');
-            div.className = 'chat-message ' + (msg.sender === userName ? 'self' : 'other');
-            
-            const senderSpan = document.createElement('div');
-            senderSpan.className = 'sender';
-            senderSpan.textContent = msg.sender + (msg.sender.toLowerCase() === 'admin' ? ' 🔑' : '');
-            
-            const bubbleDiv = document.createElement('div');
-            bubbleDiv.className = 'bubble';
-            bubbleDiv.textContent = msg.text;
-            
-            const timeSpan = document.createElement('div');
-            timeSpan.className = 'time';
-            timeSpan.textContent = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
-            
-            div.appendChild(senderSpan);
-            div.appendChild(bubbleDiv);
-            div.appendChild(timeSpan);
-            chatMessages.appendChild(div);
-        });
-        
-        // Scroll to bottom
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    });
-    
-    // Update online users
-    const userRef = database.ref('onlineUsers/' + userName);
-    userRef.onDisconnect().remove();
-    userRef.set({ name: userName, online: true, timestamp: Date.now() });
-    
-    database.ref('onlineUsers').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (!data) {
-            onlineUsersList.textContent = 'No one online';
-            chatOnlineCount.textContent = '';
-            return;
-        }
-        const users = Object.keys(data).filter(key => data[key].online);
-        const count = users.length;
-        chatOnlineCount.textContent = '· ' + count + ' online';
-        if (count === 0) {
-            onlineUsersList.textContent = 'No one online';
-        } else {
-            const userNames = users.map(u => u + (u.toLowerCase() === 'admin' ? ' 🔑' : ''));
-            onlineUsersList.textContent = userNames.join(', ');
-        }
-    });
-}
-
-function sendMessage() {
-    const text = chatInput.value.trim();
-    if (!text) return;
-    
-    database.ref('chatMessages').push({
-        sender: userName,
-        text: text,
-        timestamp: Date.now()
-    });
-    
-    chatInput.value = '';
-}
-
-// =============================================
-// FIREBASE - REAL-TIME READ
-// =============================================
-function setupFirebaseListener() {
-    setSyncStatus('Connecting...', 'syncing');
-    
-    database.ref('censusRecords').on('value', (snapshot) => {
-        const data = snapshot.val();
-        records = [];
-        
-        if (data) {
-            Object.keys(data).forEach(key => {
-                const record = {
-                    ...data[key],
-                    _firebaseKey: key
-                };
-                // Only add record if user can view it
-                if (canViewRecord(record)) {
-                    records.push(record);
-                }
-            });
-            records.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-        }
-        
-        renderTable();
-        updateStats();
-        updateDashboardStats();
-        updateUserList();
-        lastUpdatedSpan.textContent = 'Updated: ' + getTimestamp();
-        setSyncStatus('Synced', 'synced');
-        
-    }, (error) => {
-        console.error('Firebase read error:', error);
-        setSyncStatus('Error', 'error');
-        showToast('⚠️ Firebase connection error', true);
-    });
-}
-
-// =============================================
-// FIREBASE - ADD RECORD
-// =============================================
-function addRecord() {
-    const tin = tinInput.value.trim();
-    const name = nameInput.value.trim();
-    const sector = sectorSelect.value;
-    
-    document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
-    document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
-    
-    let hasError = false;
-    if (tin === '') {
-        document.getElementById('tinGroup').querySelector('.error-msg').style.display = 'block';
-        document.getElementById('tin').classList.add('error');
-        hasError = true;
-    }
-    if (name === '') {
-        document.getElementById('nameGroup').querySelector('.error-msg').style.display = 'block';
-        document.getElementById('taxpayerName').classList.add('error');
-        hasError = true;
-    }
-    if (sector === '' || sector === null) {
-        document.getElementById('sectorGroup').querySelector('.error-msg').style.display = 'block';
-        document.getElementById('sectorSelect').classList.add('error');
-        hasError = true;
-    }
-    if (hasError) {
-        showToast('⚠️ Please fill in all required fields (marked with *)', true);
-        return;
-    }
-
-    const liability = parseFloat(liabilityInput.value) || 0;
-    const payment = parseFloat(paymentInput.value) || 0;
-    const outstanding = Math.max(liability - payment, 0);
-
-    const record = {
-        tin,
-        name,
-        telephone: telephoneInput.value.trim(),
-        email: emailInput.value.trim(),
-        location: locationInput.value.trim(),
-        taxOffice: taxOfficeInput.value.trim(),
-        taxpayerType: taxpayerTypeSelect.value,
-        sector: sector,
-        fileStatus: fileStatusSelect.value,
-        taxTypes: getSelectedTaxTypes(),
-        liability: liability,
-        payment: payment,
-        outstanding: outstanding,
-        timestamp: Date.now(),
-        addedBy: userName,
-        addedDate: new Date().toISOString()
+    <script>
+    // =============================================
+    // FIREBASE CONFIG
+    // =============================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyCS_khPEUXXhFgan2WXvhjMCaQBPHfOAwU",
+        authDomain: "gra-census.firebaseapp.com",
+        databaseURL: "https://gra-census-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "gra-census",
+        storageBucket: "gra-census.firebasestorage.app",
+        messagingSenderId: "332382691282",
+        appId: "1:332382691282:web:21c7dc40178ddea706720b",
+        measurementId: "G-65XLLF4LYB"
     };
 
-    setSyncStatus('Saving...', 'syncing');
-    
-    database.ref('censusRecords').push(record)
-        .then(() => {
-            resetForm();
-            showToast('✅ Record added successfully!');
-            setSyncStatus('Synced', 'synced');
-            const btn = document.getElementById('addBtn');
-            btn.innerHTML = '<i class="fas fa-check"></i> Added!';
-            btn.style.background = '#28a745';
-            setTimeout(() => { 
-                btn.innerHTML = '<i class="fas fa-plus"></i> Add Record';
-                btn.style.background = '#0d3b52';
-            }, 2000);
-        })
-        .catch((error) => {
-            console.error('Firebase write error:', error);
-            setSyncStatus('Error', 'error');
-            showToast('❌ Error saving: ' + error.message, true);
-        });
-}
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-// =============================================
-// FIREBASE - DELETE RECORD (with permission check)
-// =============================================
-function deleteRecord(firebaseKey, record) {
-    if (!firebaseKey) return;
-    
-    if (!canDeleteRecord(record)) {
-        showToast('⛔ You do not have permission to delete this record.', true);
-        return;
+    // =============================================
+    // APP CODE
+    // =============================================
+    let records = [];
+    let userName = '';
+    let isAdmin = false;
+    let isLoggedIn = false;
+    let editingIndex = null;
+    let chatInitialized = false;
+
+    // DOM refs
+    const loginScreen = document.getElementById('loginScreen');
+    const mainContent = document.getElementById('mainContent');
+    const loginName = document.getElementById('loginName');
+    const loginPassword = document.getElementById('loginPassword');
+    const adminPasswordGroup = document.getElementById('adminPasswordGroup');
+    const loginError = document.getElementById('loginError');
+    const loginBtn = document.getElementById('loginBtn');
+
+    const tinInput = document.getElementById('tin');
+    const nameInput = document.getElementById('taxpayerName');
+    const telephoneInput = document.getElementById('telephone');
+    const emailInput = document.getElementById('email');
+    const locationInput = document.getElementById('location');
+    const taxOfficeInput = document.getElementById('taxOffice');
+    const taxpayerTypeSelect = document.getElementById('taxpayerType');
+    const sectorSelect = document.getElementById('sectorSelect');
+    const fileStatusSelect = document.getElementById('fileStatus');
+    const liabilityInput = document.getElementById('totalLiabilityInput');
+    const paymentInput = document.getElementById('totalPaymentInput');
+    const outstandingInput = document.getElementById('totalOutstandingInput');
+    const calcOutstandingDisplay = document.getElementById('calcOutstandingDisplay');
+    const taxCheckboxes = document.querySelectorAll('.tax-types-group input[type="checkbox"]');
+    const tableBody = document.getElementById('tableBody');
+    const recordCountSpan = document.getElementById('recordCount');
+    const totalRecordsSpan = document.getElementById('totalRecords');
+    const totalLiabilitySpan = document.getElementById('totalLiability');
+    const totalPaymentSpan = document.getElementById('totalPayment');
+    const totalOutstandingSpan = document.getElementById('totalOutstanding');
+    const connectionStatus = document.getElementById('connectionStatus');
+    const lastUpdatedSpan = document.getElementById('lastUpdated');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+    const userListSpan = document.getElementById('userList');
+    const addBtn = document.getElementById('addBtn');
+    const updateBtn = document.getElementById('updateBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const formMode = document.getElementById('formMode');
+    const syncStatus = document.getElementById('syncStatus');
+    const userRoleDisplay = document.getElementById('userRoleDisplay');
+    const permissionInfo = document.getElementById('permissionInfo');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+
+    // Chat DOM refs
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const onlineUsersList = document.getElementById('onlineUsersList');
+    const chatOnlineCount = document.getElementById('chatOnlineCount');
+
+    // Toast
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+
+    function showToast(message, isError = false) {
+        toastMessage.textContent = message;
+        toast.className = 'toast show';
+        if (isError) {
+            toast.classList.add('error');
+            toast.querySelector('i').className = 'fas fa-exclamation-circle';
+        } else {
+            toast.classList.remove('error');
+            toast.querySelector('i').className = 'fas fa-check-circle';
+        }
+        setTimeout(() => { toast.classList.remove('show'); }, 3000);
     }
-    
-    if (confirm('Delete this record?')) {
-        setSyncStatus('Deleting...', 'syncing');
-        database.ref('censusRecords/' + firebaseKey).remove()
+
+    function setSyncStatus(status, type) {
+        syncStatus.className = 'sync-status ' + type;
+        if (type === 'synced') syncStatus.innerHTML = '<i class="fas fa-check-circle"></i> Synced';
+        else if (type === 'syncing') syncStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+        else if (type === 'error') syncStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error';
+    }
+
+    // =============================================
+    // LOGIN FUNCTIONS
+    // =============================================
+    const ADMIN_PASSWORD = 'Eazi_2605';
+
+    function handleLogin() {
+        const name = loginName.value.trim();
+        if (!name) {
+            loginError.textContent = 'Please enter your name.';
+            loginError.style.display = 'block';
+            loginName.focus();
+            return;
+        }
+
+        // Check if trying to login as Admin
+        if (name.toLowerCase() === 'admin') {
+            const password = loginPassword.value.trim();
+            if (!password) {
+                loginError.textContent = 'Admin password is required.';
+                loginError.style.display = 'block';
+                loginPassword.focus();
+                return;
+            }
+            if (password !== ADMIN_PASSWORD) {
+                loginError.textContent = '❌ Incorrect password. Please try again.';
+                loginError.style.display = 'block';
+                loginPassword.value = '';
+                loginPassword.focus();
+                return;
+            }
+            // Admin login successful
+            isAdmin = true;
+            userName = 'Admin';
+        } else {
+            // Regular user login
+            isAdmin = false;
+            userName = name;
+        }
+
+        // Login successful
+        isLoggedIn = true;
+        loginError.style.display = 'none';
+        
+        // Store username for persistence
+        localStorage.setItem('censusUserName', userName);
+        localStorage.setItem('censusIsAdmin', isAdmin ? 'true' : 'false');
+        
+        // Show main content
+        loginScreen.style.display = 'none';
+        mainContent.style.display = 'block';
+        
+        // Setup user
+        setupUser();
+        
+        // Initialize Firebase listeners
+        setupFirebaseListener();
+        setupChat();
+        
+        // Start checking connection
+        checkConnection();
+        setInterval(checkConnection, 10000);
+        
+        showToast('👋 Welcome ' + userName + (isAdmin ? ' (Admin)' : ''));
+        console.log('✅ User logged in:', userName);
+        console.log('🔑 Admin mode:', isAdmin);
+    }
+
+    function logoutUser() {
+        if (confirm('Logout?')) {
+            // Clear login state
+            localStorage.removeItem('censusUserName');
+            localStorage.removeItem('censusIsAdmin');
+            isLoggedIn = false;
+            isAdmin = false;
+            userName = '';
+            
+            // Reset login form
+            loginName.value = '';
+            loginPassword.value = '';
+            adminPasswordGroup.style.display = 'none';
+            loginError.style.display = 'none';
+            
+            // Show login screen
+            loginScreen.style.display = 'flex';
+            mainContent.style.display = 'none';
+            
+            // Detach Firebase listeners
+            database.ref('censusRecords').off();
+            database.ref('chatMessages').off();
+            database.ref('onlineUsers/' + (userName || '')).off();
+            
+            showToast('👋 Logged out successfully');
+            console.log('👋 User logged out');
+        }
+    }
+
+    // =============================================
+    // LOGIN EVENT LISTENERS
+    // =============================================
+    loginName.addEventListener('input', function() {
+        // Show/hide admin password field
+        if (this.value.trim().toLowerCase() === 'admin') {
+            adminPasswordGroup.style.display = 'block';
+            loginPassword.focus();
+        } else {
+            adminPasswordGroup.style.display = 'none';
+            loginPassword.value = '';
+        }
+        loginError.style.display = 'none';
+    });
+
+    loginPassword.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            handleLogin();
+        }
+    });
+
+    loginName.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            if (this.value.trim().toLowerCase() === 'admin') {
+                loginPassword.focus();
+            } else {
+                handleLogin();
+            }
+        }
+    });
+
+    loginBtn.addEventListener('click', handleLogin);
+
+    // Auto-login if user was previously logged in
+    function checkAutoLogin() {
+        const storedName = localStorage.getItem('censusUserName');
+        const storedAdmin = localStorage.getItem('censusIsAdmin') === 'true';
+        
+        if (storedName) {
+            // Auto-login
+            isAdmin = storedAdmin;
+            userName = storedName;
+            isLoggedIn = true;
+            
+            loginScreen.style.display = 'none';
+            mainContent.style.display = 'block';
+            
+            setupUser();
+            setupFirebaseListener();
+            setupChat();
+            checkConnection();
+            setInterval(checkConnection, 10000);
+            
+            showToast('👋 Welcome back ' + userName + (isAdmin ? ' (Admin)' : ''));
+            console.log('✅ Auto-login successful:', userName);
+        }
+    }
+
+    // =============================================
+    // PERMISSION CHECKS
+    // =============================================
+    function canEditRecord(record) {
+        if (isAdmin) return true;
+        return record.addedBy === userName;
+    }
+
+    function canDeleteRecord(record) {
+        if (isAdmin) return true;
+        return record.addedBy === userName;
+    }
+
+    function canViewRecord(record) {
+        if (isAdmin) return true;
+        return record.addedBy === userName;
+    }
+
+    // =============================================
+    // MONEY FORMATTING
+    // =============================================
+    function formatMoney(value) {
+        if (isNaN(value) || value === null || value === undefined) return '0.00';
+        return Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // =============================================
+    // AUTO-CALCULATE OUTSTANDING
+    // =============================================
+    function calculateOutstanding() {
+        const liability = parseFloat(liabilityInput.value) || 0;
+        const payment = parseFloat(paymentInput.value) || 0;
+        const outstanding = Math.max(liability - payment, 0);
+        outstandingInput.value = formatMoney(outstanding);
+        if (liability > 0 || payment > 0) {
+            calcOutstandingDisplay.innerHTML = `💰 Outstanding = <span class="value">${formatMoney(outstanding)}</span> GHS (${formatMoney(liability)} - ${formatMoney(payment)})`;
+        } else {
+            calcOutstandingDisplay.innerHTML = 'Outstanding = Liability - Payment';
+        }
+    }
+
+    // =============================================
+    // USER SETUP
+    // =============================================
+    function setupUser() {
+        document.getElementById('userNameDisplay').textContent = userName;
+        
+        if (isAdmin) {
+            userRoleDisplay.textContent = '🔑 Admin';
+            userRoleDisplay.style.background = '#f8d7da';
+            userRoleDisplay.style.color = '#721c24';
+            permissionInfo.innerHTML = '<i class="fas fa-crown"></i> Admin: Can view, edit and delete ALL records';
+            clearAllBtn.style.display = 'inline-flex';
+        } else {
+            userRoleDisplay.textContent = '👤 User';
+            userRoleDisplay.style.background = '#e8f0fe';
+            userRoleDisplay.style.color = '#1b6f9c';
+            permissionInfo.innerHTML = '<i class="fas fa-info-circle"></i> You can only view, edit and delete your own records';
+            clearAllBtn.style.display = 'none';
+        }
+    }
+
+    // =============================================
+    // HELPERS
+    // =============================================
+    function getSelectedTaxTypes() {
+        const selected = [];
+        taxCheckboxes.forEach(cb => { if (cb.checked) selected.push(cb.value); });
+        return selected.join(', ') || 'None';
+    }
+
+    function setTaxTypes(taxTypesStr) {
+        if (!taxTypesStr || taxTypesStr === 'None') {
+            taxCheckboxes.forEach(cb => { cb.checked = false; });
+            return;
+        }
+        const types = taxTypesStr.split(',').map(t => t.trim());
+        taxCheckboxes.forEach(cb => {
+            cb.checked = types.includes(cb.value);
+        });
+    }
+
+    function resetForm() {
+        tinInput.value = '';
+        nameInput.value = '';
+        telephoneInput.value = '';
+        emailInput.value = '';
+        locationInput.value = '';
+        taxOfficeInput.value = '';
+        taxpayerTypeSelect.value = 'Individual';
+        sectorSelect.value = '';
+        fileStatusSelect.value = 'Active';
+        liabilityInput.value = '';
+        paymentInput.value = '';
+        outstandingInput.value = '';
+        calcOutstandingDisplay.innerHTML = 'Outstanding = Liability - Payment';
+        taxCheckboxes.forEach(cb => { cb.checked = (cb.value === 'Personal Income Tax'); });
+        document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
+        editingIndex = null;
+        addBtn.style.display = 'inline-flex';
+        updateBtn.style.display = 'none';
+        cancelEditBtn.style.display = 'none';
+        formMode.innerHTML = 'Mode: <strong style="color:#0d3b52;">Add New</strong>';
+        tinInput.focus();
+    }
+
+    function getTimestamp() {
+        return new Date().toLocaleString('en-GH', { 
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+    }
+
+    // =============================================
+    // QUICK FILL FUNCTIONS
+    // =============================================
+    function fillSample1() {
+        if (editingIndex !== null) { if (!confirm('Cancel editing?')) return; resetForm(); }
+        tinInput.value = 'GRA-1001';
+        nameInput.value = 'Afia Mensah';
+        telephoneInput.value = '024 123 4567';
+        emailInput.value = 'afia@example.com';
+        locationInput.value = 'Accra';
+        taxOfficeInput.value = 'GRA-Accra Central';
+        taxpayerTypeSelect.value = 'Individual';
+        sectorSelect.value = 'A';
+        fileStatusSelect.value = 'Active';
+        liabilityInput.value = '12500';
+        paymentInput.value = '8000';
+        calculateOutstanding();
+        setTaxTypes('Personal Income Tax, VAT Standard, NHIL & GETFUND');
+        showToast('📋 Sample 1 loaded! Click Add Record');
+        tinInput.focus();
+    }
+
+    function fillSample2() {
+        if (editingIndex !== null) { if (!confirm('Cancel editing?')) return; resetForm(); }
+        tinInput.value = 'GC-2024-5678';
+        nameInput.value = 'Kofi Trading Ltd';
+        telephoneInput.value = '020 987 6543';
+        emailInput.value = 'info@kofitrading.com';
+        locationInput.value = 'Tema';
+        taxOfficeInput.value = 'GRA-Tema';
+        taxpayerTypeSelect.value = 'Company';
+        sectorSelect.value = 'B';
+        fileStatusSelect.value = 'Active';
+        liabilityInput.value = '34200.50';
+        paymentInput.value = '20000';
+        calculateOutstanding();
+        setTaxTypes('Corporate Income Tax, VAT Standard, NHIL & GETFUND, Customs');
+        showToast('📋 Sample 2 loaded! Click Add Record');
+        tinInput.focus();
+    }
+
+    function fillSample3() {
+        if (editingIndex !== null) { if (!confirm('Cancel editing?')) return; resetForm(); }
+        tinInput.value = 'GRA-7890';
+        nameInput.value = 'Ama Serwaa Foundation';
+        telephoneInput.value = '024 555 6789';
+        emailInput.value = 'ama@foundation.org';
+        locationInput.value = 'Kumasi';
+        taxOfficeInput.value = 'GRA-Kumasi';
+        taxpayerTypeSelect.value = 'NGO';
+        sectorSelect.value = 'D';
+        fileStatusSelect.value = 'Dormant';
+        liabilityInput.value = '5600';
+        paymentInput.value = '5600';
+        calculateOutstanding();
+        setTaxTypes('Personal Income Tax, Gift Tax, Withholding Tax');
+        showToast('📋 Sample 3 loaded! Click Add Record');
+        tinInput.focus();
+    }
+
+    function clearForm() {
+        if (editingIndex !== null) { if (!confirm('Cancel editing?')) return; }
+        resetForm();
+        showToast('🗑️ Form cleared');
+    }
+
+    // =============================================
+    // UPDATE USER LIST
+    // =============================================
+    function updateUserList() {
+        const users = new Set();
+        records.forEach(r => { if (r.addedBy) users.add(r.addedBy); });
+        if (users.size === 0) { userListSpan.textContent = 'No team members yet'; return; }
+        const sortedUsers = Array.from(users).sort();
+        userListSpan.innerHTML = sortedUsers.map(u => {
+            const isAdminUser = u.toLowerCase() === 'admin';
+            if (u === userName) {
+                return `<span style="background:#1b6f9c; color:white; padding:2px 10px; border-radius:12px; font-weight:600;">${u} (You)${isAdminUser ? ' 🔑' : ''}</span>`;
+            }
+            if (isAdminUser) {
+                return `<span style="background:#f8d7da; color:#721c24; padding:2px 10px; border-radius:12px;">${u} 🔑</span>`;
+            }
+            return `<span style="background:#e8e0f0; color:#6f42c1; padding:2px 10px; border-radius:12px;">${u}</span>`;
+        }).join(' ');
+    }
+
+    // =============================================
+    // CHAT FUNCTIONS
+    // =============================================
+    function setupChat() {
+        if (chatInitialized) return;
+        chatInitialized = true;
+        
+        // Listen for chat messages
+        database.ref('chatMessages').orderByChild('timestamp').limitToLast(100).on('value', (snapshot) => {
+            const data = snapshot.val();
+            chatMessages.innerHTML = '';
+            
+            if (!data) {
+                chatMessages.innerHTML = '<div style="text-align:center; color:#6a8ba0; font-size:0.85rem; padding:2rem;"><i class="fas fa-comment-dots"></i> No messages yet. Start the conversation!</div>';
+                return;
+            }
+            
+            const messages = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
+            messages.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = 'chat-message ' + (msg.sender === userName ? 'self' : 'other');
+                
+                const senderSpan = document.createElement('div');
+                senderSpan.className = 'sender';
+                senderSpan.textContent = msg.sender + (msg.sender.toLowerCase() === 'admin' ? ' 🔑' : '');
+                
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.className = 'bubble';
+                bubbleDiv.textContent = msg.text;
+                
+                const timeSpan = document.createElement('div');
+                timeSpan.className = 'time';
+                timeSpan.textContent = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
+                
+                div.appendChild(senderSpan);
+                div.appendChild(bubbleDiv);
+                div.appendChild(timeSpan);
+                chatMessages.appendChild(div);
+            });
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+        
+        // Update online users
+        const userRef = database.ref('onlineUsers/' + userName);
+        userRef.onDisconnect().remove();
+        userRef.set({ name: userName, online: true, timestamp: Date.now() });
+        
+        database.ref('onlineUsers').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) {
+                onlineUsersList.textContent = 'No one online';
+                chatOnlineCount.textContent = '';
+                return;
+            }
+            const users = Object.keys(data).filter(key => data[key].online);
+            const count = users.length;
+            chatOnlineCount.textContent = '· ' + count + ' online';
+            if (count === 0) {
+                onlineUsersList.textContent = 'No one online';
+            } else {
+                const userNames = users.map(u => u + (u.toLowerCase() === 'admin' ? ' 🔑' : ''));
+                onlineUsersList.textContent = userNames.join(', ');
+            }
+        });
+    }
+
+    function sendMessage() {
+        const text = chatInput.value.trim();
+        if (!text) return;
+        
+        database.ref('chatMessages').push({
+            sender: userName,
+            text: text,
+            timestamp: Date.now()
+        });
+        
+        chatInput.value = '';
+    }
+
+    // =============================================
+    // FIREBASE - REAL-TIME READ
+    // =============================================
+    function setupFirebaseListener() {
+        setSyncStatus('Connecting...', 'syncing');
+        
+        database.ref('censusRecords').on('value', (snapshot) => {
+            const data = snapshot.val();
+            records = [];
+            
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    const record = {
+                        ...data[key],
+                        _firebaseKey: key
+                    };
+                    if (canViewRecord(record)) {
+                        records.push(record);
+                    }
+                });
+                records.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            }
+            
+            renderTable();
+            updateStats();
+            updateDashboardStats();
+            updateUserList();
+            lastUpdatedSpan.textContent = 'Updated: ' + getTimestamp();
+            setSyncStatus('Synced', 'synced');
+            
+        }, (error) => {
+            console.error('Firebase read error:', error);
+            setSyncStatus('Error', 'error');
+            showToast('⚠️ Firebase connection error', true);
+        });
+    }
+
+    // =============================================
+    // FIREBASE - ADD RECORD
+    // =============================================
+    function addRecord() {
+        const tin = tinInput.value.trim();
+        const name = nameInput.value.trim();
+        const sector = sectorSelect.value;
+        
+        document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
+        
+        let hasError = false;
+        if (tin === '') {
+            document.getElementById('tinGroup').querySelector('.error-msg').style.display = 'block';
+            document.getElementById('tin').classList.add('error');
+            hasError = true;
+        }
+        if (name === '') {
+            document.getElementById('nameGroup').querySelector('.error-msg').style.display = 'block';
+            document.getElementById('taxpayerName').classList.add('error');
+            hasError = true;
+        }
+        if (sector === '' || sector === null) {
+            document.getElementById('sectorGroup').querySelector('.error-msg').style.display = 'block';
+            document.getElementById('sectorSelect').classList.add('error');
+            hasError = true;
+        }
+        if (hasError) {
+            showToast('⚠️ Please fill in all required fields (marked with *)', true);
+            return;
+        }
+
+        const liability = parseFloat(liabilityInput.value) || 0;
+        const payment = parseFloat(paymentInput.value) || 0;
+        const outstanding = Math.max(liability - payment, 0);
+
+        const record = {
+            tin,
+            name,
+            telephone: telephoneInput.value.trim(),
+            email: emailInput.value.trim(),
+            location: locationInput.value.trim(),
+            taxOffice: taxOfficeInput.value.trim(),
+            taxpayerType: taxpayerTypeSelect.value,
+            sector: sector,
+            fileStatus: fileStatusSelect.value,
+            taxTypes: getSelectedTaxTypes(),
+            liability: liability,
+            payment: payment,
+            outstanding: outstanding,
+            timestamp: Date.now(),
+            addedBy: userName,
+            addedDate: new Date().toISOString()
+        };
+
+        setSyncStatus('Saving...', 'syncing');
+        
+        database.ref('censusRecords').push(record)
             .then(() => {
-                showToast('🗑️ Record deleted');
+                resetForm();
+                showToast('✅ Record added successfully!');
                 setSyncStatus('Synced', 'synced');
+                const btn = document.getElementById('addBtn');
+                btn.innerHTML = '<i class="fas fa-check"></i> Added!';
+                btn.style.background = '#28a745';
+                setTimeout(() => { 
+                    btn.innerHTML = '<i class="fas fa-plus"></i> Add Record';
+                    btn.style.background = '#0d3b52';
+                }, 2000);
             })
             .catch((error) => {
-                showToast('❌ Error deleting: ' + error.message, true);
+                console.error('Firebase write error:', error);
                 setSyncStatus('Error', 'error');
+                showToast('❌ Error saving: ' + error.message, true);
             });
     }
-}
 
-// =============================================
-// FIREBASE - CLEAR ALL (Admin only)
-// =============================================
-function clearAllRecords() {
-    if (!isAdmin) {
-        showToast('⛔ Only Admin can clear all records.', true);
-        return;
-    }
-    if (records.length === 0) return;
-    if (confirm('⚠️ Delete ALL records? This cannot be undone.')) {
-        if (confirm('Are you sure? All data will be permanently removed.')) {
-            setSyncStatus('Deleting all...', 'syncing');
-            database.ref('censusRecords').remove()
+    // =============================================
+    // FIREBASE - DELETE RECORD
+    // =============================================
+    function deleteRecord(firebaseKey, record) {
+        if (!firebaseKey) return;
+        
+        if (!canDeleteRecord(record)) {
+            showToast('⛔ You do not have permission to delete this record.', true);
+            return;
+        }
+        
+        if (confirm('Delete this record?')) {
+            setSyncStatus('Deleting...', 'syncing');
+            database.ref('censusRecords/' + firebaseKey).remove()
                 .then(() => {
-                    showToast('🗑️ All records cleared');
+                    showToast('🗑️ Record deleted');
                     setSyncStatus('Synced', 'synced');
                 })
                 .catch((error) => {
-                    showToast('❌ Error clearing: ' + error.message, true);
+                    showToast('❌ Error deleting: ' + error.message, true);
                     setSyncStatus('Error', 'error');
                 });
         }
     }
-}
 
-// =============================================
-// FIREBASE - UPDATE RECORD (with permission check)
-// =============================================
-function updateRecord() {
-    if (editingIndex === null) {
-        showToast('No record is being edited.', true);
-        return;
-    }
-    
-    const recordToEdit = records[editingIndex];
-    
-    if (!canEditRecord(recordToEdit)) {
-        showToast('⛔ You do not have permission to edit this record.', true);
-        resetForm();
-        return;
-    }
-    
-    const tin = tinInput.value.trim();
-    const name = nameInput.value.trim();
-    const sector = sectorSelect.value;
-    
-    document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
-    document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
-    
-    let hasError = false;
-    if (tin === '') {
-        document.getElementById('tinGroup').querySelector('.error-msg').style.display = 'block';
-        document.getElementById('tin').classList.add('error');
-        hasError = true;
-    }
-    if (name === '') {
-        document.getElementById('nameGroup').querySelector('.error-msg').style.display = 'block';
-        document.getElementById('taxpayerName').classList.add('error');
-        hasError = true;
-    }
-    if (sector === '' || sector === null) {
-        document.getElementById('sectorGroup').querySelector('.error-msg').style.display = 'block';
-        document.getElementById('sectorSelect').classList.add('error');
-        hasError = true;
-    }
-    if (hasError) {
-        showToast('⚠️ Please fill in all required fields (marked with *)', true);
-        return;
-    }
-
-    const liability = parseFloat(liabilityInput.value) || 0;
-    const payment = parseFloat(paymentInput.value) || 0;
-    const outstanding = Math.max(liability - payment, 0);
-
-    const updatedRecord = {
-        tin,
-        name,
-        telephone: telephoneInput.value.trim(),
-        email: emailInput.value.trim(),
-        location: locationInput.value.trim(),
-        taxOffice: taxOfficeInput.value.trim(),
-        taxpayerType: taxpayerTypeSelect.value,
-        sector: sector,
-        fileStatus: fileStatusSelect.value,
-        taxTypes: getSelectedTaxTypes(),
-        liability: liability,
-        payment: payment,
-        outstanding: outstanding,
-        lastEdited: Date.now(),
-        editedBy: userName
-    };
-
-    const firebaseKey = records[editingIndex]._firebaseKey;
-    setSyncStatus('Updating...', 'syncing');
-    
-    database.ref('censusRecords/' + firebaseKey).update(updatedRecord)
-        .then(() => {
-            resetForm();
-            showToast('✅ Record updated successfully!');
-            setSyncStatus('Synced', 'synced');
-        })
-        .catch((error) => {
-            console.error('Firebase update error:', error);
-            setSyncStatus('Error', 'error');
-            showToast('❌ Error updating: ' + error.message, true);
-        });
-}
-
-// =============================================
-// EDIT MODE FUNCTIONS (with permission check)
-// =============================================
-function startEdit(index) {
-    const record = records[index];
-    if (!record) return;
-    
-    if (!canEditRecord(record)) {
-        showToast('⛔ You do not have permission to edit this record.', true);
-        return;
-    }
-    
-    editingIndex = index;
-    tinInput.value = record.tin || '';
-    nameInput.value = record.name || '';
-    telephoneInput.value = record.telephone || '';
-    emailInput.value = record.email || '';
-    locationInput.value = record.location || '';
-    taxOfficeInput.value = record.taxOffice || '';
-    taxpayerTypeSelect.value = record.taxpayerType || 'Individual';
-    sectorSelect.value = record.sector || '';
-    fileStatusSelect.value = record.fileStatus || 'Active';
-    liabilityInput.value = record.liability || '';
-    paymentInput.value = record.payment || '';
-    calculateOutstanding();
-    setTaxTypes(record.taxTypes || '');
-    addBtn.style.display = 'none';
-    updateBtn.style.display = 'inline-flex';
-    cancelEditBtn.style.display = 'inline-flex';
-    formMode.innerHTML = 'Mode: <strong style="color:#6f42c1;">Editing Record #' + (index + 1) + '</strong>';
-    document.getElementById('censusForm').scrollIntoView({ behavior: 'smooth' });
-    showToast('✏️ Editing record ' + (index + 1));
-    tinInput.focus();
-}
-
-function cancelEdit() {
-    if (confirm('Cancel editing? Changes will be lost.')) {
-        resetForm();
-        showToast('❌ Edit cancelled');
-    }
-}
-
-// =============================================
-// RENDER TABLE (with permission-based filtering)
-// =============================================
-function renderTable() {
-    tableBody.innerHTML = '';
-    
-    // Filter records based on permissions
-    const visibleRecords = records.filter(rec => canViewRecord(rec));
-    
-    if (visibleRecords.length === 0) {
-        if (isAdmin) {
-            tableBody.innerHTML = '<tr><td colspan="15" class="empty-state"><i class="fas fa-box-open"></i> No records in the system yet</td></tr>';
-        } else {
-            tableBody.innerHTML = '<tr><td colspan="15" class="empty-state"><i class="fas fa-box-open"></i> You have no records yet. Add your first record!</td></tr>';
+    // =============================================
+    // FIREBASE - CLEAR ALL (Admin only)
+    // =============================================
+    function clearAllRecords() {
+        if (!isAdmin) {
+            showToast('⛔ Only Admin can clear all records.', true);
+            return;
         }
-        downloadBtn.disabled = true;
-        downloadAllBtn.disabled = true;
+        if (records.length === 0) return;
+        if (confirm('⚠️ Delete ALL records? This cannot be undone.')) {
+            if (confirm('Are you sure? All data will be permanently removed.')) {
+                setSyncStatus('Deleting all...', 'syncing');
+                database.ref('censusRecords').remove()
+                    .then(() => {
+                        showToast('🗑️ All records cleared');
+                        setSyncStatus('Synced', 'synced');
+                    })
+                    .catch((error) => {
+                        showToast('❌ Error clearing: ' + error.message, true);
+                        setSyncStatus('Error', 'error');
+                    });
+            }
+        }
+    }
+
+    // =============================================
+    // FIREBASE - UPDATE RECORD
+    // =============================================
+    function updateRecord() {
+        if (editingIndex === null) {
+            showToast('No record is being edited.', true);
+            return;
+        }
+        
+        const recordToEdit = records[editingIndex];
+        
+        if (!canEditRecord(recordToEdit)) {
+            showToast('⛔ You do not have permission to edit this record.', true);
+            resetForm();
+            return;
+        }
+        
+        const tin = tinInput.value.trim();
+        const name = nameInput.value.trim();
+        const sector = sectorSelect.value;
+        
+        document.querySelectorAll('.field-group .error-msg').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.field-group input, .field-group select').forEach(el => el.classList.remove('error'));
+        
+        let hasError = false;
+        if (tin === '') {
+            document.getElementById('tinGroup').querySelector('.error-msg').style.display = 'block';
+            document.getElementById('tin').classList.add('error');
+            hasError = true;
+        }
+        if (name === '') {
+            document.getElementById('nameGroup').querySelector('.error-msg').style.display = 'block';
+            document.getElementById('taxpayerName').classList.add('error');
+            hasError = true;
+        }
+        if (sector === '' || sector === null) {
+            document.getElementById('sectorGroup').querySelector('.error-msg').style.display = 'block';
+            document.getElementById('sectorSelect').classList.add('error');
+            hasError = true;
+        }
+        if (hasError) {
+            showToast('⚠️ Please fill in all required fields (marked with *)', true);
+            return;
+        }
+
+        const liability = parseFloat(liabilityInput.value) || 0;
+        const payment = parseFloat(paymentInput.value) || 0;
+        const outstanding = Math.max(liability - payment, 0);
+
+        const updatedRecord = {
+            tin,
+            name,
+            telephone: telephoneInput.value.trim(),
+            email: emailInput.value.trim(),
+            location: locationInput.value.trim(),
+            taxOffice: taxOfficeInput.value.trim(),
+            taxpayerType: taxpayerTypeSelect.value,
+            sector: sector,
+            fileStatus: fileStatusSelect.value,
+            taxTypes: getSelectedTaxTypes(),
+            liability: liability,
+            payment: payment,
+            outstanding: outstanding,
+            lastEdited: Date.now(),
+            editedBy: userName
+        };
+
+        const firebaseKey = records[editingIndex]._firebaseKey;
+        setSyncStatus('Updating...', 'syncing');
+        
+        database.ref('censusRecords/' + firebaseKey).update(updatedRecord)
+            .then(() => {
+                resetForm();
+                showToast('✅ Record updated successfully!');
+                setSyncStatus('Synced', 'synced');
+            })
+            .catch((error) => {
+                console.error('Firebase update error:', error);
+                setSyncStatus('Error', 'error');
+                showToast('❌ Error updating: ' + error.message, true);
+            });
+    }
+
+    // =============================================
+    // EDIT MODE FUNCTIONS
+    // =============================================
+    function startEdit(index) {
+        const record = records[index];
+        if (!record) return;
+        
+        if (!canEditRecord(record)) {
+            showToast('⛔ You do not have permission to edit this record.', true);
+            return;
+        }
+        
+        editingIndex = index;
+        tinInput.value = record.tin || '';
+        nameInput.value = record.name || '';
+        telephoneInput.value = record.telephone || '';
+        emailInput.value = record.email || '';
+        locationInput.value = record.location || '';
+        taxOfficeInput.value = record.taxOffice || '';
+        taxpayerTypeSelect.value = record.taxpayerType || 'Individual';
+        sectorSelect.value = record.sector || '';
+        fileStatusSelect.value = record.fileStatus || 'Active';
+        liabilityInput.value = record.liability || '';
+        paymentInput.value = record.payment || '';
+        calculateOutstanding();
+        setTaxTypes(record.taxTypes || '');
+        addBtn.style.display = 'none';
+        updateBtn.style.display = 'inline-flex';
+        cancelEditBtn.style.display = 'inline-flex';
+        formMode.innerHTML = 'Mode: <strong style="color:#6f42c1;">Editing Record #' + (index + 1) + '</strong>';
+        document.getElementById('censusForm').scrollIntoView({ behavior: 'smooth' });
+        showToast('✏️ Editing record ' + (index + 1));
+        tinInput.focus();
+    }
+
+    function cancelEdit() {
+        if (confirm('Cancel editing? Changes will be lost.')) {
+            resetForm();
+            showToast('❌ Edit cancelled');
+        }
+    }
+
+    // =============================================
+    // RENDER TABLE
+    // =============================================
+    function renderTable() {
+        tableBody.innerHTML = '';
+        
+        const visibleRecords = records.filter(rec => canViewRecord(rec));
+        
+        if (visibleRecords.length === 0) {
+            if (isAdmin) {
+                tableBody.innerHTML = '<tr><td colspan="15" class="empty-state"><i class="fas fa-box-open"></i> No records in the system yet</td></tr>';
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="15" class="empty-state"><i class="fas fa-box-open"></i> You have no records yet. Add your first record!</td></tr>';
+            }
+            downloadBtn.disabled = true;
+            downloadAllBtn.disabled = true;
+            updateStats();
+            updateUserList();
+            updateDashboardStats();
+            return;
+        }
+        downloadBtn.disabled = false;
+        downloadAllBtn.disabled = false;
+        const sorted = [...visibleRecords].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        sorted.forEach((rec) => {
+            const row = document.createElement('tr');
+            const actualIndex = records.findIndex(r => r._firebaseKey === rec._firebaseKey);
+            const canEdit = canEditRecord(rec);
+            const canDelete = canDeleteRecord(rec);
+            
+            const cells = [
+                rec.tin || '—', rec.name || '—', rec.telephone || '—', rec.email || '—',
+                rec.location || '—', rec.taxOffice || '—', rec.taxpayerType || '—', rec.sector || '—'
+            ];
+            cells.forEach(text => { const td = document.createElement('td'); td.textContent = text; row.appendChild(td); });
+            
+            const statusCell = document.createElement('td');
+            const status = rec.fileStatus || '—';
+            statusCell.innerHTML = `<span class="status-${status.toLowerCase()}">${status}</span>`;
+            row.appendChild(statusCell);
+            
+            const taxTypesCell = document.createElement('td');
+            taxTypesCell.textContent = rec.taxTypes || '—';
+            row.appendChild(taxTypesCell);
+            
+            const liabilityCell = document.createElement('td');
+            liabilityCell.innerHTML = `<span class="amount liability">${formatMoney(rec.liability || 0)}</span>`;
+            row.appendChild(liabilityCell);
+            const paymentCell = document.createElement('td');
+            paymentCell.innerHTML = `<span class="amount payment">${formatMoney(rec.payment || 0)}</span>`;
+            row.appendChild(paymentCell);
+            const outstandingCell = document.createElement('td');
+            outstandingCell.innerHTML = `<span class="amount outstanding">${formatMoney(rec.outstanding || 0)}</span>`;
+            row.appendChild(outstandingCell);
+            
+            const addedByCell = document.createElement('td');
+            const addedBy = rec.addedBy || '—';
+            const span = document.createElement('span');
+            span.textContent = addedBy;
+            span.className = 'user-name';
+            if (addedBy.toLowerCase() === 'admin') {
+                span.className += ' admin-user';
+                span.textContent = addedBy + ' 🔑';
+            } else if (addedBy === userName) {
+                span.className += ' current-user';
+                span.textContent = addedBy + ' ★';
+            } else {
+                span.className += ' other-user';
+            }
+            addedByCell.appendChild(span);
+            row.appendChild(addedByCell);
+            
+            const actionCell = document.createElement('td');
+            actionCell.style.whiteSpace = 'nowrap';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'action-btn edit-btn';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            editBtn.title = canEdit ? 'Edit record' : '🔒 Only the owner or Admin can edit';
+            if (!canEdit) editBtn.classList.add('disabled');
+            editBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (canEdit) startEdit(actualIndex);
+                else showToast('⛔ You do not have permission to edit this record.', true);
+            });
+            actionCell.appendChild(editBtn);
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'action-btn delete-btn';
+            deleteBtn.innerHTML = '<i class="fas fa-times-circle"></i>';
+            deleteBtn.title = canDelete ? 'Delete record' : '🔒 Only the owner or Admin can delete';
+            if (!canDelete) deleteBtn.classList.add('disabled');
+            deleteBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (canDelete) deleteRecord(rec._firebaseKey, rec);
+                else showToast('⛔ You do not have permission to delete this record.', true);
+            });
+            actionCell.appendChild(deleteBtn);
+            
+            row.appendChild(actionCell);
+            tableBody.appendChild(row);
+        });
+        recordCountSpan.textContent = visibleRecords.length + ' records';
         updateStats();
         updateUserList();
         updateDashboardStats();
-        return;
     }
-    downloadBtn.disabled = false;
-    downloadAllBtn.disabled = false;
-    const sorted = [...visibleRecords].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-    sorted.forEach((rec) => {
-        const row = document.createElement('tr');
-        const actualIndex = records.findIndex(r => r._firebaseKey === rec._firebaseKey);
-        const canEdit = canEditRecord(rec);
-        const canDelete = canDeleteRecord(rec);
-        
-        const cells = [
-            rec.tin || '—', rec.name || '—', rec.telephone || '—', rec.email || '—',
-            rec.location || '—', rec.taxOffice || '—', rec.taxpayerType || '—', rec.sector || '—'
-        ];
-        cells.forEach(text => { const td = document.createElement('td'); td.textContent = text; row.appendChild(td); });
-        
-        const statusCell = document.createElement('td');
-        const status = rec.fileStatus || '—';
-        statusCell.innerHTML = `<span class="status-${status.toLowerCase()}">${status}</span>`;
-        row.appendChild(statusCell);
-        
-        const taxTypesCell = document.createElement('td');
-        taxTypesCell.textContent = rec.taxTypes || '—';
-        row.appendChild(taxTypesCell);
-        
-        const liabilityCell = document.createElement('td');
-        liabilityCell.innerHTML = `<span class="amount liability">${formatMoney(rec.liability || 0)}</span>`;
-        row.appendChild(liabilityCell);
-        const paymentCell = document.createElement('td');
-        paymentCell.innerHTML = `<span class="amount payment">${formatMoney(rec.payment || 0)}</span>`;
-        row.appendChild(paymentCell);
-        const outstandingCell = document.createElement('td');
-        outstandingCell.innerHTML = `<span class="amount outstanding">${formatMoney(rec.outstanding || 0)}</span>`;
-        row.appendChild(outstandingCell);
-        
-        const addedByCell = document.createElement('td');
-        const addedBy = rec.addedBy || '—';
-        const span = document.createElement('span');
-        span.textContent = addedBy;
-        span.className = 'user-name';
-        if (addedBy.toLowerCase() === 'admin') {
-            span.className += ' admin-user';
-            span.textContent = addedBy + ' 🔑';
-        } else if (addedBy === userName) {
-            span.className += ' current-user';
-            span.textContent = addedBy + ' ★';
-        } else {
-            span.className += ' other-user';
-        }
-        addedByCell.appendChild(span);
-        row.appendChild(addedByCell);
-        
-        const actionCell = document.createElement('td');
-        actionCell.style.whiteSpace = 'nowrap';
-        
-        const editBtn = document.createElement('button');
-        editBtn.className = 'action-btn edit-btn';
-        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-        editBtn.title = canEdit ? 'Edit record' : '🔒 Only the owner or Admin can edit';
-        if (!canEdit) editBtn.classList.add('disabled');
-        editBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            if (canEdit) startEdit(actualIndex);
-            else showToast('⛔ You do not have permission to edit this record.', true);
+
+    // =============================================
+    // UPDATE STATS
+    // =============================================
+    function updateStats() {
+        const visibleRecords = records.filter(rec => canViewRecord(rec));
+        let totalLiab = 0, totalPay = 0, totalOut = 0;
+        visibleRecords.forEach(r => {
+            totalLiab += parseFloat(r.liability) || 0;
+            totalPay += parseFloat(r.payment) || 0;
+            totalOut += parseFloat(r.outstanding) || 0;
         });
-        actionCell.appendChild(editBtn);
+        totalRecordsSpan.textContent = visibleRecords.length;
+        totalLiabilitySpan.textContent = formatMoney(totalLiab);
+        totalPaymentSpan.textContent = formatMoney(totalPay);
+        totalOutstandingSpan.textContent = formatMoney(totalOut);
+    }
+
+    // =============================================
+    // UPDATE DASHBOARD STATS
+    // =============================================
+    function updateDashboardStats() {
+        const visibleRecords = records.filter(rec => canViewRecord(rec));
         
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'action-btn delete-btn';
-        deleteBtn.innerHTML = '<i class="fas fa-times-circle"></i>';
-        deleteBtn.title = canDelete ? 'Delete record' : '🔒 Only the owner or Admin can delete';
-        if (!canDelete) deleteBtn.classList.add('disabled');
-        deleteBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            if (canDelete) deleteRecord(rec._firebaseKey, rec);
-            else showToast('⛔ You do not have permission to delete this record.', true);
+        const sectorMap = {};
+        const sectorLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U'];
+        sectorLetters.forEach(letter => { sectorMap[letter] = 0; });
+        let sectorTotal = 0;
+        visibleRecords.forEach(r => {
+            if (r.sector && sectorMap.hasOwnProperty(r.sector)) {
+                sectorMap[r.sector]++;
+                sectorTotal++;
+            }
         });
-        actionCell.appendChild(deleteBtn);
-        
-        row.appendChild(actionCell);
-        tableBody.appendChild(row);
-    });
-    recordCountSpan.textContent = visibleRecords.length + ' records';
-    updateStats();
-    updateUserList();
-    updateDashboardStats();
-}
-
-// =============================================
-// UPDATE STATS (only for visible records)
-// =============================================
-function updateStats() {
-    const visibleRecords = records.filter(rec => canViewRecord(rec));
-    let totalLiab = 0, totalPay = 0, totalOut = 0;
-    visibleRecords.forEach(r => {
-        totalLiab += parseFloat(r.liability) || 0;
-        totalPay += parseFloat(r.payment) || 0;
-        totalOut += parseFloat(r.outstanding) || 0;
-    });
-    totalRecordsSpan.textContent = visibleRecords.length;
-    totalLiabilitySpan.textContent = formatMoney(totalLiab);
-    totalPaymentSpan.textContent = formatMoney(totalPay);
-    totalOutstandingSpan.textContent = formatMoney(totalOut);
-}
-
-// =============================================
-// UPDATE DASHBOARD STATS (only for visible records)
-// =============================================
-function updateDashboardStats() {
-    const visibleRecords = records.filter(rec => canViewRecord(rec));
-    
-    // Sector Distribution
-    const sectorMap = {};
-    const sectorLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U'];
-    sectorLetters.forEach(letter => { sectorMap[letter] = 0; });
-    let sectorTotal = 0;
-    visibleRecords.forEach(r => {
-        if (r.sector && sectorMap.hasOwnProperty(r.sector)) {
-            sectorMap[r.sector]++;
-            sectorTotal++;
-        }
-    });
-    const sectorGrid = document.getElementById('sectorGrid');
-    sectorGrid.innerHTML = '';
-    sectorLetters.forEach(letter => {
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `<span class="label">${letter}</span><span class="count">${sectorMap[letter]}</span>`;
-        sectorGrid.appendChild(div);
-    });
-    document.getElementById('sectorTotal').textContent = sectorTotal;
-
-    // Taxpayer Type Distribution
-    const typeMap = { 'Company': 0, 'Individual': 0, 'NGO': 0, 'Other': 0 };
-    let typeTotal = 0;
-    visibleRecords.forEach(r => {
-        if (r.taxpayerType && typeMap.hasOwnProperty(r.taxpayerType)) {
-            typeMap[r.taxpayerType]++;
-            typeTotal++;
-        }
-    });
-    const typeList = document.getElementById('taxpayerTypeList');
-    typeList.innerHTML = '';
-    const typeColors = { 'Company': '#1b6f9c', 'Individual': '#6f42c1', 'NGO': '#20c997', 'Other': '#d4a017' };
-    Object.keys(typeMap).forEach(key => {
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `<span class="label"><span class="dot" style="background:${typeColors[key]}"></span>${key}</span><span class="count">${typeMap[key]}</span>`;
-        typeList.appendChild(div);
-    });
-    document.getElementById('taxpayerTypeTotal').textContent = typeTotal;
-
-    // File Status Distribution
-    const statusMap = { 'Active': 0, 'Inactive': 0, 'Dormant': 0, 'Deregistered': 0 };
-    let statusTotal = 0;
-    visibleRecords.forEach(r => {
-        if (r.fileStatus && statusMap.hasOwnProperty(r.fileStatus)) {
-            statusMap[r.fileStatus]++;
-            statusTotal++;
-        }
-    });
-    const statusList = document.getElementById('statusList');
-    statusList.innerHTML = '';
-    const statusColors = { 'Active': '#1f7b4b', 'Inactive': '#6c757d', 'Dormant': '#d4a017', 'Deregistered': '#b13e4b' };
-    Object.keys(statusMap).forEach(key => {
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `<span class="label"><span class="dot" style="background:${statusColors[key]}"></span>${key}</span><span class="count">${statusMap[key]}</span>`;
-        statusList.appendChild(div);
-    });
-    document.getElementById('statusTotal').textContent = statusTotal;
-
-    // Tax Types Summary
-    const taxTypeMap = {};
-    const allTaxTypes = [
-        'Personal Income Tax', 'Corporate Income Tax', 'VAT Standard, NHIL & GETFUND',
-        'PAYE', 'Customs', 'Excise', 'Capital Gains Tax', 'Withholding Tax',
-        'Gift Tax', 'Rent Tax', 'Stamp Duty', 'VIT',
-        'Financial Sector Recovery Levy', 'Growth and Sustainability Levy',
-        'Flat', 'Flat / COVID-19', 'NHIL/GETFUND/COVID-19', 'NHIL/GETFUND',
-        'Minerals Royalties', 'Tax Stamp', 'Modified Taxation', 'Standard',
-        'Petroleum Tax', 'Mining Tax', 'Communication Service Tax',
-        'Suspense', 'Other'
-    ];
-    allTaxTypes.forEach(type => { taxTypeMap[type] = 0; });
-    let totalRegistrations = 0;
-    visibleRecords.forEach(r => {
-        if (r.taxTypes && r.taxTypes !== 'None') {
-            const types = r.taxTypes.split(',').map(t => t.trim());
-            types.forEach(type => {
-                if (taxTypeMap.hasOwnProperty(type)) {
-                    taxTypeMap[type]++;
-                    totalRegistrations++;
-                }
-            });
-        }
-    });
-    const taxTypesList = document.getElementById('taxTypesList');
-    taxTypesList.innerHTML = '';
-    const sortedTaxTypes = Object.keys(taxTypeMap)
-        .filter(key => taxTypeMap[key] > 0)
-        .sort((a, b) => taxTypeMap[b] - taxTypeMap[a] || a.localeCompare(b));
-    if (sortedTaxTypes.length === 0) {
-        taxTypesList.innerHTML = '<div class="item"><span class="label">No tax types registered yet</span></div>';
-    } else {
-        sortedTaxTypes.forEach(key => {
+        const sectorGrid = document.getElementById('sectorGrid');
+        sectorGrid.innerHTML = '';
+        sectorLetters.forEach(letter => {
             const div = document.createElement('div');
             div.className = 'item';
-            const count = taxTypeMap[key];
-            let displayName = key;
-            if (displayName.length > 22) displayName = displayName.substring(0, 20) + '…';
-            div.innerHTML = `<span class="label"><span class="dot" style="background:#20c997"></span>${displayName}</span><span class="count">${count}</span>`;
-            taxTypesList.appendChild(div);
+            div.innerHTML = `<span class="label">${letter}</span><span class="count">${sectorMap[letter]}</span>`;
+            sectorGrid.appendChild(div);
         });
-    }
-    document.getElementById('taxTypesTotal').textContent = totalRegistrations;
-}
+        document.getElementById('sectorTotal').textContent = sectorTotal;
 
-// =============================================
-// EXPORT / MERGE / DOWNLOAD
-// =============================================
-function exportData() {
-    const visibleRecords = records.filter(rec => canViewRecord(rec));
-    if (visibleRecords.length === 0) { showToast('No records to export.', true); return; }
-    const data = { 
-        exportedBy: userName, 
-        exportDate: new Date().toISOString(), 
-        totalRecords: visibleRecords.length, 
-        records: visibleRecords.map(r => {
-            const { _firebaseKey, ...rest } = r;
-            return rest;
-        })
-    };
-    const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `GRA_Census_${userName}_${new Date().toISOString().slice(0,10)}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    showToast('✅ Exported ' + visibleRecords.length + ' records for ' + userName);
-}
+        const typeMap = { 'Company': 0, 'Individual': 0, 'NGO': 0, 'Other': 0 };
+        let typeTotal = 0;
+        visibleRecords.forEach(r => {
+            if (r.taxpayerType && typeMap.hasOwnProperty(r.taxpayerType)) {
+                typeMap[r.taxpayerType]++;
+                typeTotal++;
+            }
+        });
+        const typeList = document.getElementById('taxpayerTypeList');
+        typeList.innerHTML = '';
+        const typeColors = { 'Company': '#1b6f9c', 'Individual': '#6f42c1', 'NGO': '#20c997', 'Other': '#d4a017' };
+        Object.keys(typeMap).forEach(key => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `<span class="label"><span class="dot" style="background:${typeColors[key]}"></span>${key}</span><span class="count">${typeMap[key]}</span>`;
+            typeList.appendChild(div);
+        });
+        document.getElementById('taxpayerTypeTotal').textContent = typeTotal;
 
-function mergeData(files) {
-    if (!files || files.length === 0) { showToast('Please select JSON files to merge.', true); return; }
-    let totalMerged = 0, duplicateCount = 0;
-    let processed = 0;
-    Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const data = JSON.parse(e.target.result);
-                const importedRecords = data.records || [];
-                importedRecords.forEach(imported => {
-                    const exists = records.some(existing => 
-                        existing.tin === imported.tin && 
-                        existing.name === imported.name
-                    );
-                    if (!exists) {
-                        const liability = parseFloat(imported.liability) || 0;
-                        const payment = parseFloat(imported.payment) || 0;
-                        const outstanding = Math.max(liability - payment, 0);
-                        database.ref('censusRecords').push({
-                            ...imported,
-                            outstanding: outstanding,
-                            mergedFrom: data.exportedBy || 'Unknown',
-                            mergedAt: new Date().toISOString()
-                        });
-                        totalMerged++;
-                    } else {
-                        duplicateCount++;
+        const statusMap = { 'Active': 0, 'Inactive': 0, 'Dormant': 0, 'Deregistered': 0 };
+        let statusTotal = 0;
+        visibleRecords.forEach(r => {
+            if (r.fileStatus && statusMap.hasOwnProperty(r.fileStatus)) {
+                statusMap[r.fileStatus]++;
+                statusTotal++;
+            }
+        });
+        const statusList = document.getElementById('statusList');
+        statusList.innerHTML = '';
+        const statusColors = { 'Active': '#1f7b4b', 'Inactive': '#6c757d', 'Dormant': '#d4a017', 'Deregistered': '#b13e4b' };
+        Object.keys(statusMap).forEach(key => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `<span class="label"><span class="dot" style="background:${statusColors[key]}"></span>${key}</span><span class="count">${statusMap[key]}</span>`;
+            statusList.appendChild(div);
+        });
+        document.getElementById('statusTotal').textContent = statusTotal;
+
+        const taxTypeMap = {};
+        const allTaxTypes = [
+            'Personal Income Tax', 'Corporate Income Tax', 'VAT Standard, NHIL & GETFUND',
+            'PAYE', 'Customs', 'Excise', 'Capital Gains Tax', 'Withholding Tax',
+            'Gift Tax', 'Rent Tax', 'Stamp Duty', 'VIT',
+            'Financial Sector Recovery Levy', 'Growth and Sustainability Levy',
+            'Flat', 'Flat / COVID-19', 'NHIL/GETFUND/COVID-19', 'NHIL/GETFUND',
+            'Minerals Royalties', 'Tax Stamp', 'Modified Taxation', 'Standard',
+            'Petroleum Tax', 'Mining Tax', 'Communication Service Tax',
+            'Suspense', 'Other'
+        ];
+        allTaxTypes.forEach(type => { taxTypeMap[type] = 0; });
+        let totalRegistrations = 0;
+        visibleRecords.forEach(r => {
+            if (r.taxTypes && r.taxTypes !== 'None') {
+                const types = r.taxTypes.split(',').map(t => t.trim());
+                types.forEach(type => {
+                    if (taxTypeMap.hasOwnProperty(type)) {
+                        taxTypeMap[type]++;
+                        totalRegistrations++;
                     }
                 });
-                processed++;
-                if (processed === files.length) {
-                    showToast(`✅ Merge complete! ${totalMerged} added, ${duplicateCount} duplicates skipped`);
-                }
-            } catch (error) {
-                showToast('Error reading file ' + file.name + ': ' + error.message, true);
             }
-        };
-        reader.readAsText(file);
-    });
-}
-
-function downloadExcel() {
-    const visibleRecords = records.filter(rec => canViewRecord(rec));
-    if (visibleRecords.length === 0) { showToast('No records to export.', true); return; }
-    const headers = ['TIN/Ghana Card', 'Name', 'Telephone', 'Email', 'Location', 'Tax Office', 'Taxpayer Type', 'Sector', 'File Status', 'Tax Types', 'Liability (GHS)', 'Payment (GHS)', 'Outstanding (GHS)', 'Added By', 'Date Added'];
-    const rows = visibleRecords.map(r => [
-        r.tin || '', r.name || '', r.telephone || '', r.email || '',
-        r.location || '', r.taxOffice || '', r.taxpayerType || '', r.sector || '', r.fileStatus || '', r.taxTypes || '',
-        parseFloat(r.liability || 0).toFixed(2),
-        parseFloat(r.payment || 0).toFixed(2),
-        parseFloat(r.outstanding || 0).toFixed(2),
-        r.addedBy || '',
-        r.addedDate ? new Date(r.addedDate).toLocaleString() : ''
-    ]);
-    let csvContent = headers.join(',') + '\n';
-    rows.forEach(row => {
-        const escaped = row.map(cell => {
-            if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"') || cell.includes('\n'))) {
-                return `"${cell.replace(/"/g, '""')}"`;
-            }
-            return cell;
         });
-        csvContent += escaped.join(',') + '\n';
-    });
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `GRA_Census_${new Date().toISOString().slice(0,10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    showToast('✅ Excel downloaded successfully!');
-}
+        const taxTypesList = document.getElementById('taxTypesList');
+        taxTypesList.innerHTML = '';
+        const sortedTaxTypes = Object.keys(taxTypeMap)
+            .filter(key => taxTypeMap[key] > 0)
+            .sort((a, b) => taxTypeMap[b] - taxTypeMap[a] || a.localeCompare(b));
+        if (sortedTaxTypes.length === 0) {
+            taxTypesList.innerHTML = '<div class="item"><span class="label">No tax types registered yet</span></div>';
+        } else {
+            sortedTaxTypes.forEach(key => {
+                const div = document.createElement('div');
+                div.className = 'item';
+                const count = taxTypeMap[key];
+                let displayName = key;
+                if (displayName.length > 22) displayName = displayName.substring(0, 20) + '…';
+                div.innerHTML = `<span class="label"><span class="dot" style="background:#20c997"></span>${displayName}</span><span class="count">${count}</span>`;
+                taxTypesList.appendChild(div);
+            });
+        }
+        document.getElementById('taxTypesTotal').textContent = totalRegistrations;
+    }
 
-function downloadAllData() {
-    const visibleRecords = records.filter(rec => canViewRecord(rec));
-    if (visibleRecords.length === 0) { showToast('No records to export.', true); return; }
-    downloadAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
-    downloadAllBtn.disabled = true;
-    setTimeout(() => {
-        const headers = ['TIN/Ghana Card', 'Name', 'Telephone', 'Email', 'Location', 'Tax Office', 'Taxpayer Type', 'Sector', 'File Status', 'Tax Types', 'Liability (GHS)', 'Payment (GHS)', 'Outstanding (GHS)', 'Added By', 'Date Added', 'Merged From', 'Merged At'];
+    // =============================================
+    // EXPORT / MERGE / DOWNLOAD
+    // =============================================
+    function exportData() {
+        const visibleRecords = records.filter(rec => canViewRecord(rec));
+        if (visibleRecords.length === 0) { showToast('No records to export.', true); return; }
+        const data = { 
+            exportedBy: userName, 
+            exportDate: new Date().toISOString(), 
+            totalRecords: visibleRecords.length, 
+            records: visibleRecords.map(r => {
+                const { _firebaseKey, ...rest } = r;
+                return rest;
+            })
+        };
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `GRA_Census_${userName}_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast('✅ Exported ' + visibleRecords.length + ' records for ' + userName);
+    }
+
+    function mergeData(files) {
+        if (!files || files.length === 0) { showToast('Please select JSON files to merge.', true); return; }
+        let totalMerged = 0, duplicateCount = 0;
+        let processed = 0;
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    const importedRecords = data.records || [];
+                    importedRecords.forEach(imported => {
+                        const exists = records.some(existing => 
+                            existing.tin === imported.tin && 
+                            existing.name === imported.name
+                        );
+                        if (!exists) {
+                            const liability = parseFloat(imported.liability) || 0;
+                            const payment = parseFloat(imported.payment) || 0;
+                            const outstanding = Math.max(liability - payment, 0);
+                            database.ref('censusRecords').push({
+                                ...imported,
+                                outstanding: outstanding,
+                                mergedFrom: data.exportedBy || 'Unknown',
+                                mergedAt: new Date().toISOString()
+                            });
+                            totalMerged++;
+                        } else {
+                            duplicateCount++;
+                        }
+                    });
+                    processed++;
+                    if (processed === files.length) {
+                        showToast(`✅ Merge complete! ${totalMerged} added, ${duplicateCount} duplicates skipped`);
+                    }
+                } catch (error) {
+                    showToast('Error reading file ' + file.name + ': ' + error.message, true);
+                }
+            };
+            reader.readAsText(file);
+        });
+    }
+
+    function downloadExcel() {
+        const visibleRecords = records.filter(rec => canViewRecord(rec));
+        if (visibleRecords.length === 0) { showToast('No records to export.', true); return; }
+        const headers = ['TIN/Ghana Card', 'Name', 'Telephone', 'Email', 'Location', 'Tax Office', 'Taxpayer Type', 'Sector', 'File Status', 'Tax Types', 'Liability (GHS)', 'Payment (GHS)', 'Outstanding (GHS)', 'Added By', 'Date Added'];
         const rows = visibleRecords.map(r => [
             r.tin || '', r.name || '', r.telephone || '', r.email || '',
             r.location || '', r.taxOffice || '', r.taxpayerType || '', r.sector || '', r.fileStatus || '', r.taxTypes || '',
@@ -1484,9 +1698,7 @@ function downloadAllData() {
             parseFloat(r.payment || 0).toFixed(2),
             parseFloat(r.outstanding || 0).toFixed(2),
             r.addedBy || '',
-            r.addedDate ? new Date(r.addedDate).toLocaleString() : '',
-            r.mergedFrom || 'Original',
-            r.mergedAt ? new Date(r.mergedAt).toLocaleString() : ''
+            r.addedDate ? new Date(r.addedDate).toLocaleString() : ''
         ]);
         let csvContent = headers.join(',') + '\n';
         rows.forEach(row => {
@@ -1498,129 +1710,171 @@ function downloadAllData() {
             });
             csvContent += escaped.join(',') + '\n';
         });
-        let summary = '\n📊 GRA CENSUS SUMMARY REPORT\n';
-        summary += '='.repeat(50) + '\n';
-        summary += `📅 Export Date: ${new Date().toLocaleString()}\n`;
-        summary += `📈 Total Records: ${visibleRecords.length}\n`;
-        let totalLiab = 0, totalPay = 0, totalOut = 0;
-        const users = new Set();
-        const taxTypes = new Set();
-        const sectors = new Set();
-        const taxpayerTypes = new Set();
-        const statusTypes = new Set();
-        visibleRecords.forEach(r => {
-            totalLiab += parseFloat(r.liability) || 0;
-            totalPay += parseFloat(r.payment) || 0;
-            totalOut += parseFloat(r.outstanding) || 0;
-            if (r.addedBy) users.add(r.addedBy);
-            if (r.sector) sectors.add(r.sector);
-            if (r.taxpayerType) taxpayerTypes.add(r.taxpayerType);
-            if (r.fileStatus) statusTypes.add(r.fileStatus);
-            if (r.taxTypes) {
-                r.taxTypes.split(',').forEach(t => taxTypes.add(t.trim()));
-            }
-        });
-        summary += `💰 Total Liability: GHS ${formatMoney(totalLiab)}\n`;
-        summary += `💳 Total Payment: GHS ${formatMoney(totalPay)}\n`;
-        summary += `⚠️ Total Outstanding: GHS ${formatMoney(totalOut)}\n`;
-        summary += `📊 Collection Rate: ${totalLiab > 0 ? ((totalPay/totalLiab)*100).toFixed(1) : 0}%\n`;
-        summary += `👤 Team Members (${users.size}): ${Array.from(users).join(', ')}\n`;
-        summary += `🏢 Taxpayer Types (${taxpayerTypes.size}): ${Array.from(taxpayerTypes).join(', ')}\n`;
-        summary += `📋 Sectors (${sectors.size}): ${Array.from(sectors).sort().join(', ')}\n`;
-        summary += `📌 File Statuses (${statusTypes.size}): ${Array.from(statusTypes).join(', ')}\n`;
-        summary += `🏷️ Tax Types (${taxTypes.size}): ${Array.from(taxTypes).join(', ')}\n`;
-        summary += '='.repeat(50) + '\n';
-        const fullContent = csvContent + '\n\n' + summary;
-        const blob = new Blob(['\uFEFF' + fullContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        const dateStr = new Date().toISOString().slice(0,10);
-        link.download = `GRA_Census_Complete_${dateStr}.csv`;
+        link.download = `GRA_Census_${new Date().toISOString().slice(0,10)}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        downloadAllBtn.innerHTML = '<i class="fas fa-users"></i> Download All Data';
-        downloadAllBtn.disabled = false;
-        showToast(`✅ Complete data exported! ${visibleRecords.length} records`);
-    }, 500);
-}
-
-// =============================================
-// CHECK CONNECTION
-// =============================================
-function checkConnection() {
-    if (navigator.onLine) {
-        connectionStatus.className = 'online-badge';
-        connectionStatus.innerHTML = '<i class="fas fa-wifi"></i> Online';
-    } else {
-        connectionStatus.className = 'offline-badge';
-        connectionStatus.innerHTML = '<i class="fas fa-wifi"></i> Offline';
+        showToast('✅ Excel downloaded successfully!');
     }
-}
 
-// =============================================
-// EVENT LISTENERS
-// =============================================
-addBtn.addEventListener('click', addRecord);
-updateBtn.addEventListener('click', updateRecord);
-cancelEditBtn.addEventListener('click', cancelEdit);
-clearAllBtn.addEventListener('click', clearAllRecords);
-document.getElementById('exportBtn').addEventListener('click', exportData);
-document.getElementById('mergeBtn').addEventListener('click', function() {
-    const files = document.getElementById('mergeFile').files;
-    if (files.length === 0) { showToast('Please select JSON files to merge.', true); return; }
-    mergeData(files);
-    document.getElementById('mergeFile').value = '';
-});
-document.getElementById('downloadBtn').addEventListener('click', downloadExcel);
-document.getElementById('downloadAllBtn').addEventListener('click', downloadAllData);
+    function downloadAllData() {
+        const visibleRecords = records.filter(rec => canViewRecord(rec));
+        if (visibleRecords.length === 0) { showToast('No records to export.', true); return; }
+        downloadAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
+        downloadAllBtn.disabled = true;
+        setTimeout(() => {
+            const headers = ['TIN/Ghana Card', 'Name', 'Telephone', 'Email', 'Location', 'Tax Office', 'Taxpayer Type', 'Sector', 'File Status', 'Tax Types', 'Liability (GHS)', 'Payment (GHS)', 'Outstanding (GHS)', 'Added By', 'Date Added', 'Merged From', 'Merged At'];
+            const rows = visibleRecords.map(r => [
+                r.tin || '', r.name || '', r.telephone || '', r.email || '',
+                r.location || '', r.taxOffice || '', r.taxpayerType || '', r.sector || '', r.fileStatus || '', r.taxTypes || '',
+                parseFloat(r.liability || 0).toFixed(2),
+                parseFloat(r.payment || 0).toFixed(2),
+                parseFloat(r.outstanding || 0).toFixed(2),
+                r.addedBy || '',
+                r.addedDate ? new Date(r.addedDate).toLocaleString() : '',
+                r.mergedFrom || 'Original',
+                r.mergedAt ? new Date(r.mergedAt).toLocaleString() : ''
+            ]);
+            let csvContent = headers.join(',') + '\n';
+            rows.forEach(row => {
+                const escaped = row.map(cell => {
+                    if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"') || cell.includes('\n'))) {
+                        return `"${cell.replace(/"/g, '""')}"`;
+                    }
+                    return cell;
+                });
+                csvContent += escaped.join(',') + '\n';
+            });
+            let summary = '\n📊 GRA CENSUS SUMMARY REPORT\n';
+            summary += '='.repeat(50) + '\n';
+            summary += `📅 Export Date: ${new Date().toLocaleString()}\n`;
+            summary += `📈 Total Records: ${visibleRecords.length}\n`;
+            let totalLiab = 0, totalPay = 0, totalOut = 0;
+            const users = new Set();
+            const taxTypes = new Set();
+            const sectors = new Set();
+            const taxpayerTypes = new Set();
+            const statusTypes = new Set();
+            visibleRecords.forEach(r => {
+                totalLiab += parseFloat(r.liability) || 0;
+                totalPay += parseFloat(r.payment) || 0;
+                totalOut += parseFloat(r.outstanding) || 0;
+                if (r.addedBy) users.add(r.addedBy);
+                if (r.sector) sectors.add(r.sector);
+                if (r.taxpayerType) taxpayerTypes.add(r.taxpayerType);
+                if (r.fileStatus) statusTypes.add(r.fileStatus);
+                if (r.taxTypes) {
+                    r.taxTypes.split(',').forEach(t => taxTypes.add(t.trim()));
+                }
+            });
+            summary += `💰 Total Liability: GHS ${formatMoney(totalLiab)}\n`;
+            summary += `💳 Total Payment: GHS ${formatMoney(totalPay)}\n`;
+            summary += `⚠️ Total Outstanding: GHS ${formatMoney(totalOut)}\n`;
+            summary += `📊 Collection Rate: ${totalLiab > 0 ? ((totalPay/totalLiab)*100).toFixed(1) : 0}%\n`;
+            summary += `👤 Team Members (${users.size}): ${Array.from(users).join(', ')}\n`;
+            summary += `🏢 Taxpayer Types (${taxpayerTypes.size}): ${Array.from(taxpayerTypes).join(', ')}\n`;
+            summary += `📋 Sectors (${sectors.size}): ${Array.from(sectors).sort().join(', ')}\n`;
+            summary += `📌 File Statuses (${statusTypes.size}): ${Array.from(statusTypes).join(', ')}\n`;
+            summary += `🏷️ Tax Types (${taxTypes.size}): ${Array.from(taxTypes).join(', ')}\n`;
+            summary += '='.repeat(50) + '\n';
+            const fullContent = csvContent + '\n\n' + summary;
+            const blob = new Blob(['\uFEFF' + fullContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            const dateStr = new Date().toISOString().slice(0,10);
+            link.download = `GRA_Census_Complete_${dateStr}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            downloadAllBtn.innerHTML = '<i class="fas fa-users"></i> Download All Data';
+            downloadAllBtn.disabled = false;
+            showToast(`✅ Complete data exported! ${visibleRecords.length} records`);
+        }, 500);
+    }
 
-document.querySelectorAll('input, select').forEach(input => {
-    input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            if (editingIndex !== null) { updateRecord(); } else { addRecord(); }
+    // =============================================
+    // CHECK CONNECTION
+    // =============================================
+    function checkConnection() {
+        if (navigator.onLine) {
+            connectionStatus.className = 'online-badge';
+            connectionStatus.innerHTML = '<i class="fas fa-wifi"></i> Online';
+        } else {
+            connectionStatus.className = 'offline-badge';
+            connectionStatus.innerHTML = '<i class="fas fa-wifi"></i> Offline';
+        }
+    }
+
+    // =============================================
+    // EVENT LISTENERS
+    // =============================================
+    addBtn.addEventListener('click', addRecord);
+    updateBtn.addEventListener('click', updateRecord);
+    cancelEditBtn.addEventListener('click', cancelEdit);
+    clearAllBtn.addEventListener('click', clearAllRecords);
+    document.getElementById('exportBtn').addEventListener('click', exportData);
+    document.getElementById('mergeBtn').addEventListener('click', function() {
+        const files = document.getElementById('mergeFile').files;
+        if (files.length === 0) { showToast('Please select JSON files to merge.', true); return; }
+        mergeData(files);
+        document.getElementById('mergeFile').value = '';
+    });
+    document.getElementById('downloadBtn').addEventListener('click', downloadExcel);
+    document.getElementById('downloadAllBtn').addEventListener('click', downloadAllData);
+
+    document.querySelectorAll('input, select').forEach(input => {
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (editingIndex !== null) { updateRecord(); } else { addRecord(); }
+            }
+        });
+    });
+
+    tinInput.addEventListener('input', function() {
+        if (this.value.trim() !== '') {
+            this.classList.remove('error');
+            document.getElementById('tinGroup').querySelector('.error-msg').style.display = 'none';
         }
     });
-});
+    nameInput.addEventListener('input', function() {
+        if (this.value.trim() !== '') {
+            this.classList.remove('error');
+            document.getElementById('nameGroup').querySelector('.error-msg').style.display = 'none';
+        }
+    });
+    sectorSelect.addEventListener('change', function() {
+        if (this.value !== '') {
+            this.classList.remove('error');
+            document.getElementById('sectorGroup').querySelector('.error-msg').style.display = 'none';
+        }
+    });
 
-tinInput.addEventListener('input', function() {
-    if (this.value.trim() !== '') {
-        this.classList.remove('error');
-        document.getElementById('tinGroup').querySelector('.error-msg').style.display = 'none';
+    // =============================================
+    // INITIALIZE
+    // =============================================
+    // Check for auto-login first
+    checkAutoLogin();
+    
+    // If not logged in, show login screen (it's already visible by default)
+    if (!isLoggedIn) {
+        loginScreen.style.display = 'flex';
+        mainContent.style.display = 'none';
+        loginName.focus();
     }
-});
-nameInput.addEventListener('input', function() {
-    if (this.value.trim() !== '') {
-        this.classList.remove('error');
-        document.getElementById('nameGroup').querySelector('.error-msg').style.display = 'none';
-    }
-});
-sectorSelect.addEventListener('change', function() {
-    if (this.value !== '') {
-        this.classList.remove('error');
-        document.getElementById('sectorGroup').querySelector('.error-msg').style.display = 'none';
-    }
-});
 
-// =============================================
-// INITIALIZE
-// =============================================
-setupUser();
-checkConnection();
-setInterval(checkConnection, 10000);
-setupFirebaseListener();
-setupChat();
-
-console.log('🔥 Firebase Connected!');
-console.log('👤 Current User:', userName);
-console.log('🔑 Admin Mode:', isAdmin);
-console.log('📊 Users can only see their own records');
-console.log('👑 Admin can see ALL records and manage everything');
-console.log('💬 Chat feature enabled for team communication');
-console.log('✅ Click "Add Record" to save to Firebase');
-</script>
+    console.log('🔥 Firebase Connected!');
+    console.log('🔐 Login system enabled');
+    console.log('👑 Admin username: Admin');
+    console.log('🔑 Admin password: Eazi_2605');
+    console.log('💬 Chat feature enabled for team communication');
+    </script>
 </body>
 </html>
