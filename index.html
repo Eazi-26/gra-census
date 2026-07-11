@@ -11,6 +11,7 @@
         .container { max-width: 1200px; margin: 0 auto; width: 100%; }
         .card { background: white; border-radius: 20px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
         h1 { font-size: 1.5rem; color: #0b2b3b; display: flex; align-items: center; gap: 8px; }
+        .cedi-sign { font-weight: 700; color: #0d3b52; }
         
         /* Login Screen */
         #loginScreen {
@@ -723,9 +724,9 @@
             <!-- STATS -->
             <div class="stats" id="statsGrid">
                 <div class="stat-card"><div class="number" id="totalRecords">0</div><div class="label">Total Records</div></div>
-                <div class="stat-card"><div class="number" id="totalLiability">0.00</div><div class="label">Total Liability (GH₵)</div></div>
-                <div class="stat-card"><div class="number" id="totalPayment">0.00</div><div class="label">Total Payment (GH₵)</div></div>
-                <div class="stat-card"><div class="number" id="totalOutstanding">0.00</div><div class="label">Total Outstanding (GH₵)</div></div>
+                <div class="stat-card"><div class="number" id="totalLiability">₵0.00</div><div class="label">Liability</div></div>
+                <div class="stat-card"><div class="number" id="totalPayment">₵0.00</div><div class="label">Payment</div></div>
+                <div class="stat-card"><div class="number" id="totalOutstanding">₵0.00</div><div class="label">Outstanding</div></div>
             </div>
 
             <!-- DASHBOARD CARDS -->
@@ -837,14 +838,14 @@
                         </div>
                     </div>
 
-                    <div class="field-group"><label><i class="fas fa-coins"></i> Liability (GHS) <span class="auto-calc-badge">enter</span></label>
+                    <div class="field-group"><label><i class="fas fa-coins"></i> Liability <span class="auto-calc-badge">enter</span></label>
                         <input type="number" id="totalLiabilityInput" placeholder="0.00" step="0.01" min="0" class="money-input" oninput="calculateOutstanding()" />
                     </div>
-                    <div class="field-group"><label><i class="fas fa-hand-holding-usd"></i> Payment (GHS) <span class="auto-calc-badge">enter</span></label>
+                    <div class="field-group"><label><i class="fas fa-hand-holding-usd"></i> Payment <span class="auto-calc-badge">enter</span></label>
                         <input type="number" id="totalPaymentInput" placeholder="0.00" step="0.01" min="0" class="money-input" oninput="calculateOutstanding()" />
                     </div>
-                    <div class="field-group"><label><i class="fas fa-exclamation-triangle"></i> Outstanding (GHS) <span class="auto-calc-badge">auto</span></label>
-                        <input type="text" id="totalOutstandingInput" placeholder="0.00" readonly style="background:#f0f7fe; font-weight:600; color:#0d3b52; font-family:'Courier New', monospace; text-align:right;" />
+                    <div class="field-group"><label><i class="fas fa-exclamation-triangle"></i> Outstanding <span class="auto-calc-badge">auto</span></label>
+                        <input type="text" id="totalOutstandingInput" placeholder="₵0.00" readonly style="background:#f0f7fe; font-weight:600; color:#0d3b52; font-family:'Courier New', monospace; text-align:right;" />
                         <span class="calculated" id="calcOutstandingDisplay">Outstanding = Liability - Payment</span>
                     </div>
                 </div>
@@ -1151,11 +1152,14 @@
     }
 
     // =============================================
-    // MONEY FORMATTING
+    // MONEY FORMATTING - WITH CEDI SIGN
     // =============================================
     function formatMoney(value) {
-        if (isNaN(value) || value === null || value === undefined) return '0.00';
-        return Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (isNaN(value) || value === null || value === undefined) return '₵0.00';
+        return '₵' + Number(value).toLocaleString('en-US', { 
+            minimumFractionDigits: 2, 
+            maximumFractionDigits: 2 
+        });
     }
 
     // =============================================
@@ -1167,7 +1171,7 @@
         const outstanding = Math.max(liability - payment, 0);
         outstandingInput.value = formatMoney(outstanding);
         if (liability > 0 || payment > 0) {
-            calcOutstandingDisplay.innerHTML = `💰 Outstanding = <span class="value">${formatMoney(outstanding)}</span> GHS (${formatMoney(liability)} - ${formatMoney(payment)})`;
+            calcOutstandingDisplay.innerHTML = `💰 Outstanding = <span class="value">${formatMoney(outstanding)}</span> (${formatMoney(liability)} - ${formatMoney(payment)})`;
         } else {
             calcOutstandingDisplay.innerHTML = 'Outstanding = Liability - Payment';
         }
@@ -2010,9 +2014,9 @@
                     r.taxTypes.split(',').forEach(t => taxTypes.add(t.trim()));
                 }
             });
-            summary += `💰 Total Liability: GHS ${formatMoney(totalLiab)}\n`;
-            summary += `💳 Total Payment: GHS ${formatMoney(totalPay)}\n`;
-            summary += `⚠️ Total Outstanding: GHS ${formatMoney(totalOut)}\n`;
+            summary += `💰 Total Liability: ${formatMoney(totalLiab)}\n`;
+            summary += `💳 Total Payment: ${formatMoney(totalPay)}\n`;
+            summary += `⚠️ Total Outstanding: ${formatMoney(totalOut)}\n`;
             summary += `📊 Collection Rate: ${totalLiab > 0 ? ((totalPay/totalLiab)*100).toFixed(1) : 0}%\n`;
             summary += `👤 Team Members (${users.size}): ${Array.from(users).join(', ')}\n`;
             summary += `🏢 Taxpayer Types (${taxpayerTypes.size}): ${Array.from(taxpayerTypes).join(', ')}\n`;
@@ -2111,7 +2115,7 @@
     console.log('👑 Admin username: Admin');
     console.log('🔑 Admin password: Eazi_2605');
     console.log('📱 Fully responsive design');
-    console.log('💬 Chat removed');
+    console.log('💰 Using Ghana Cedi sign: ₵');
     </script>
 </body>
 </html>
