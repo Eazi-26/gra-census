@@ -119,7 +119,6 @@
         .online-badge { background: #d4edda; color: #155724; padding: 3px 10px; border-radius: 30px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 4px; }
         .offline-badge { background: #f8d7da; color: #721c24; padding: 3px 10px; border-radius: 30px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 4px; }
         .firebase-badge { background: #cce5ff; color: #004085; padding: 3px 10px; border-radius: 30px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 4px; }
-        .admin-badge { background: #f8d7da; color: #721c24; padding: 3px 10px; border-radius: 30px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 4px; font-weight: 700; }
         .sync-status { font-size: 0.65rem; padding: 2px 8px; border-radius: 12px; margin-left: 6px; white-space: nowrap; }
         .sync-status.synced { background: #d4edda; color: #155724; }
         .sync-status.syncing { background: #fff3cd; color: #856404; }
@@ -517,93 +516,6 @@
             margin-left: auto;
         }
         
-        /* Chat */
-        .chat-section { margin-top: 1rem; border-top: 2px solid #e6edf4; padding-top: 1rem; }
-        .chat-container {
-            display: flex;
-            flex-direction: column;
-            height: 300px;
-            background: #f8fafc;
-            border-radius: 14px;
-            border: 1px solid #deeaf3;
-            overflow: hidden;
-        }
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0.6rem;
-            -webkit-overflow-scrolling: touch;
-        }
-        .chat-message {
-            margin-bottom: 0.5rem;
-            display: flex;
-            flex-direction: column;
-            max-width: 85%;
-        }
-        .chat-message.self { align-self: flex-end; align-items: flex-end; }
-        .chat-message.other { align-self: flex-start; align-items: flex-start; }
-        .chat-message .sender {
-            font-size: 0.6rem;
-            font-weight: 600;
-            color: #6a8ba0;
-            margin-bottom: 1px;
-            padding: 0 4px;
-        }
-        .chat-message .bubble {
-            padding: 6px 12px;
-            border-radius: 14px;
-            font-size: 0.82rem;
-            word-wrap: break-word;
-            max-width: 100%;
-        }
-        .chat-message.self .bubble { background: #0d3b52; color: white; border-bottom-right-radius: 4px; }
-        .chat-message.other .bubble { background: white; color: #1d3d4f; border: 1px solid #d4e0ea; border-bottom-left-radius: 4px; }
-        .chat-message .time { font-size: 0.5rem; color: #8aa9c0; margin-top: 1px; padding: 0 4px; }
-        .chat-input-area {
-            display: flex;
-            gap: 0.4rem;
-            padding: 0.5rem 0.8rem;
-            background: white;
-            border-top: 1px solid #deeaf3;
-        }
-        .chat-input-area input {
-            flex: 1;
-            padding: 6px 12px;
-            border: 1px solid #d4e0ea;
-            border-radius: 30px;
-            font-size: 0.82rem;
-            outline: none;
-            min-height: 36px;
-        }
-        .chat-input-area input:focus { border-color: #1b6f9c; }
-        .chat-input-area .btn { padding: 6px 14px; border-radius: 30px; font-size: 0.75rem; }
-        .chat-online-users {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.3rem;
-            padding: 0.3rem 0.8rem;
-            background: white;
-            border-bottom: 1px solid #deeaf3;
-            font-size: 0.7rem;
-        }
-        .chat-online-users .online-user {
-            font-size: 0.65rem;
-            background: #d4edda;
-            color: #155724;
-            padding: 1px 8px;
-            border-radius: 30px;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-        }
-        .chat-online-users .online-user .dot {
-            width: 5px;
-            height: 5px;
-            background: #1f7b4b;
-            border-radius: 50%;
-            display: inline-block;
-        }
-        
         /* Footer */
         .footer-bar {
             display: flex;
@@ -676,7 +588,6 @@
         /* RESPONSIVE BREAKPOINTS */
         /* ============================================= */
         
-        /* Small phones */
         @media (max-width: 480px) {
             body { padding: 0.5rem; }
             .card { padding: 0.8rem; border-radius: 14px; }
@@ -697,7 +608,6 @@
             .table-wrapper { border-radius: 8px; }
             table { font-size: 0.65rem; min-width: 500px; }
             th, td { padding: 4px 4px; }
-            .chat-container { height: 250px; }
             .merge-section { flex-direction: column; align-items: stretch; }
             .merge-section input[type="file"] { min-width: auto; }
             .merge-section .hint { margin-left: 0; text-align: center; }
@@ -707,7 +617,6 @@
             .user-legend .permission-info { font-size: 0.55rem; }
         }
         
-        /* Tablets and small laptops */
         @media (min-width: 481px) and (max-width: 768px) {
             .form-grid { grid-template-columns: repeat(2, 1fr); }
             .tax-types-grid { grid-template-columns: repeat(2, 1fr); }
@@ -715,10 +624,8 @@
             .stats { grid-template-columns: repeat(2, 1fr); }
             .dash-card .sector-grid { grid-template-columns: repeat(3, 1fr); }
             .dash-card .tax-grid { grid-template-columns: 1fr; }
-            .chat-container { height: 280px; }
         }
         
-        /* Medium screens */
         @media (min-width: 769px) and (max-width: 1024px) {
             .dashboard-grid-4 { grid-template-columns: repeat(2, 1fr); }
             .form-grid { grid-template-columns: repeat(3, 1fr); }
@@ -726,25 +633,21 @@
             .dash-card .tax-grid { grid-template-columns: 1fr; }
         }
         
-        /* Large screens */
         @media (min-width: 1025px) {
             .dashboard-grid-4 { grid-template-columns: repeat(4, 1fr); }
             .form-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
             .tax-types-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
         }
         
-        /* Landscape phones */
         @media (max-width: 768px) and (orientation: landscape) {
-            .chat-container { height: 200px; }
             .dashboard-grid-4 { grid-template-columns: repeat(2, 1fr); }
             .form-grid { grid-template-columns: repeat(2, 1fr); }
             .stats { grid-template-columns: repeat(4, 1fr); }
             .stat-card .number { font-size: 1rem; }
         }
         
-        /* Print styles */
         @media print {
-            .btn, .action-btn, .quick-fill, .chat-section, .merge-section, .header-actions { display: none !important; }
+            .btn, .action-btn, .quick-fill, .merge-section, .header-actions { display: none !important; }
             .card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
             body { background: white; padding: 0.5rem; }
         }
@@ -998,31 +901,6 @@
                 </div>
             </div>
 
-            <!-- CHAT SECTION -->
-            <div class="card chat-section">
-                <h4 style="display: flex; align-items: center; gap: 8px; color: #0d3b52; font-size:1rem; margin-bottom:0.3rem;">
-                    <i class="fas fa-comments" style="color:#1b6f9c;"></i> Team Chat
-                    <span id="chatOnlineCount" style="font-size:0.65rem; color:#6a8ba0; font-weight:normal;"></span>
-                </h4>
-                <div class="chat-container" id="chatContainer">
-                    <div class="chat-online-users" id="chatOnlineUsers">
-                        <span style="font-size:0.6rem; color:#6a8ba0;">Online:</span>
-                        <span id="onlineUsersList" style="font-size:0.6rem; color:#6a8ba0;">No one online</span>
-                    </div>
-                    <div class="chat-messages" id="chatMessages">
-                        <div style="text-align:center; color:#6a8ba0; font-size:0.8rem; padding:1.5rem;">
-                            <i class="fas fa-comment-dots"></i> No messages yet.
-                        </div>
-                    </div>
-                    <div class="chat-input-area">
-                        <input type="text" id="chatInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()" />
-                        <button class="btn btn-primary" onclick="sendMessage()" style="padding:6px 14px; font-size:0.75rem;">
-                            <i class="fas fa-paper-plane"></i> Send
-                        </button>
-                    </div>
-                </div>
-            </div>
-
             <!-- FOOTER -->
             <div class="footer-bar">
                 <span>
@@ -1064,7 +942,6 @@
     let isAdmin = false;
     let isLoggedIn = false;
     let editingIndex = null;
-    let chatInitialized = false;
 
     // DOM refs
     const loginScreen = document.getElementById('loginScreen');
@@ -1108,11 +985,6 @@
     const userRoleDisplay = document.getElementById('userRoleDisplay');
     const permissionInfo = document.getElementById('permissionInfo');
     const clearAllBtn = document.getElementById('clearAllBtn');
-
-    const chatMessages = document.getElementById('chatMessages');
-    const chatInput = document.getElementById('chatInput');
-    const onlineUsersList = document.getElementById('onlineUsersList');
-    const chatOnlineCount = document.getElementById('chatOnlineCount');
 
     const toast = document.getElementById('toast');
     const toastMessage = document.getElementById('toastMessage');
@@ -1184,7 +1056,6 @@
         
         setupUser();
         setupFirebaseListener();
-        setupChat();
         checkConnection();
         setInterval(checkConnection, 10000);
         
@@ -1208,8 +1079,6 @@
             mainContent.style.display = 'none';
             
             database.ref('censusRecords').off();
-            database.ref('chatMessages').off();
-            database.ref('onlineUsers/' + (userName || '')).off();
             
             showToast('👋 Logged out successfully');
         }
@@ -1256,7 +1125,6 @@
             
             setupUser();
             setupFirebaseListener();
-            setupChat();
             checkConnection();
             setInterval(checkConnection, 10000);
             
@@ -1462,84 +1330,6 @@
             }
             return `<span style="background:#e8e0f0; color:#6f42c1; padding:1px 8px; border-radius:10px;">${u}</span>`;
         }).join(' ');
-    }
-
-    // =============================================
-    // CHAT FUNCTIONS
-    // =============================================
-    function setupChat() {
-        if (chatInitialized) return;
-        chatInitialized = true;
-        
-        database.ref('chatMessages').orderByChild('timestamp').limitToLast(100).on('value', (snapshot) => {
-            const data = snapshot.val();
-            chatMessages.innerHTML = '';
-            
-            if (!data) {
-                chatMessages.innerHTML = '<div style="text-align:center; color:#6a8ba0; font-size:0.8rem; padding:1.5rem;"><i class="fas fa-comment-dots"></i> No messages yet.</div>';
-                return;
-            }
-            
-            const messages = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
-            messages.forEach(msg => {
-                const div = document.createElement('div');
-                div.className = 'chat-message ' + (msg.sender === userName ? 'self' : 'other');
-                
-                const senderSpan = document.createElement('div');
-                senderSpan.className = 'sender';
-                senderSpan.textContent = msg.sender + (msg.sender.toLowerCase() === 'admin' ? ' 🔑' : '');
-                
-                const bubbleDiv = document.createElement('div');
-                bubbleDiv.className = 'bubble';
-                bubbleDiv.textContent = msg.text;
-                
-                const timeSpan = document.createElement('div');
-                timeSpan.className = 'time';
-                timeSpan.textContent = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
-                
-                div.appendChild(senderSpan);
-                div.appendChild(bubbleDiv);
-                div.appendChild(timeSpan);
-                chatMessages.appendChild(div);
-            });
-            
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        });
-        
-        const userRef = database.ref('onlineUsers/' + userName);
-        userRef.onDisconnect().remove();
-        userRef.set({ name: userName, online: true, timestamp: Date.now() });
-        
-        database.ref('onlineUsers').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (!data) {
-                onlineUsersList.textContent = 'No one online';
-                chatOnlineCount.textContent = '';
-                return;
-            }
-            const users = Object.keys(data).filter(key => data[key].online);
-            const count = users.length;
-            chatOnlineCount.textContent = '· ' + count + ' online';
-            if (count === 0) {
-                onlineUsersList.textContent = 'No one online';
-            } else {
-                const userNames = users.map(u => u + (u.toLowerCase() === 'admin' ? ' 🔑' : ''));
-                onlineUsersList.textContent = userNames.join(', ');
-            }
-        });
-    }
-
-    function sendMessage() {
-        const text = chatInput.value.trim();
-        if (!text) return;
-        
-        database.ref('chatMessages').push({
-            sender: userName,
-            text: text,
-            timestamp: Date.now()
-        });
-        
-        chatInput.value = '';
     }
 
     // =============================================
@@ -2321,6 +2111,7 @@
     console.log('👑 Admin username: Admin');
     console.log('🔑 Admin password: Eazi_2605');
     console.log('📱 Fully responsive design');
+    console.log('💬 Chat removed');
     </script>
 </body>
 </html>
