@@ -1148,6 +1148,11 @@
         mainContent.style.display = 'block';
         
         setupUser();
+        
+        // Load local data first
+        loadLocalData();
+        
+        // Then setup Firebase listener
         setupFirebaseListener();
         checkConnection();
         setInterval(checkConnection, 10000);
@@ -1217,11 +1222,58 @@
             mainContent.style.display = 'block';
             
             setupUser();
+            
+            // Load local data first
+            loadLocalData();
+            
+            // Then setup Firebase listener
             setupFirebaseListener();
             checkConnection();
             setInterval(checkConnection, 10000);
             
             showToast('👋 Welcome back ' + userName + (isAdmin ? ' (Admin)' : ''));
+        }
+    }
+
+    // =============================================
+    // LOAD LOCAL DATA FROM localStorage
+    // =============================================
+    function loadLocalData() {
+        try {
+            const storedData = localStorage.getItem('censusData');
+            if (storedData) {
+                const data = JSON.parse(storedData);
+                if (data.records && data.records.length > 0) {
+                    // Merge local records with existing records
+                    const localRecords = data.records;
+                    // Add to records array if not already there
+                    localRecords.forEach(localRec => {
+                        const exists = records.some(r => 
+                            r.tin === localRec.tin && 
+                            r.name === localRec.name &&
+                            r.addedBy === localRec.addedBy
+                        );
+                        if (!exists) {
+                            // Add local record to records
+                            records.push({
+                                ...localRec,
+                                _source: 'local'
+                            });
+                        }
+                    });
+                    // Re-sort records
+                    records.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                    updatePagination();
+                    renderTable();
+                    updateStats();
+                    updateDashboardStats();
+                    updateUserList();
+                    showToast('📂 Loaded ' + localRecords.length + ' records from local storage');
+                    console.log('📂 Loaded local data:', localRecords.length, 'records');
+                }
+            }
+        } catch (e) {
+            console.error('Error loading local data:', e);
         }
     }
 
@@ -1436,20 +1488,51 @@
         
         database.ref('censusRecords').on('value', (snapshot) => {
             const data = snapshot.val();
-            records = [];
+            const firebaseRecords = [];
             
             if (data) {
                 Object.keys(data).forEach(key => {
                     const record = {
                         ...data[key],
-                        _firebaseKey: key
+                        _firebaseKey: key,
+                        _source: 'firebase'
                     };
-                    if (canViewRecord(record)) {
-                        records.push(record);
-                    }
+                    firebaseRecords.push(record);
                 });
-                records.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             }
+            
+            // Merge Firebase records with existing records
+            // Keep records that are already loaded (from localStorage)
+            const existingRecords = records.filter(r => r._source === 'local' || r._source === 'firebase');
+            
+            // Replace firebase records with new ones
+            const nonFirebaseRecords = records.filter(r => r._source !== 'firebase');
+            const mergedRecords = [...nonFirebaseRecords];
+            
+            firebaseRecords.forEach(fbRec => {
+                // Check if record already exists (by TIN, Name, AddedBy)
+                const exists = mergedRecords.some(r => 
+                    r.tin === fbRec.tin && 
+                    r.name === fbRec.name &&
+                    r.addedBy === fbRec.addedBy
+                );
+                if (!exists) {
+                    mergedRecords.push(fbRec);
+                } else {
+                    // Update existing record with Firebase data
+                    const index = mergedRecords.findIndex(r => 
+                        r.tin === fbRec.tin && 
+                        r.name === fbRec.name &&
+                        r.addedBy === fbRec.addedBy
+                    );
+                    if (index !== -1) {
+                        mergedRecords[index] = fbRec;
+                    }
+                }
+            });
+            
+            records = mergedRecords;
+            records.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             
             updatePagination();
             renderTable();
@@ -2067,7 +2150,7 @@
             exportDate: new Date().toISOString(), 
             totalRecords: visibleRecords.length, 
             records: visibleRecords.map(r => {
-                const { _firebaseKey, ...rest } = r;
+                const { _firebaseKey, _source, ...rest } = r;
                 return rest;
             })
         };
@@ -2325,6 +2408,7 @@
     console.log('📤 Export JSON: Available');
     console.log('📊 Download Excel: Available');
     console.log('📄 Pagination: 30 records per page');
+    console.log('📂 Local data loaded automatically');
     </script>
 </body>
 </html>
