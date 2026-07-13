@@ -169,6 +169,10 @@
             border-color: #1b6f9c;
             outline: none;
         }
+        .admin-stats .filter-controls .btn-apply { background: #1b6f9c; color: white; }
+        .admin-stats .filter-controls .btn-apply:hover { background: #134b66; }
+        .admin-stats .filter-controls .btn-reset { background: #1b6f9c; color: white; }
+        .admin-stats .filter-controls .btn-reset:hover { background: #134b66; }
         .admin-stats .user-stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -324,6 +328,18 @@
         .duplicate-warning .message strong { font-weight: 700; }
         .duplicate-warning .actions { margin: 0; gap: 0.5rem; }
         .duplicate-warning .actions .btn { font-size: 0.75rem; padding: 4px 14px; }
+        
+        /* Username error */
+        .username-error {
+            color: #b13e4b;
+            font-size: 0.8rem;
+            display: none;
+            margin-top: 4px;
+            padding: 6px 10px;
+            background: #fce8ea;
+            border-radius: 8px;
+            border: 1px solid #f5c6cb;
+        }
         
         /* Buttons */
         .btn {
@@ -821,6 +837,7 @@
             <div class="field-group">
                 <label><i class="fas fa-user"></i> Your Name</label>
                 <input type="text" id="loginName" placeholder="e.g. Kwame, Ama, Admin" autofocus />
+                <div class="username-error" id="usernameError">⚠️ This username is already taken. Please choose another name.</div>
             </div>
             
             <div class="field-group" id="adminPasswordGroup" style="display: none;">
@@ -883,8 +900,8 @@
                     <input type="date" id="adminDateFrom" style="max-width:140px;" />
                     <span style="font-size:0.75rem; color:#6a8ba0;">to</span>
                     <input type="date" id="adminDateTo" style="max-width:140px;" />
-                    <button class="btn btn-sm btn-primary" onclick="applyAdminFilter()"><i class="fas fa-filter"></i> Apply</button>
-                    <button class="btn btn-sm btn-secondary" onclick="resetAdminFilter()"><i class="fas fa-undo"></i> Reset</button>
+                    <button class="btn btn-sm btn-apply" onclick="applyAdminFilter()"><i class="fas fa-filter"></i> Apply</button>
+                    <button class="btn btn-sm btn-reset" onclick="resetAdminFilter()"><i class="fas fa-undo"></i> Reset</button>
                 </div>
                 <div class="user-stats-grid" id="userStatsGrid">
                     <div style="text-align:center; color:#6a8ba0; padding:1rem; grid-column:1/-1;">Loading user statistics...</div>
@@ -1173,6 +1190,7 @@
     const loginPassword = document.getElementById('loginPassword');
     const adminPasswordGroup = document.getElementById('adminPasswordGroup');
     const loginError = document.getElementById('loginError');
+    const usernameError = document.getElementById('usernameError');
     const loginBtn = document.getElementById('loginBtn');
 
     const tinInput = document.getElementById('tin');
@@ -1256,6 +1274,33 @@
     }
 
     // =============================================
+    // UNIQUE USERNAME CHECK
+    // =============================================
+    function checkUsernameAvailability(name) {
+        if (!name) return true;
+        
+        // Check if name already exists in records
+        const users = new Set();
+        records.forEach(r => {
+            if (r.addedBy) users.add(r.addedBy);
+        });
+        
+        // Admin name is reserved
+        if (name.toLowerCase() === 'admin') {
+            return true; // Admin is special
+        }
+        
+        // Check if name is already taken (case insensitive)
+        const nameLower = name.toLowerCase();
+        for (let user of users) {
+            if (user.toLowerCase() === nameLower) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // =============================================
     // DUPLICATE DETECTION
     // =============================================
     function checkDuplicate() {
@@ -1302,6 +1347,23 @@
     // =============================================
     const ADMIN_PASSWORD = 'Eazi_2605';
 
+    // Real-time username validation on input
+    loginName.addEventListener('input', function() {
+        const name = this.value.trim();
+        if (!name) {
+            usernameError.style.display = 'none';
+            return;
+        }
+        
+        // Check if name is already taken (excluding self)
+        const isAvailable = checkUsernameAvailability(name);
+        if (!isAvailable && name.toLowerCase() !== 'admin') {
+            usernameError.style.display = 'block';
+        } else {
+            usernameError.style.display = 'none';
+        }
+    });
+
     function handleLogin() {
         const name = loginName.value.trim();
         if (!name) {
@@ -1309,6 +1371,18 @@
             loginError.style.display = 'block';
             loginName.focus();
             return;
+        }
+
+        // Check for duplicate username (excluding Admin)
+        if (name.toLowerCase() !== 'admin') {
+            const isAvailable = checkUsernameAvailability(name);
+            if (!isAvailable) {
+                usernameError.style.display = 'block';
+                loginError.textContent = 'This username is already taken. Please choose another name.';
+                loginError.style.display = 'block';
+                loginName.focus();
+                return;
+            }
         }
 
         if (name.toLowerCase() === 'admin') {
@@ -1335,6 +1409,7 @@
 
         isLoggedIn = true;
         loginError.style.display = 'none';
+        usernameError.style.display = 'none';
         
         localStorage.setItem('censusUserName', userName);
         localStorage.setItem('censusIsAdmin', isAdmin ? 'true' : 'false');
@@ -1363,6 +1438,7 @@
             loginPassword.value = '';
             adminPasswordGroup.style.display = 'none';
             loginError.style.display = 'none';
+            usernameError.style.display = 'none';
             
             loginScreen.style.display = 'flex';
             mainContent.style.display = 'none';
@@ -1405,6 +1481,7 @@
         const storedAdmin = localStorage.getItem('censusIsAdmin') === 'true';
         
         if (storedName) {
+            // Check if the stored username is still available (should be, since they created it)
             isAdmin = storedAdmin;
             userName = storedName;
             isLoggedIn = true;
@@ -1468,17 +1545,17 @@
     // PERMISSION CHECKS
     // =============================================
     function canEditRecord(record) {
-        if (isAdmin) return true;
+        if (isAdmin) return true;  // Admin can edit ANY record
         return record.addedBy === userName;
     }
 
     function canDeleteRecord(record) {
-        if (isAdmin) return true;
+        if (isAdmin) return true;  // Admin can delete ANY record
         return record.addedBy === userName;
     }
 
     function canViewRecord(record) {
-        if (isAdmin) return true;
+        if (isAdmin) return true;  // Admin can view ALL records
         return record.addedBy === userName;
     }
 
@@ -1521,6 +1598,7 @@
         adminFilterDateTo = dateTo;
         
         renderAdminStats();
+        showToast('📊 Filters applied');
     }
 
     function resetAdminFilter() {
@@ -2884,6 +2962,8 @@
     console.log('🔐 Login system enabled');
     console.log('👑 Admin username: Admin');
     console.log('🔑 Admin password: Eazi_2605');
+    console.log('🛡️ Unique username enforcement active');
+    console.log('👑 Admin: Can view, edit, and delete ALL user data');
     console.log('📱 Fully responsive design');
     console.log('💰 Using Ghana Cedi sign: ₵');
     console.log('📤 Export JSON: Available');
