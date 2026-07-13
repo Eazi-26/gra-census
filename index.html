@@ -146,6 +146,50 @@
         .user-legend .legend-label { font-weight: 600; color: #0d3b52; }
         .user-legend .permission-info { color: #6a8ba0; margin-left: auto; font-size: 0.65rem; }
         
+        /* Admin User Stats */
+        .admin-stats {
+            display: none;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            border: 1px solid #e2ebf3;
+        }
+        .admin-stats.visible { display: block; }
+        .admin-stats h4 { font-size: 0.8rem; color: #0d3b52; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px; }
+        .admin-stats .filter-controls { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.8rem; }
+        .admin-stats .filter-controls select, .admin-stats .filter-controls input {
+            padding: 5px 10px;
+            border: 1px solid #d4e0ea;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            background: white;
+        }
+        .admin-stats .filter-controls select:focus, .admin-stats .filter-controls input:focus {
+            border-color: #1b6f9c;
+            outline: none;
+        }
+        .admin-stats .user-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.5rem;
+        }
+        .admin-stats .user-stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            border: 1px solid #e2ebf3;
+            transition: 0.2s;
+        }
+        .admin-stats .user-stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .admin-stats .user-stat-card .user-name { font-weight: 700; color: #0d3b52; font-size: 0.85rem; }
+        .admin-stats .user-stat-card .user-count { font-size: 0.75rem; color: #6a8ba0; }
+        .admin-stats .user-stat-card .user-count span { font-weight: 700; color: #1b6f9c; }
+        .admin-stats .user-stat-card .user-totals { font-size: 0.7rem; color: #6a8ba0; margin-top: 2px; }
+        .admin-stats .user-stat-card .user-totals span { font-weight: 600; color: #0d3b52; }
+        .admin-stats .user-stat-card .user-badge { font-size: 0.6rem; padding: 1px 6px; border-radius: 10px; background: #d4edda; color: #155724; display: inline-block; }
+        .admin-stats .user-stat-card .user-badge.admin { background: #f8d7da; color: #721c24; }
+        
         /* Form */
         .form-grid {
             display: grid;
@@ -718,6 +762,8 @@
             .pagination-controls { justify-content: center; }
             .duplicate-warning { flex-direction: column; align-items: stretch; text-align: center; }
             .duplicate-warning .actions { justify-content: center; }
+            .admin-stats .user-stats-grid { grid-template-columns: 1fr; }
+            .admin-stats .filter-controls { flex-direction: column; align-items: stretch; }
         }
         
         @media (min-width: 481px) and (max-width: 768px) {
@@ -727,6 +773,7 @@
             .stats { grid-template-columns: repeat(2, 1fr); }
             .dash-card .sector-grid { grid-template-columns: repeat(3, 1fr); }
             .dash-card .tax-grid { grid-template-columns: 1fr; }
+            .admin-stats .user-stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
         
         @media (min-width: 769px) and (max-width: 1024px) {
@@ -821,6 +868,26 @@
                     <span class="permission-info" id="permissionInfo">
                         <i class="fas fa-info-circle"></i> You can only edit/delete your own records
                     </span>
+                </div>
+            </div>
+
+            <!-- ADMIN USER STATS -->
+            <div class="card admin-stats" id="adminStatsPanel">
+                <h4><i class="fas fa-chart-bar" style="color:#1b6f9c;"></i> Team Performance Dashboard</h4>
+                <div class="filter-controls">
+                    <span style="font-size:0.75rem; font-weight:600; color:#0d3b52;">Filter by:</span>
+                    <select id="adminUserFilter">
+                        <option value="all">All Users</option>
+                    </select>
+                    <span style="font-size:0.75rem; color:#6a8ba0;">|</span>
+                    <input type="date" id="adminDateFrom" style="max-width:140px;" />
+                    <span style="font-size:0.75rem; color:#6a8ba0;">to</span>
+                    <input type="date" id="adminDateTo" style="max-width:140px;" />
+                    <button class="btn btn-sm btn-primary" onclick="applyAdminFilter()"><i class="fas fa-filter"></i> Apply</button>
+                    <button class="btn btn-sm btn-secondary" onclick="resetAdminFilter()"><i class="fas fa-undo"></i> Reset</button>
+                </div>
+                <div class="user-stats-grid" id="userStatsGrid">
+                    <div style="text-align:center; color:#6a8ba0; padding:1rem; grid-column:1/-1;">Loading user statistics...</div>
                 </div>
             </div>
 
@@ -1094,6 +1161,11 @@
     let totalPages = 0;
     let paginatedRecords = [];
 
+    // Admin filter variables
+    let adminFilterUser = 'all';
+    let adminFilterDateFrom = '';
+    let adminFilterDateTo = '';
+
     // DOM refs
     const loginScreen = document.getElementById('loginScreen');
     const mainContent = document.getElementById('mainContent');
@@ -1143,6 +1215,11 @@
     const mergeStatus = document.getElementById('mergeStatus');
     const mergeBtn = document.getElementById('mergeBtn');
     const mergeFile = document.getElementById('mergeFile');
+    const adminStatsPanel = document.getElementById('adminStatsPanel');
+    const userStatsGrid = document.getElementById('userStatsGrid');
+    const adminUserFilter = document.getElementById('adminUserFilter');
+    const adminDateFrom = document.getElementById('adminDateFrom');
+    const adminDateTo = document.getElementById('adminDateTo');
 
     // Pagination DOM refs
     const pageStart = document.getElementById('pageStart');
@@ -1346,7 +1423,7 @@
     }
 
     // =============================================
-    // LOAD LOCAL DATA - Shows offline records
+    // LOAD LOCAL DATA
     // =============================================
     function loadLocalData() {
         try {
@@ -1357,14 +1434,12 @@
                     const localRecords = data.records;
                     let addedCount = 0;
                     localRecords.forEach(localRec => {
-                        // Check if this record already exists in the records array
                         const exists = records.some(r => 
                             r.tin === localRec.tin && 
                             r.name === localRec.name &&
                             r.addedBy === localRec.addedBy
                         );
                         if (!exists) {
-                            // Mark as local source
                             records.push({
                                 ...localRec,
                                 _source: 'local'
@@ -1378,9 +1453,9 @@
                     updateStats();
                     updateDashboardStats();
                     updateUserList();
+                    updateAdminStats();
                     if (addedCount > 0) {
-                        console.log('📂 Loaded ' + addedCount + ' offline records from localStorage');
-                        showToast('📂 Loaded ' + addedCount + ' offline records from your device');
+                        console.log('📂 Loaded ' + addedCount + ' offline records');
                     }
                 }
             }
@@ -1405,6 +1480,181 @@
     function canViewRecord(record) {
         if (isAdmin) return true;
         return record.addedBy === userName;
+    }
+
+    // =============================================
+    // ADMIN STATS - FILTER USERS
+    // =============================================
+    function updateAdminStats() {
+        if (!isAdmin) {
+            adminStatsPanel.classList.remove('visible');
+            return;
+        }
+        
+        adminStatsPanel.classList.add('visible');
+        
+        // Update user filter dropdown
+        const users = new Set();
+        records.forEach(r => { if (r.addedBy) users.add(r.addedBy); });
+        const userArray = Array.from(users).sort();
+        
+        const currentFilter = adminUserFilter.value;
+        adminUserFilter.innerHTML = '<option value="all">All Users</option>';
+        userArray.forEach(u => {
+            const option = document.createElement('option');
+            option.value = u;
+            option.textContent = u + (u.toLowerCase() === 'admin' ? ' 🔑' : '');
+            if (u === currentFilter) option.selected = true;
+            adminUserFilter.appendChild(option);
+        });
+        
+        applyAdminFilter();
+    }
+
+    function applyAdminFilter() {
+        const filterUser = adminUserFilter.value;
+        const dateFrom = adminDateFrom.value;
+        const dateTo = adminDateTo.value;
+        
+        adminFilterUser = filterUser;
+        adminFilterDateFrom = dateFrom;
+        adminFilterDateTo = dateTo;
+        
+        renderAdminStats();
+    }
+
+    function resetAdminFilter() {
+        adminUserFilter.value = 'all';
+        adminDateFrom.value = '';
+        adminDateTo.value = '';
+        adminFilterUser = 'all';
+        adminFilterDateFrom = '';
+        adminFilterDateTo = '';
+        renderAdminStats();
+        showToast('🔄 Filters reset');
+    }
+
+    function renderAdminStats() {
+        let filteredRecords = [...records];
+        
+        // Filter by user
+        if (adminFilterUser !== 'all') {
+            filteredRecords = filteredRecords.filter(r => r.addedBy === adminFilterUser);
+        }
+        
+        // Filter by date range
+        if (adminFilterDateFrom) {
+            const fromDate = new Date(adminFilterDateFrom);
+            fromDate.setHours(0, 0, 0, 0);
+            filteredRecords = filteredRecords.filter(r => {
+                if (!r.timestamp) return true;
+                const recordDate = new Date(r.timestamp);
+                return recordDate >= fromDate;
+            });
+        }
+        if (adminFilterDateTo) {
+            const toDate = new Date(adminFilterDateTo);
+            toDate.setHours(23, 59, 59, 999);
+            filteredRecords = filteredRecords.filter(r => {
+                if (!r.timestamp) return true;
+                const recordDate = new Date(r.timestamp);
+                return recordDate <= toDate;
+            });
+        }
+        
+        // Group by user
+        const userStats = {};
+        filteredRecords.forEach(r => {
+            const user = r.addedBy || 'Unknown';
+            if (!userStats[user]) {
+                userStats[user] = {
+                    count: 0,
+                    totalLiability: 0,
+                    totalPayment: 0,
+                    totalOutstanding: 0,
+                    records: []
+                };
+            }
+            userStats[user].count++;
+            userStats[user].totalLiability += parseFloat(r.liability) || 0;
+            userStats[user].totalPayment += parseFloat(r.payment) || 0;
+            userStats[user].totalOutstanding += parseFloat(r.outstanding) || 0;
+            userStats[user].records.push(r);
+        });
+        
+        // Render stats grid
+        const userNames = Object.keys(userStats).sort();
+        
+        if (userNames.length === 0) {
+            userStatsGrid.innerHTML = '<div style="text-align:center; color:#6a8ba0; padding:1rem; grid-column:1/-1;">No records found matching the filters</div>';
+            return;
+        }
+        
+        let totalRecords = 0;
+        let totalLiability = 0;
+        let totalPayment = 0;
+        let totalOutstanding = 0;
+        
+        userStatsGrid.innerHTML = '';
+        userNames.forEach(user => {
+            const stats = userStats[user];
+            totalRecords += stats.count;
+            totalLiability += stats.totalLiability;
+            totalPayment += stats.totalPayment;
+            totalOutstanding += stats.totalOutstanding;
+            
+            const isAdminUser = user.toLowerCase() === 'admin';
+            const isCurrentUser = user === userName;
+            
+            const card = document.createElement('div');
+            card.className = 'user-stat-card';
+            card.innerHTML = `
+                <div class="user-name">${user} ${isAdminUser ? '🔑' : ''} ${isCurrentUser ? '★' : ''}</div>
+                <div class="user-count">📊 <span>${stats.count}</span> records</div>
+                <div class="user-totals">
+                    ₵${stats.totalLiability.toFixed(2)} liability · 
+                    ₵${stats.totalPayment.toFixed(2)} paid · 
+                    ₵${stats.totalOutstanding.toFixed(2)} outstanding
+                </div>
+                <div style="margin-top:4px;">
+                    <span class="user-badge ${isAdminUser ? 'admin' : ''}">
+                        ${isAdminUser ? '👑 Admin' : '👤 User'}
+                    </span>
+                    ${stats.count > 0 ? `<span class="user-badge" style="background:#e8f0fe; color:#1b6f9c;">${stats.count} record${stats.count > 1 ? 's' : ''}</span>` : ''}
+                </div>
+            `;
+            // Click to filter by this user
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', function() {
+                if (adminUserFilter.value === user) {
+                    adminUserFilter.value = 'all';
+                } else {
+                    adminUserFilter.value = user;
+                }
+                applyAdminFilter();
+            });
+            userStatsGrid.appendChild(card);
+        });
+        
+        // Add summary card
+        const summaryCard = document.createElement('div');
+        summaryCard.className = 'user-stat-card';
+        summaryCard.style.background = '#0d3b52';
+        summaryCard.style.color = 'white';
+        summaryCard.style.borderColor = '#0d3b52';
+        summaryCard.innerHTML = `
+            <div class="user-name" style="color:white;">📊 Summary</div>
+            <div class="user-count" style="color:#cce5ff;"><span style="color:white;">${totalRecords}</span> total records</div>
+            <div class="user-totals" style="color:#cce5ff;">
+                ₵${totalLiability.toFixed(2)} total liability · 
+                ₵${totalPayment.toFixed(2)} total paid · 
+                ₵${totalOutstanding.toFixed(2)} total outstanding
+            </div>
+            <div style="margin-top:4px;">
+                <span class="user-badge" style="background:#cce5ff; color:#004085;">${userNames.length} team members</span>
+            </div>
+        `;
+        userStatsGrid.appendChild(summaryCard);
     }
 
     // =============================================
@@ -1445,12 +1695,14 @@
             userRoleDisplay.style.color = '#721c24';
             permissionInfo.innerHTML = '<i class="fas fa-crown"></i> Admin: Can view, edit and delete ALL records';
             clearAllBtn.style.display = 'inline-flex';
+            adminStatsPanel.classList.add('visible');
         } else {
             userRoleDisplay.textContent = '👤 User';
             userRoleDisplay.style.background = '#e8f0fe';
             userRoleDisplay.style.color = '#1b6f9c';
             permissionInfo.innerHTML = '<i class="fas fa-info-circle"></i> You can only view, edit and delete your own records';
             clearAllBtn.style.display = 'none';
+            adminStatsPanel.classList.remove('visible');
         }
     }
 
@@ -1619,12 +1871,10 @@
                 });
             }
             
-            // Keep local records that are not in Firebase yet
             const nonFirebaseRecords = records.filter(r => r._source !== 'firebase');
             const mergedRecords = [...nonFirebaseRecords];
             
             firebaseRecords.forEach(fbRec => {
-                // Check if this record already exists (by TIN, Name, AddedBy)
                 const exists = mergedRecords.some(r => 
                     r.tin === fbRec.tin && 
                     r.name === fbRec.name &&
@@ -1633,7 +1883,6 @@
                 if (!exists) {
                     mergedRecords.push(fbRec);
                 } else {
-                    // Update existing record with Firebase data
                     const index = mergedRecords.findIndex(r => 
                         r.tin === fbRec.tin && 
                         r.name === fbRec.name &&
@@ -1653,10 +1902,11 @@
             updateStats();
             updateDashboardStats();
             updateUserList();
+            updateAdminStats();
             lastUpdatedSpan.textContent = 'Updated: ' + getTimestamp();
             setSyncStatus('Synced', 'synced');
             
-            // Save local records to localStorage for offline access
+            // Save local records to localStorage
             try {
                 const localOnlyRecords = records.filter(r => r._source === 'local' || !r._firebaseKey);
                 if (localOnlyRecords.length > 0) {
@@ -1834,7 +2084,7 @@
             addedDate: new Date().toISOString()
         };
 
-        // Also save to localStorage for offline access
+        // Save to localStorage for offline access
         try {
             const localData = localStorage.getItem('censusData');
             let localRecords = [];
@@ -1842,7 +2092,6 @@
                 const parsed = JSON.parse(localData);
                 localRecords = parsed.records || [];
             }
-            // Check if already in local storage
             const exists = localRecords.some(r => r.tin === tin && r.name === name);
             if (!exists) {
                 localRecords.push(record);
@@ -2055,7 +2304,7 @@
     }
 
     // =============================================
-    // RENDER TABLE - Shows source (Local/Firebase)
+    // RENDER TABLE
     // =============================================
     function renderTable() {
         tableBody.innerHTML = '';
@@ -2134,7 +2383,6 @@
             addedByCell.appendChild(span);
             row.appendChild(addedByCell);
             
-            // Source column
             const sourceCell = document.createElement('td');
             const source = rec._source || 'unknown';
             if (source === 'local') {
@@ -2645,6 +2893,8 @@
     console.log('🛡️ Duplicate detection enabled');
     console.log('🔀 Merge fixed: Now properly imports JSON files');
     console.log('📊 Source column shows Offline vs Synced records');
+    console.log('👑 Admin Dashboard: View team performance by user');
+    console.log('📅 Admin can filter by user and date range');
     </script>
 </body>
 </html>
