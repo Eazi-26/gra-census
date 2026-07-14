@@ -194,6 +194,68 @@
         .admin-stats .user-stat-card .user-badge { font-size: 0.6rem; padding: 1px 6px; border-radius: 10px; background: #d4edda; color: #155724; display: inline-block; }
         .admin-stats .user-stat-card .user-badge.admin { background: #f8d7da; color: #721c24; }
         
+        /* Search Filter */
+        .search-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.8rem;
+            align-items: center;
+            background: #f8fafc;
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            border: 1px solid #e2ebf3;
+        }
+        .search-filter .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 14px;
+            border: 1px solid #d4e0ea;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            outline: none;
+            background: white;
+            transition: 0.2s;
+        }
+        .search-filter .search-input:focus {
+            border-color: #1b6f9c;
+            box-shadow: 0 0 0 3px rgba(27,111,156,0.1);
+        }
+        .search-filter .search-select {
+            padding: 8px 12px;
+            border: 1px solid #d4e0ea;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            background: white;
+            outline: none;
+            cursor: pointer;
+        }
+        .search-filter .search-select:focus {
+            border-color: #1b6f9c;
+            box-shadow: 0 0 0 3px rgba(27,111,156,0.1);
+        }
+        .search-filter .search-clear {
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            font-size: 0.85rem;
+            padding: 4px 8px;
+            border-radius: 30px;
+            transition: 0.2s;
+        }
+        .search-filter .search-clear:hover {
+            background: #e9ecef;
+            color: #343a40;
+        }
+        .search-filter .search-results {
+            font-size: 0.75rem;
+            color: #6a8ba0;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+        .search-filter .search-results span { font-weight: 700; color: #0d3b52; }
+        
         /* Form */
         .form-grid {
             display: grid;
@@ -554,6 +616,7 @@
         }
         td .source-badge.local { background: #fff3cd; color: #856404; }
         td .source-badge.firebase { background: #d4edda; color: #155724; }
+        td .highlight { background: #fff8e1; }
         
         .action-btn {
             background: none;
@@ -780,6 +843,8 @@
             .duplicate-warning .actions { justify-content: center; }
             .admin-stats .user-stats-grid { grid-template-columns: 1fr; }
             .admin-stats .filter-controls { flex-direction: column; align-items: stretch; }
+            .search-filter { flex-direction: column; align-items: stretch; }
+            .search-filter .search-results { margin-left: 0; text-align: center; }
         }
         
         @media (min-width: 481px) and (max-width: 768px) {
@@ -813,7 +878,7 @@
         }
         
         @media print {
-            .btn, .action-btn, .quick-fill, .merge-section, .header-actions, .pagination-container { display: none !important; }
+            .btn, .action-btn, .quick-fill, .merge-section, .header-actions, .pagination-container, .search-filter { display: none !important; }
             .card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
             body { background: white; padding: 0.5rem; }
         }
@@ -1065,8 +1130,26 @@
                 </div>
             </div>
 
-            <!-- TABLE WITH PAGINATION -->
+            <!-- TABLE WITH SEARCH FILTER -->
             <div class="card">
+                <!-- SEARCH FILTER -->
+                <div class="search-filter">
+                    <i class="fas fa-search" style="color:#1b6f9c;"></i>
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search by TIN, Name, Location, Tax Office, Status, Tax Types..." oninput="applySearchFilter()" />
+                    <select class="search-select" id="searchField" onchange="applySearchFilter()">
+                        <option value="all">All Fields</option>
+                        <option value="tin">TIN / Ghana Card</option>
+                        <option value="name">Name</option>
+                        <option value="location">Location</option>
+                        <option value="taxOffice">Tax Office</option>
+                        <option value="fileStatus">File Status</option>
+                        <option value="taxTypes">Tax Types</option>
+                        <option value="addedBy">Added By</option>
+                    </select>
+                    <button class="search-clear" onclick="clearSearch()" title="Clear search"><i class="fas fa-times-circle"></i> Clear</button>
+                    <span class="search-results" id="searchResults">Showing <span id="visibleCount">0</span> of <span id="totalCount">0</span> records</span>
+                </div>
+
                 <div class="table-wrapper">
                     <table>
                         <thead>
@@ -1165,12 +1248,15 @@
     // APP CODE
     // =============================================
     let records = [];
+    let filteredRecords = [];
     let userName = '';
     let isAdmin = false;
     let isLoggedIn = false;
     let editingIndex = null;
     let isForceAdding = false;
     let duplicateDetected = false;
+    let searchTerm = '';
+    let searchField = 'all';
 
     // Pagination variables
     let currentPage = 1;
@@ -1239,6 +1325,13 @@
     const adminDateFrom = document.getElementById('adminDateFrom');
     const adminDateTo = document.getElementById('adminDateTo');
 
+    // Search DOM refs
+    const searchInput = document.getElementById('searchInput');
+    const searchFieldSelect = document.getElementById('searchField');
+    const searchResults = document.getElementById('searchResults');
+    const visibleCount = document.getElementById('visibleCount');
+    const totalCount = document.getElementById('totalCount');
+
     // Pagination DOM refs
     const pageStart = document.getElementById('pageStart');
     const pageEnd = document.getElementById('pageEnd');
@@ -1278,19 +1371,13 @@
     // =============================================
     function checkUsernameAvailability(name) {
         if (!name) return true;
-        
-        // Check if name already exists in records
         const users = new Set();
         records.forEach(r => {
             if (r.addedBy) users.add(r.addedBy);
         });
-        
-        // Admin name is reserved
         if (name.toLowerCase() === 'admin') {
-            return true; // Admin is special
+            return true;
         }
-        
-        // Check if name is already taken (case insensitive)
         const nameLower = name.toLowerCase();
         for (let user of users) {
             if (user.toLowerCase() === nameLower) {
@@ -1343,19 +1430,85 @@
     }
 
     // =============================================
+    // SEARCH FILTER FUNCTIONS
+    // =============================================
+    function applySearchFilter() {
+        searchTerm = searchInput.value.toLowerCase().trim();
+        searchField = searchFieldSelect.value;
+
+        if (!searchTerm) {
+            filteredRecords = [...records];
+        } else {
+            filteredRecords = records.filter(record => {
+                const searchableFields = {
+                    tin: record.tin || '',
+                    name: record.name || '',
+                    location: record.location || '',
+                    taxOffice: record.taxOffice || '',
+                    fileStatus: record.fileStatus || '',
+                    taxTypes: record.taxTypes || '',
+                    addedBy: record.addedBy || ''
+                };
+
+                if (searchField === 'all') {
+                    // Search all fields
+                    return Object.values(searchableFields).some(value =>
+                        value.toLowerCase().includes(searchTerm)
+                    );
+                } else {
+                    // Search specific field
+                    const fieldValue = searchableFields[searchField] || '';
+                    return fieldValue.toLowerCase().includes(searchTerm);
+                }
+            });
+        }
+
+        // Reset to first page when searching
+        currentPage = 1;
+        updatePagination();
+        renderTable();
+        updateSearchResults();
+    }
+
+    function clearSearch() {
+        searchInput.value = '';
+        searchTerm = '';
+        searchField = 'all';
+        searchFieldSelect.value = 'all';
+        filteredRecords = [...records];
+        currentPage = 1;
+        updatePagination();
+        renderTable();
+        updateSearchResults();
+        showToast('🔍 Search cleared');
+    }
+
+    function updateSearchResults() {
+        const total = records.length;
+        const visible = filteredRecords.length;
+        visibleCount.textContent = visible;
+        totalCount.textContent = total;
+        
+        if (searchTerm) {
+            searchResults.style.display = 'inline';
+            searchResults.innerHTML = `Showing <span>${visible}</span> of <span>${total}</span> records (filtered)`;
+        } else {
+            searchResults.style.display = 'inline';
+            searchResults.innerHTML = `Showing <span>${visible}</span> of <span>${total}</span> records`;
+        }
+    }
+
+    // =============================================
     // LOGIN FUNCTIONS
     // =============================================
     const ADMIN_PASSWORD = 'Eazi_2605';
 
-    // Real-time username validation on input
     loginName.addEventListener('input', function() {
         const name = this.value.trim();
         if (!name) {
             usernameError.style.display = 'none';
             return;
         }
-        
-        // Check if name is already taken (excluding self)
         const isAvailable = checkUsernameAvailability(name);
         if (!isAvailable && name.toLowerCase() !== 'admin') {
             usernameError.style.display = 'block';
@@ -1373,7 +1526,6 @@
             return;
         }
 
-        // Check for duplicate username (excluding Admin)
         if (name.toLowerCase() !== 'admin') {
             const isAvailable = checkUsernameAvailability(name);
             if (!isAvailable) {
@@ -1481,7 +1633,6 @@
         const storedAdmin = localStorage.getItem('censusIsAdmin') === 'true';
         
         if (storedName) {
-            // Check if the stored username is still available (should be, since they created it)
             isAdmin = storedAdmin;
             userName = storedName;
             isLoggedIn = true;
@@ -1525,12 +1676,14 @@
                         }
                     });
                     records.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                    filteredRecords = [...records];
                     updatePagination();
                     renderTable();
                     updateStats();
                     updateDashboardStats();
                     updateUserList();
                     updateAdminStats();
+                    updateSearchResults();
                     if (addedCount > 0) {
                         console.log('📂 Loaded ' + addedCount + ' offline records');
                     }
@@ -1545,22 +1698,22 @@
     // PERMISSION CHECKS
     // =============================================
     function canEditRecord(record) {
-        if (isAdmin) return true;  // Admin can edit ANY record
+        if (isAdmin) return true;
         return record.addedBy === userName;
     }
 
     function canDeleteRecord(record) {
-        if (isAdmin) return true;  // Admin can delete ANY record
+        if (isAdmin) return true;
         return record.addedBy === userName;
     }
 
     function canViewRecord(record) {
-        if (isAdmin) return true;  // Admin can view ALL records
+        if (isAdmin) return true;
         return record.addedBy === userName;
     }
 
     // =============================================
-    // ADMIN STATS - FILTER USERS
+    // ADMIN STATS
     // =============================================
     function updateAdminStats() {
         if (!isAdmin) {
@@ -1570,7 +1723,6 @@
         
         adminStatsPanel.classList.add('visible');
         
-        // Update user filter dropdown
         const users = new Set();
         records.forEach(r => { if (r.addedBy) users.add(r.addedBy); });
         const userArray = Array.from(users).sort();
@@ -1615,12 +1767,10 @@
     function renderAdminStats() {
         let filteredRecords = [...records];
         
-        // Filter by user
         if (adminFilterUser !== 'all') {
             filteredRecords = filteredRecords.filter(r => r.addedBy === adminFilterUser);
         }
         
-        // Filter by date range
         if (adminFilterDateFrom) {
             const fromDate = new Date(adminFilterDateFrom);
             fromDate.setHours(0, 0, 0, 0);
@@ -1640,7 +1790,6 @@
             });
         }
         
-        // Group by user
         const userStats = {};
         filteredRecords.forEach(r => {
             const user = r.addedBy || 'Unknown';
@@ -1660,7 +1809,6 @@
             userStats[user].records.push(r);
         });
         
-        // Render stats grid
         const userNames = Object.keys(userStats).sort();
         
         if (userNames.length === 0) {
@@ -1701,7 +1849,6 @@
                     ${stats.count > 0 ? `<span class="user-badge" style="background:#e8f0fe; color:#1b6f9c;">${stats.count} record${stats.count > 1 ? 's' : ''}</span>` : ''}
                 </div>
             `;
-            // Click to filter by this user
             card.style.cursor = 'pointer';
             card.addEventListener('click', function() {
                 if (adminUserFilter.value === user) {
@@ -1714,7 +1861,6 @@
             userStatsGrid.appendChild(card);
         });
         
-        // Add summary card
         const summaryCard = document.createElement('div');
         summaryCard.className = 'user-stat-card';
         summaryCard.style.background = '#0d3b52';
@@ -1975,12 +2121,20 @@
             records = mergedRecords;
             records.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             
+            // Apply search filter
+            if (searchTerm) {
+                applySearchFilter();
+            } else {
+                filteredRecords = [...records];
+            }
+            
             updatePagination();
             renderTable();
             updateStats();
             updateDashboardStats();
             updateUserList();
             updateAdminStats();
+            updateSearchResults();
             lastUpdatedSpan.textContent = 'Updated: ' + getTimestamp();
             setSyncStatus('Synced', 'synced');
             
@@ -2013,7 +2167,7 @@
     // PAGINATION FUNCTIONS
     // =============================================
     function updatePagination() {
-        const visibleRecords = records.filter(rec => canViewRecord(rec));
+        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
         const totalRecords = visibleRecords.length;
         totalRecordsCount.textContent = totalRecords;
         
@@ -2030,10 +2184,11 @@
         }
         
         updatePaginationControls();
+        updateSearchResults();
     }
 
     function updatePaginationControls() {
-        const visibleRecords = records.filter(rec => canViewRecord(rec));
+        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
         const totalRecords = visibleRecords.length;
         
         if (totalRecords === 0) {
@@ -2081,7 +2236,7 @@
     }
 
     function goToPage(page) {
-        const visibleRecords = records.filter(rec => canViewRecord(rec));
+        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
         const totalRecords = visibleRecords.length;
         if (recordsPerPage === -1) {
             currentPage = 1;
@@ -2162,7 +2317,6 @@
             addedDate: new Date().toISOString()
         };
 
-        // Save to localStorage for offline access
         try {
             const localData = localStorage.getItem('censusData');
             let localRecords = [];
@@ -2387,7 +2541,7 @@
     function renderTable() {
         tableBody.innerHTML = '';
         
-        const visibleRecords = records.filter(rec => canViewRecord(rec));
+        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
         
         if (visibleRecords.length === 0) {
             if (isAdmin) {
@@ -2507,6 +2661,7 @@
         updateStats();
         updateUserList();
         updateDashboardStats();
+        updateSearchResults();
     }
 
     // =============================================
@@ -2947,6 +3102,10 @@
         }
     });
 
+    // Search filter - real-time
+    searchInput.addEventListener('input', applySearchFilter);
+    searchFieldSelect.addEventListener('change', applySearchFilter);
+
     // =============================================
     // INITIALIZE
     // =============================================
@@ -2964,6 +3123,7 @@
     console.log('🔑 Admin password: Eazi_2605');
     console.log('🛡️ Unique username enforcement active');
     console.log('👑 Admin: Can view, edit, and delete ALL user data');
+    console.log('🔍 Search filter added: Search by TIN, Name, Location, etc.');
     console.log('📱 Fully responsive design');
     console.log('💰 Using Ghana Cedi sign: ₵');
     console.log('📤 Export JSON: Available');
