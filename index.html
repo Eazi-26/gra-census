@@ -751,6 +751,7 @@
         .status-inactive { color: #6c757d; font-weight: 600; }
         .status-dormant { color: #d4a017; font-weight: 600; }
         .status-deregistered { color: #b13e4b; font-weight: 600; }
+        .status-unassigned { color: #6f42c1; font-weight: 600; }
         
         #mainContent { display: none; }
         
@@ -1065,7 +1066,7 @@
                     </div>
 
                     <div class="field-group"><label><i class="fas fa-flag"></i> File Status</label>
-                        <select id="fileStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Dormant">Dormant</option><option value="Deregistered">Deregistered</option></select>
+                        <select id="fileStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Dormant">Dormant</option><option value="Deregistered">Deregistered</option><option value="Unassigned">Unassigned</option></select>
                     </div>
 
                     <div class="tax-types-group">
@@ -1079,6 +1080,7 @@
                             <label class="tax-check"><input type="checkbox" value="Excise"> Excise</label>
                             <label class="tax-check"><input type="checkbox" value="Capital Gains Tax"> Capital Gains Tax</label>
                             <label class="tax-check"><input type="checkbox" value="Withholding Tax"> Withholding Tax</label>
+                            <label class="tax-check"><input type="checkbox" value="Withholding VAT"> Withholding VAT</label>
                             <label class="tax-check"><input type="checkbox" value="Gift Tax"> Gift Tax</label>
                             <label class="tax-check"><input type="checkbox" value="Rent Tax"> Rent Tax</label>
                             <label class="tax-check"><input type="checkbox" value="Stamp Duty"> Stamp Duty</label>
@@ -2581,7 +2583,8 @@
             
             const statusCell = document.createElement('td');
             const status = rec.fileStatus || '—';
-            statusCell.innerHTML = `<span class="status-${status.toLowerCase()}">${status}</span>`;
+            const statusClass = status.toLowerCase();
+            statusCell.innerHTML = `<span class="status-${statusClass}">${status}</span>`;
             row.appendChild(statusCell);
             
             const taxTypesCell = document.createElement('td');
@@ -2726,7 +2729,7 @@
         });
         document.getElementById('taxpayerTypeTotal').textContent = typeTotal;
 
-        const statusMap = { 'Active': 0, 'Inactive': 0, 'Dormant': 0, 'Deregistered': 0 };
+        const statusMap = { 'Active': 0, 'Inactive': 0, 'Dormant': 0, 'Deregistered': 0, 'Unassigned': 0 };
         let statusTotal = 0;
         visibleRecords.forEach(r => {
             if (r.fileStatus && statusMap.hasOwnProperty(r.fileStatus)) {
@@ -2736,7 +2739,7 @@
         });
         const statusList = document.getElementById('statusList');
         statusList.innerHTML = '';
-        const statusColors = { 'Active': '#1f7b4b', 'Inactive': '#6c757d', 'Dormant': '#d4a017', 'Deregistered': '#b13e4b' };
+        const statusColors = { 'Active': '#1f7b4b', 'Inactive': '#6c757d', 'Dormant': '#d4a017', 'Deregistered': '#b13e4b', 'Unassigned': '#6f42c1' };
         Object.keys(statusMap).forEach(key => {
             const div = document.createElement('div');
             div.className = 'item';
@@ -2749,7 +2752,7 @@
         const allTaxTypes = [
             'Personal Income Tax', 'Corporate Income Tax', 'VAT Standard, NHIL & GETFUND',
             'PAYE', 'Customs', 'Excise', 'Capital Gains Tax', 'Withholding Tax',
-            'Gift Tax', 'Rent Tax', 'Stamp Duty', 'VIT',
+            'Withholding VAT', 'Gift Tax', 'Rent Tax', 'Stamp Duty', 'VIT',
             'Financial Sector Recovery Levy', 'Growth and Sustainability Levy',
             'Flat', 'Flat / COVID-19', 'NHIL/GETFUND/COVID-19', 'NHIL/GETFUND',
             'Minerals Royalties', 'Tax Stamp', 'Modified Taxation', 'Standard',
