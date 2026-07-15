@@ -133,8 +133,8 @@
         .header-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
         .btn-logout { background: #b13e4b; color: white; padding: 4px 14px; border-radius: 30px; font-size: 0.75rem; border: none; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 4px; }
         .btn-logout:hover { background: #c44a58; }
-        .btn-rename { background: #6f42c1; color: white; padding: 4px 14px; border-radius: 30px; font-size: 0.75rem; border: none; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 4px; }
-        .btn-rename:hover { background: #7c4fd3; }
+        .btn-rename { background: #007bff; color: white; padding: 4px 14px; border-radius: 30px; font-size: 0.75rem; border: none; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 4px; }
+        .btn-rename:hover { background: #0069d9; }
         
         .user-legend {
             display: flex;
@@ -192,52 +192,13 @@
             position: relative;
         }
         .admin-stats .user-stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-        .admin-stats .user-stat-card .user-name { font-weight: 700; color: #0d3b52; font-size: 0.85rem; cursor: pointer; }
-        .admin-stats .user-stat-card .user-name:hover { text-decoration: underline; }
+        .admin-stats .user-stat-card .user-name { font-weight: 700; color: #0d3b52; font-size: 0.85rem; }
         .admin-stats .user-stat-card .user-count { font-size: 0.75rem; color: #6a8ba0; }
         .admin-stats .user-stat-card .user-count span { font-weight: 700; color: #1b6f9c; }
         .admin-stats .user-stat-card .user-totals { font-size: 0.7rem; color: #6a8ba0; margin-top: 2px; }
         .admin-stats .user-stat-card .user-totals span { font-weight: 600; color: #0d3b52; }
         .admin-stats .user-stat-card .user-badge { font-size: 0.6rem; padding: 1px 6px; border-radius: 10px; background: #d4edda; color: #155724; display: inline-block; }
         .admin-stats .user-stat-card .user-badge.admin { background: #f8d7da; color: #721c24; }
-        .admin-stats .user-stat-card .remove-user-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: #b13e4b;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            padding: 2px 10px;
-            font-size: 0.6rem;
-            cursor: pointer;
-            transition: 0.2s;
-            opacity: 0.6;
-        }
-        .admin-stats .user-stat-card .remove-user-btn:hover {
-            opacity: 1;
-            background: #c44a58;
-            transform: scale(1.05);
-        }
-        .admin-stats .user-stat-card .rename-user-btn {
-            position: absolute;
-            top: 8px;
-            right: 70px;
-            background: #6f42c1;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            padding: 2px 10px;
-            font-size: 0.6rem;
-            cursor: pointer;
-            transition: 0.2s;
-            opacity: 0.6;
-        }
-        .admin-stats .user-stat-card .rename-user-btn:hover {
-            opacity: 1;
-            background: #7c4fd3;
-            transform: scale(1.05);
-        }
         .admin-stats .user-stat-card .removed-badge {
             background: #f8d7da;
             color: #721c24;
@@ -245,19 +206,6 @@
             border-radius: 10px;
             font-size: 0.55rem;
             font-weight: 600;
-        }
-        .admin-stats .user-stat-card .merge-checkbox {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            width: 16px;
-            height: 16px;
-            accent-color: #6f42c1;
-            cursor: pointer;
-        }
-        .admin-stats .user-stat-card.selected-for-merge {
-            border: 2px solid #6f42c1;
-            background: #f3edf9;
         }
         .admin-stats .user-stat-card .previous-name {
             font-size: 0.6rem;
@@ -996,6 +944,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
         }
         #manageTeamModal .modal-content .user-list-item .user-actions {
             display: flex;
@@ -1014,8 +963,8 @@
             outline: none;
         }
         #manageTeamModal .modal-content .merge-select select:focus {
-            border-color: #6f42c1;
-            box-shadow: 0 0 0 3px rgba(111,66,193,0.1);
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
         }
         #manageTeamModal .modal-content .warning-box {
             background: #fff3cd;
@@ -1040,6 +989,12 @@
             color: #6a8ba0;
             padding: 1rem;
         }
+        #manageTeamModal .modal-content .btn-rename-modal { background: #007bff; color: white; }
+        #manageTeamModal .modal-content .btn-rename-modal:hover { background: #0069d9; }
+        #manageTeamModal .modal-content .btn-merge-modal { background: #007bff; color: white; }
+        #manageTeamModal .modal-content .btn-merge-modal:hover { background: #0069d9; }
+        #manageTeamModal .modal-content .btn-remove-modal { background: #dc3545; color: white; }
+        #manageTeamModal .modal-content .btn-remove-modal:hover { background: #c82333; }
         
         /* Rename User Modal */
         #renameUserModal {
@@ -1093,8 +1048,8 @@
             outline: none;
         }
         #renameUserModal .modal-content .field-group input:focus {
-            border-color: #6f42c1;
-            box-shadow: 0 0 0 3px rgba(111,66,193,0.1);
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
         }
         #renameUserModal .modal-content .field-group .error-msg {
             color: #b13e4b;
@@ -1120,6 +1075,8 @@
             flex-wrap: wrap;
         }
         #renameUserModal .modal-content .modal-actions .btn { flex: 1; justify-content: center; }
+        #renameUserModal .modal-content .btn-save-rename { background: #007bff; color: white; }
+        #renameUserModal .modal-content .btn-save-rename:hover { background: #0069d9; }
         
         @media (max-width: 480px) {
             body { padding: 0.5rem; }
@@ -1156,9 +1113,6 @@
             .admin-stats .filter-controls { flex-direction: column; align-items: stretch; }
             .search-filter { flex-direction: column; align-items: stretch; }
             .search-filter .search-results { margin-left: 0; text-align: center; }
-            .admin-stats .user-stat-card .remove-user-btn, 
-            .admin-stats .user-stat-card .rename-user-btn { position: static; margin-top: 4px; }
-            .admin-stats .user-stat-card .rename-user-btn { margin-right: 4px; }
             #manageTeamModal .modal-content { padding: 1.5rem; margin: 0.5rem; }
             #renameUserModal .modal-content { padding: 1.5rem; margin: 0.5rem; }
             #manageTeamModal .modal-content .user-list-item { flex-direction: column; align-items: stretch; gap: 4px; }
@@ -1286,7 +1240,7 @@
                     <input type="date" id="adminDateTo" style="max-width:140px" />
                     <button class="btn btn-sm btn-apply" onclick="applyAdminFilter()"><i class="fas fa-filter"></i> Apply</button>
                     <button class="btn btn-sm btn-reset" onclick="resetAdminFilter()"><i class="fas fa-undo"></i> Reset</button>
-                    <button class="btn btn-sm btn-blue" onclick="openManageTeam()">
+                    <button class="btn btn-sm btn-manage-team" onclick="openManageTeam()">
                         <i class="fas fa-users-cog"></i> Manage Team
                     </button>
                 </div>
@@ -1607,7 +1561,7 @@
                 
                 <div class="modal-actions">
                     <button class="btn btn-secondary" onclick="closeManageTeam()"><i class="fas fa-times"></i> Cancel</button>
-                    <button class="btn btn-purple" id="executeMergeFromModal" onclick="executeMergeFromModal()"><i class="fas fa-merge"></i> Merge Users</button>
+                    <button class="btn btn-merge-modal" id="executeMergeFromModal" onclick="executeMergeFromModal()"><i class="fas fa-merge"></i> Merge Users</button>
                 </div>
             </div>
             
@@ -1630,7 +1584,7 @@
     <!-- ============================================= -->
     <div id="renameUserModal">
         <div class="modal-content">
-            <h3><i class="fas fa-user-edit" style="color:#6f42c1;"></i> Rename User</h3>
+            <h3><i class="fas fa-user-edit" style="color:#007bff;"></i> Rename User</h3>
             <p class="subtitle" id="renameModalSubtitle">Change your display name. This will update all your records.</p>
             
             <div class="field-group">
@@ -1657,7 +1611,7 @@
             
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeRenameModal()"><i class="fas fa-times"></i> Cancel</button>
-                <button class="btn btn-purple" id="executeRenameBtn" onclick="executeRename()"><i class="fas fa-save"></i> Save New Name</button>
+                <button class="btn btn-save-rename" id="executeRenameBtn" onclick="executeRename()"><i class="fas fa-save"></i> Save New Name</button>
             </div>
         </div>
     </div>
@@ -1816,7 +1770,12 @@
         populateMergeUsers();
         populateRemovedUsers();
         // Default to Members tab
-        switchTeamTab('members', document.querySelector('.tab-bar .active') || document.querySelector('.tab-bar button'));
+        const activeTab = document.querySelector('.tab-bar .active');
+        if (activeTab) {
+            switchTeamTab(activeTab.textContent.trim().toLowerCase().replace(' ', ''), activeTab);
+        } else {
+            switchTeamTab('members', document.querySelector('.tab-bar button'));
+        }
     }
 
     function closeManageTeam() {
@@ -1832,7 +1791,13 @@
         
         // Update tab content
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+        const tabMap = {
+            'members': 'tabMembers',
+            'merge': 'tabMerge',
+            'removed': 'tabRemoved'
+        };
+        const tabId = tabMap[tab] || 'tabMembers';
+        document.getElementById(tabId).classList.add('active');
     }
 
     function populateTeamMembers() {
@@ -1863,11 +1828,11 @@
                         <span style="font-size:0.7rem; color:#6a8ba0;">${recordCount} records</span>
                     </div>
                     <div class="user-actions">
-                        <button class="btn btn-sm btn-purple" onclick="closeManageTeam(); showRenameModal('${u}')" style="padding:2px 10px;">
+                        <button class="btn btn-sm btn-rename-modal" onclick="closeManageTeam(); showRenameModal('${u}')" style="padding:2px 10px;">
                             <i class="fas fa-user-edit"></i> Rename
                         </button>
                         ${!isAdminUser && u !== userName ? `
-                            <button class="btn btn-sm danger" onclick="closeManageTeam(); removeUserFromTeam('${u}')" style="padding:2px 12px;">
+                            <button class="btn btn-sm btn-remove-modal" onclick="closeManageTeam(); removeUserFromTeam('${u}')" style="padding:2px 12px;">
                                 <i class="fas fa-user-minus"></i> Remove
                             </button>
                         ` : ''}
@@ -1898,8 +1863,8 @@
         mergeUserSelection.innerHTML = userArray.map(u => {
             const isSelected = selectedUsersForMerge.has(u);
             return `
-                <label style="display:inline-flex; align-items:center; gap:4px; background:${isSelected ? '#f3edf9' : '#f8fafc'}; padding:2px 10px; border-radius:30px; cursor:pointer; border:${isSelected ? '2px solid #6f42c1' : '1px solid #d4e0ea'};">
-                    <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleUserForMergeModal('${u}')" style="accent-color:#6f42c1;" />
+                <label style="display:inline-flex; align-items:center; gap:4px; background:${isSelected ? '#f3edf9' : '#f8fafc'}; padding:2px 10px; border-radius:30px; cursor:pointer; border:${isSelected ? '2px solid #007bff' : '1px solid #d4e0ea'};">
+                    <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleUserForMergeModal('${u}')" style="accent-color:#007bff;" />
                     <span style="font-size:0.8rem;">${u}</span>
                     <span style="font-size:0.6rem; color:#6a8ba0;">(${records.filter(r => r.addedBy === u).length} recs)</span>
                 </label>
@@ -1938,7 +1903,7 @@
                     <span class="removed-badge">Removed</span>
                 </div>
                 <div class="user-actions">
-                    <button class="btn btn-sm btn-purple" onclick="closeManageTeam(); showRenameModal('${u}')" style="padding:2px 10px;">
+                    <button class="btn btn-sm btn-rename-modal" onclick="closeManageTeam(); showRenameModal('${u}')" style="padding:2px 10px;">
                         <i class="fas fa-user-edit"></i> Rename
                     </button>
                     <button class="btn btn-sm btn-success" onclick="closeManageTeam(); restoreUser('${u}')" style="padding:2px 12px;">
@@ -2239,7 +2204,7 @@
                 <div class="removed-user-item">
                     <span><i class="fas fa-user-slash" style="color:#6c757d;"></i> <strong>${user}</strong> <span style="font-size:0.6rem; color:#6c757d;">(removed)</span></span>
                     <div style="display:flex; gap:4px;">
-                        <button class="btn btn-sm btn-purple" onclick="showRenameModal('${user}')" style="padding:2px 10px; font-size:0.6rem;">
+                        <button class="btn btn-sm btn-rename-modal" onclick="showRenameModal('${user}')" style="padding:2px 10px; font-size:0.6rem;">
                             <i class="fas fa-user-edit"></i> Rename
                         </button>
                         <button class="restore-btn" onclick="restoreUser('${user}')"><i class="fas fa-undo"></i> Restore</button>
@@ -2826,34 +2791,7 @@
                     ${stats.count > 0 ? `<span class="user-badge" style="background:#e8f0fe; color:#1b6f9c;">${stats.count} record${stats.count > 1 ? 's' : ''}</span>` : ''}
                     ${isRemoved ? `<span class="user-badge" style="background:#f8d7da; color:#721c24;">🚫 Removed</span>` : ''}
                 </div>
-                <div style="display:flex; gap:4px; margin-top:4px; flex-wrap:wrap;">
-                    ${!isRemoved && !isAdminUser && user !== userName ? `
-                        <button class="btn btn-sm btn-purple" onclick="event.stopPropagation(); showRenameModal('${user}')" style="padding:2px 10px; font-size:0.6rem;">
-                            <i class="fas fa-user-edit"></i> Rename
-                        </button>
-                        <button class="remove-user-btn" onclick="event.stopPropagation(); removeUserFromTeam('${user}')" title="Remove this user from the team">
-                            <i class="fas fa-user-minus"></i> Remove
-                        </button>
-                    ` : ''}
-                    ${isRemoved ? `
-                        <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); restoreUser('${user}')" style="padding:2px 10px; font-size:0.6rem;">
-                            <i class="fas fa-undo"></i> Restore
-                        </button>
-                    ` : ''}
-                    ${isAdminUser ? `<span style="font-size:0.6rem; color:#6a8ba0;">Admin account</span>` : ''}
-                    ${user === userName && !isAdminUser ? `<span style="font-size:0.6rem; color:#6a8ba0;">(You)</span>` : ''}
-                </div>
             `;
-            card.style.cursor = 'pointer';
-            card.addEventListener('click', function(e) {
-                if (e.target.closest('.remove-user-btn') || e.target.closest('.btn')) return;
-                if (adminUserFilter.value === user) {
-                    adminUserFilter.value = 'all';
-                } else {
-                    adminUserFilter.value = user;
-                }
-                applyAdminFilter();
-            });
             userStatsGrid.appendChild(card);
         });
         
@@ -4177,10 +4115,13 @@
     console.log('🔀 Merge: Import JSON files & merge users');
     console.log('👥 Admin can merge 2+ users into one account');
     console.log('✏️ Users can rename themselves (click name or Rename button)');
-    console.log('👑 Admin can rename any user');
+    console.log('👑 Admin can rename any user via Manage Team');
     console.log('🔄 Renamed records show previous name in history');
     console.log('📋 Manage Team: All team management in one place');
     console.log('🔵 Manage Team button is blue');
+    console.log('🔵 Rename button is blue');
+    console.log('🔵 Merge button is blue');
+    console.log('🔴 Remove button is red');
     </script>
 </body>
 </html>
