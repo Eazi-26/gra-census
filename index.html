@@ -176,8 +176,8 @@
         .admin-stats .filter-controls .btn-apply:hover { background: #134b66; }
         .admin-stats .filter-controls .btn-reset { background: #1b6f9c; color: white; }
         .admin-stats .filter-controls .btn-reset:hover { background: #134b66; }
-        .admin-stats .filter-controls .btn-purple { background: #6f42c1; color: white; }
-        .admin-stats .filter-controls .btn-purple:hover { background: #7c4fd3; }
+        .admin-stats .filter-controls .btn-manage-team { background: #007bff; color: white; }
+        .admin-stats .filter-controls .btn-manage-team:hover { background: #0069d9; }
         .admin-stats .user-stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -500,6 +500,8 @@
         .btn-secondary:hover { background: #5a6268; }
         .btn-purple { background: #6f42c1; color: white; }
         .btn-purple:hover { background: #7c4fd3; }
+        .btn-blue { background: #007bff; color: white; }
+        .btn-blue:hover { background: #0069d9; }
         .btn-sm { padding: 4px 12px; font-size: 0.7rem; border-radius: 20px; border: 1px solid #d4e0ea; background: white; cursor: pointer; transition: 0.2s; }
         .btn-sm:hover { background: #eaf2f9; border-color: #1b6f9c; }
         .btn-sm.danger { color: #b13e4b; border-color: #b13e4b; }
@@ -916,8 +918,8 @@
             background: #34ce57;
         }
         
-        /* Merge Users Modal */
-        #mergeUsersModal {
+        /* Manage Team Modal */
+        #manageTeamModal {
             display: none;
             position: fixed;
             top: 0;
@@ -931,42 +933,79 @@
             justify-content: center;
             padding: 1rem;
         }
-        #mergeUsersModal .modal-content {
+        #manageTeamModal .modal-content {
             background: white;
             border-radius: 24px;
             padding: 2rem;
-            max-width: 600px;
+            max-width: 650px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
         }
-        #mergeUsersModal .modal-content h3 {
+        #manageTeamModal .modal-content h3 {
             color: #0d3b52;
             margin-bottom: 0.5rem;
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        #mergeUsersModal .modal-content .selected-users-list {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 0.8rem;
-            margin: 0.8rem 0;
-            border: 1px solid #e2ebf3;
+        #manageTeamModal .modal-content .tab-bar {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 2px solid #e2ebf3;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
         }
-        #mergeUsersModal .modal-content .selected-users-list .user-tag {
-            display: inline-block;
-            background: #6f42c1;
-            color: white;
-            padding: 2px 12px;
+        #manageTeamModal .modal-content .tab-bar button {
+            padding: 6px 16px;
+            border: none;
             border-radius: 30px;
+            font-weight: 600;
             font-size: 0.8rem;
-            margin: 2px 4px 2px 0;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #e9ecef;
+            color: #495057;
         }
-        #mergeUsersModal .modal-content .target-user-select {
+        #manageTeamModal .modal-content .tab-bar button.active {
+            background: #007bff;
+            color: white;
+        }
+        #manageTeamModal .modal-content .tab-bar button:hover:not(.active) {
+            background: #dee2e6;
+        }
+        #manageTeamModal .modal-content .tab-content {
+            display: none;
+        }
+        #manageTeamModal .modal-content .tab-content.active {
+            display: block;
+        }
+        #manageTeamModal .modal-content .user-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid #e2ebf3;
+            border-radius: 6px;
+            margin-bottom: 4px;
+        }
+        #manageTeamModal .modal-content .user-list-item:hover {
+            background: #f8fafc;
+        }
+        #manageTeamModal .modal-content .user-list-item .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #manageTeamModal .modal-content .user-list-item .user-actions {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        #manageTeamModal .modal-content .merge-select {
             margin: 0.8rem 0;
         }
-        #mergeUsersModal .modal-content .target-user-select select {
+        #manageTeamModal .modal-content .merge-select select {
             width: 100%;
             padding: 10px 14px;
             border: 2px solid #d4e0ea;
@@ -974,34 +1013,33 @@
             font-size: 0.95rem;
             outline: none;
         }
-        #mergeUsersModal .modal-content .target-user-select select:focus {
+        #manageTeamModal .modal-content .merge-select select:focus {
             border-color: #6f42c1;
             box-shadow: 0 0 0 3px rgba(111,66,193,0.1);
         }
-        #mergeUsersModal .modal-content .warning-box {
+        #manageTeamModal .modal-content .warning-box {
             background: #fff3cd;
             border-radius: 12px;
             padding: 0.8rem 1rem;
             margin: 0.8rem 0;
             border: 1px solid #d4a017;
         }
-        #mergeUsersModal .modal-content .warning-box .warning-title {
-            font-weight: 700;
-            color: #856404;
-            font-size: 0.85rem;
-        }
-        #mergeUsersModal .modal-content .warning-box .warning-text {
+        #manageTeamModal .modal-content .warning-box .warning-text {
             color: #856404;
             font-size: 0.75rem;
-            margin-top: 2px;
         }
-        #mergeUsersModal .modal-content .modal-actions {
+        #manageTeamModal .modal-content .modal-actions {
             display: flex;
             gap: 0.5rem;
             margin-top: 1rem;
             flex-wrap: wrap;
         }
-        #mergeUsersModal .modal-content .modal-actions .btn { flex: 1; justify-content: center; }
+        #manageTeamModal .modal-content .modal-actions .btn { flex: 1; justify-content: center; }
+        #manageTeamModal .modal-content .empty-msg {
+            text-align: center;
+            color: #6a8ba0;
+            padding: 1rem;
+        }
         
         /* Rename User Modal */
         #renameUserModal {
@@ -1121,8 +1159,10 @@
             .admin-stats .user-stat-card .remove-user-btn, 
             .admin-stats .user-stat-card .rename-user-btn { position: static; margin-top: 4px; }
             .admin-stats .user-stat-card .rename-user-btn { margin-right: 4px; }
-            #mergeUsersModal .modal-content { padding: 1.5rem; margin: 0.5rem; }
+            #manageTeamModal .modal-content { padding: 1.5rem; margin: 0.5rem; }
             #renameUserModal .modal-content { padding: 1.5rem; margin: 0.5rem; }
+            #manageTeamModal .modal-content .user-list-item { flex-direction: column; align-items: stretch; gap: 4px; }
+            #manageTeamModal .modal-content .user-list-item .user-actions { justify-content: center; }
         }
         
         @media (min-width: 481px) and (max-width: 768px) {
@@ -1246,11 +1286,8 @@
                     <input type="date" id="adminDateTo" style="max-width:140px" />
                     <button class="btn btn-sm btn-apply" onclick="applyAdminFilter()"><i class="fas fa-filter"></i> Apply</button>
                     <button class="btn btn-sm btn-reset" onclick="resetAdminFilter()"><i class="fas fa-undo"></i> Reset</button>
-                    <button class="btn btn-sm btn-purple" onclick="toggleMergeMode()" id="mergeModeBtn">
-                        <i class="fas fa-merge"></i> Merge Users
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="showRemoveUserModal()" style="margin-left:auto;">
-                        <i class="fas fa-user-minus"></i> Manage Team
+                    <button class="btn btn-sm btn-blue" onclick="openManageTeam()">
+                        <i class="fas fa-users-cog"></i> Manage Team
                     </button>
                 </div>
                 <div class="user-stats-grid" id="userStatsGrid">
@@ -1262,21 +1299,6 @@
                         <i class="fas fa-user-slash"></i> Removed Users
                     </h5>
                     <div id="removedUsersList"></div>
-                </div>
-                <!-- Merge Controls -->
-                <div id="mergeControls" style="display:none; margin-top:1rem; padding:1rem; background:#f3edf9; border-radius:12px; border:2px solid #6f42c1;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-                        <span style="font-weight:600; color:#6f42c1;">
-                            <i class="fas fa-merge"></i> Merge Mode: <span id="selectedMergeCount">0</span> users selected
-                        </span>
-                        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                            <button class="btn btn-sm btn-success" onclick="confirmMergeUsers()"><i class="fas fa-merge"></i> Merge Selected</button>
-                            <button class="btn btn-sm btn-secondary" onclick="toggleMergeMode()"><i class="fas fa-times"></i> Cancel</button>
-                        </div>
-                    </div>
-                    <div style="font-size:0.7rem; color:#6a8ba0; margin-top:0.3rem;">
-                        <i class="fas fa-info-circle"></i> Select 2 or more users to merge them into one. All records will be transferred to the target user.
-                    </div>
                 </div>
             </div>
 
@@ -1531,6 +1553,79 @@
     </div>
 
     <!-- ============================================= -->
+    <!-- MANAGE TEAM MODAL -->
+    <!-- ============================================= -->
+    <div id="manageTeamModal">
+        <div class="modal-content">
+            <h3><i class="fas fa-users-cog" style="color:#007bff;"></i> Manage Team</h3>
+            
+            <div class="tab-bar">
+                <button class="active" onclick="switchTeamTab('members', this)"><i class="fas fa-users"></i> Members</button>
+                <button onclick="switchTeamTab('merge', this)"><i class="fas fa-merge"></i> Merge Users</button>
+                <button onclick="switchTeamTab('removed', this)"><i class="fas fa-user-slash"></i> Removed</button>
+            </div>
+            
+            <!-- Members Tab -->
+            <div class="tab-content active" id="tabMembers">
+                <p style="color:#6a8ba0; font-size:0.85rem; margin-bottom:0.8rem;">Manage team members. Remove users who are no longer on the team.</p>
+                <div id="teamMembersList">
+                    <p class="empty-msg">Loading members...</p>
+                </div>
+            </div>
+            
+            <!-- Merge Tab -->
+            <div class="tab-content" id="tabMerge">
+                <p style="color:#6a8ba0; font-size:0.85rem; margin-bottom:0.8rem;">Merge 2 or more users into one account. All records will be transferred to the selected target user.</p>
+                
+                <div class="merge-select">
+                    <label style="font-weight:600; font-size:0.8rem; color:#1e4a62; display:block; margin-bottom:4px;">
+                        <i class="fas fa-user"></i> Select users to merge (click to select/deselect):
+                    </label>
+                    <div id="mergeUserSelection" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:0.5rem;">
+                        <p class="empty-msg" style="width:100%;">Loading users...</p>
+                    </div>
+                    <div style="font-size:0.7rem; color:#6a8ba0; margin-top:4px;">
+                        <span id="mergeSelectedCountDisplay">0</span> users selected
+                    </div>
+                </div>
+                
+                <div class="merge-select">
+                    <label style="font-weight:600; font-size:0.8rem; color:#1e4a62; display:block; margin-bottom:4px;">
+                        <i class="fas fa-arrow-right"></i> Target User (keep this account):
+                    </label>
+                    <select id="mergeTargetUserSelect">
+                        <option value="">Select target user...</option>
+                    </select>
+                </div>
+                
+                <div class="warning-box">
+                    <div class="warning-text">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        <strong>This action cannot be undone.</strong> All records from selected users will be transferred to the target user.
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeManageTeam()"><i class="fas fa-times"></i> Cancel</button>
+                    <button class="btn btn-purple" id="executeMergeFromModal" onclick="executeMergeFromModal()"><i class="fas fa-merge"></i> Merge Users</button>
+                </div>
+            </div>
+            
+            <!-- Removed Tab -->
+            <div class="tab-content" id="tabRemoved">
+                <p style="color:#6a8ba0; font-size:0.85rem; margin-bottom:0.8rem;">Restore users who were previously removed from the team.</p>
+                <div id="removedTeamMembersList">
+                    <p class="empty-msg">No removed users.</p>
+                </div>
+            </div>
+            
+            <div style="margin-top:1rem; border-top:1px solid #e2ebf3; padding-top:1rem;">
+                <button class="btn btn-secondary" onclick="closeManageTeam()" style="width:100%;"><i class="fas fa-times"></i> Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
     <!-- RENAME USER MODAL -->
     <!-- ============================================= -->
     <div id="renameUserModal">
@@ -1563,64 +1658,6 @@
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeRenameModal()"><i class="fas fa-times"></i> Cancel</button>
                 <button class="btn btn-purple" id="executeRenameBtn" onclick="executeRename()"><i class="fas fa-save"></i> Save New Name</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================================= -->
-    <!-- REMOVE USER MODAL -->
-    <!-- ============================================= -->
-    <div id="removeUserModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10000; backdrop-filter:blur(3px); align-items:center; justify-content:center; padding:1rem;">
-        <div style="background:white; border-radius:24px; padding:2rem; max-width:500px; width:100%; max-height:90vh; overflow-y:auto;">
-            <h3 style="color:#0d3b52; margin-bottom:0.5rem;"><i class="fas fa-user-minus" style="color:#b13e4b;"></i> Manage Team Members</h3>
-            <p style="color:#6a8ba0; font-size:0.85rem; margin-bottom:1rem;">Remove users who are no longer on the team. Their records will remain but show as "Removed".</p>
-            
-            <div id="modalUserList">
-                <p style="text-align:center; color:#6a8ba0; padding:1rem;">Loading users...</p>
-            </div>
-            
-            <div style="margin-top:1rem; border-top:1px solid #e2ebf3; padding-top:1rem;">
-                <button class="btn btn-secondary" onclick="closeRemoveUserModal()" style="width:100%;"><i class="fas fa-times"></i> Close</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================================= -->
-    <!-- MERGE USERS MODAL -->
-    <!-- ============================================= -->
-    <div id="mergeUsersModal">
-        <div class="modal-content">
-            <h3><i class="fas fa-merge" style="color:#6f42c1;"></i> Merge Users</h3>
-            <p style="color:#6a8ba0; font-size:0.85rem; margin-bottom:0.5rem;">
-                You are about to merge the following users into one account. All their records will be transferred.
-            </p>
-            
-            <div class="selected-users-list" id="mergeSelectedUsersList">
-                <span style="color:#6a8ba0; font-size:0.8rem;">Loading selected users...</span>
-            </div>
-            
-            <div class="target-user-select">
-                <label style="font-weight:600; font-size:0.8rem; color:#1e4a62; display:block; margin-bottom:4px;">
-                    <i class="fas fa-arrow-right"></i> Target User (keep this account)
-                </label>
-                <select id="mergeTargetUser">
-                    <option value="">Select target user...</option>
-                </select>
-            </div>
-            
-            <div class="warning-box">
-                <div class="warning-title"><i class="fas fa-exclamation-triangle"></i> Important</div>
-                <div class="warning-text">
-                    • All records from the selected users will be transferred to the target user<br>
-                    • The original user accounts will be <strong>removed</strong> from the team<br>
-                    • This action <strong>cannot be undone</strong> without restoring from backup<br>
-                    • Merged records will show the original user's name in the "Merged From" field
-                </div>
-            </div>
-            
-            <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeMergeModal()"><i class="fas fa-times"></i> Cancel</button>
-                <button class="btn btn-purple" id="executeMergeBtn" onclick="executeMerge()"><i class="fas fa-merge"></i> Merge Users</button>
             </div>
         </div>
     </div>
@@ -1661,9 +1698,8 @@
     let searchTerm = '';
     let searchField = 'all';
     let removedUsers = [];
-    let mergeMode = false;
     let selectedUsersForMerge = new Set();
-    let renameTargetUser = null; // For admin renaming other users
+    let renameTargetUser = null;
 
     // Pagination variables
     let currentPage = 1;
@@ -1731,16 +1767,14 @@
     const adminUserFilter = document.getElementById('adminUserFilter');
     const adminDateFrom = document.getElementById('adminDateFrom');
     const adminDateTo = document.getElementById('adminDateTo');
-    const removeUserModal = document.getElementById('removeUserModal');
-    const modalUserList = document.getElementById('modalUserList');
     const removedUsersSection = document.getElementById('removedUsersSection');
     const removedUsersList = document.getElementById('removedUsersList');
-    const mergeControls = document.getElementById('mergeControls');
-    const selectedMergeCount = document.getElementById('selectedMergeCount');
-    const mergeModeBtn = document.getElementById('mergeModeBtn');
-    const mergeUsersModal = document.getElementById('mergeUsersModal');
-    const mergeSelectedUsersList = document.getElementById('mergeSelectedUsersList');
-    const mergeTargetUser = document.getElementById('mergeTargetUser');
+    const manageTeamModal = document.getElementById('manageTeamModal');
+    const teamMembersList = document.getElementById('teamMembersList');
+    const removedTeamMembersList = document.getElementById('removedTeamMembersList');
+    const mergeUserSelection = document.getElementById('mergeUserSelection');
+    const mergeTargetUserSelect = document.getElementById('mergeTargetUserSelect');
+    const mergeSelectedCountDisplay = document.getElementById('mergeSelectedCountDisplay');
     const renameUserModal = document.getElementById('renameUserModal');
     const currentNameInput = document.getElementById('currentNameInput');
     const newNameInput = document.getElementById('newNameInput');
@@ -1770,16 +1804,272 @@
     const toastMessage = document.getElementById('toastMessage');
 
     // =============================================
+    // MANAGE TEAM MODAL FUNCTIONS
+    // =============================================
+    function openManageTeam() {
+        if (!isAdmin) {
+            showToast('⛔ Only admin can manage the team.', true);
+            return;
+        }
+        manageTeamModal.style.display = 'flex';
+        populateTeamMembers();
+        populateMergeUsers();
+        populateRemovedUsers();
+        // Default to Members tab
+        switchTeamTab('members', document.querySelector('.tab-bar .active') || document.querySelector('.tab-bar button'));
+    }
+
+    function closeManageTeam() {
+        manageTeamModal.style.display = 'none';
+        selectedUsersForMerge.clear();
+        updateMergeSelectionDisplay();
+    }
+
+    function switchTeamTab(tab, btn) {
+        // Update tab buttons
+        document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+    }
+
+    function populateTeamMembers() {
+        const users = new Set();
+        records.forEach(r => {
+            if (r.addedBy && !isUserRemoved(r.addedBy)) {
+                users.add(r.addedBy);
+            }
+        });
+        const userArray = Array.from(users).sort();
+        
+        if (userArray.length === 0) {
+            teamMembersList.innerHTML = '<p class="empty-msg">No active team members found.</p>';
+            return;
+        }
+        
+        teamMembersList.innerHTML = userArray.map(u => {
+            const isCurrent = u === userName;
+            const isAdminUser = u.toLowerCase() === 'admin';
+            const recordCount = records.filter(r => r.addedBy === u).length;
+            
+            return `
+                <div class="user-list-item">
+                    <div class="user-info">
+                        <strong style="color:#0d3b52;">${u}</strong>
+                        ${isCurrent ? '<span class="user-badge" style="background:#1b6f9c; color:white;">You</span>' : ''}
+                        ${isAdminUser ? '<span class="user-badge admin">Admin</span>' : ''}
+                        <span style="font-size:0.7rem; color:#6a8ba0;">${recordCount} records</span>
+                    </div>
+                    <div class="user-actions">
+                        <button class="btn btn-sm btn-purple" onclick="closeManageTeam(); showRenameModal('${u}')" style="padding:2px 10px;">
+                            <i class="fas fa-user-edit"></i> Rename
+                        </button>
+                        ${!isAdminUser && u !== userName ? `
+                            <button class="btn btn-sm danger" onclick="closeManageTeam(); removeUserFromTeam('${u}')" style="padding:2px 12px;">
+                                <i class="fas fa-user-minus"></i> Remove
+                            </button>
+                        ` : ''}
+                        ${isAdminUser ? `<span style="font-size:0.6rem; color:#6a8ba0;">Cannot remove admin</span>` : ''}
+                        ${u === userName ? `<span style="font-size:0.6rem; color:#6a8ba0;">Cannot remove yourself</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function populateMergeUsers() {
+        const users = new Set();
+        records.forEach(r => {
+            if (r.addedBy && !isUserRemoved(r.addedBy) && r.addedBy !== userName && r.addedBy.toLowerCase() !== 'admin') {
+                users.add(r.addedBy);
+            }
+        });
+        const userArray = Array.from(users).sort();
+        
+        if (userArray.length < 2) {
+            mergeUserSelection.innerHTML = '<p class="empty-msg">Need at least 2 users to merge. (You cannot merge yourself or the admin.)</p>';
+            mergeTargetUserSelect.innerHTML = '<option value="">No users available</option>';
+            return;
+        }
+        
+        // Build selection checkboxes
+        mergeUserSelection.innerHTML = userArray.map(u => {
+            const isSelected = selectedUsersForMerge.has(u);
+            return `
+                <label style="display:inline-flex; align-items:center; gap:4px; background:${isSelected ? '#f3edf9' : '#f8fafc'}; padding:2px 10px; border-radius:30px; cursor:pointer; border:${isSelected ? '2px solid #6f42c1' : '1px solid #d4e0ea'};">
+                    <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleUserForMergeModal('${u}')" style="accent-color:#6f42c1;" />
+                    <span style="font-size:0.8rem;">${u}</span>
+                    <span style="font-size:0.6rem; color:#6a8ba0;">(${records.filter(r => r.addedBy === u).length} recs)</span>
+                </label>
+            `;
+        }).join('');
+        
+        // Update target user dropdown
+        const targetUsers = new Set();
+        records.forEach(r => {
+            if (r.addedBy && !isUserRemoved(r.addedBy) && !selectedUsersForMerge.has(r.addedBy)) {
+                targetUsers.add(r.addedBy);
+            }
+        });
+        const targetArray = Array.from(targetUsers).sort();
+        mergeTargetUserSelect.innerHTML = '<option value="">Select target user...</option>';
+        targetArray.forEach(u => {
+            const opt = document.createElement('option');
+            opt.value = u;
+            opt.textContent = u + (u === userName ? ' (You)' : '') + (u.toLowerCase() === 'admin' ? ' (Admin)' : '');
+            mergeTargetUserSelect.appendChild(opt);
+        });
+        
+        updateMergeSelectionDisplay();
+    }
+
+    function populateRemovedUsers() {
+        if (removedUsers.length === 0) {
+            removedTeamMembersList.innerHTML = '<p class="empty-msg">No removed users.</p>';
+            return;
+        }
+        
+        removedTeamMembersList.innerHTML = removedUsers.map(u => `
+            <div class="user-list-item">
+                <div class="user-info">
+                    <span style="color:#6c757d;"><i class="fas fa-user-slash"></i> <strong>${u}</strong></span>
+                    <span class="removed-badge">Removed</span>
+                </div>
+                <div class="user-actions">
+                    <button class="btn btn-sm btn-purple" onclick="closeManageTeam(); showRenameModal('${u}')" style="padding:2px 10px;">
+                        <i class="fas fa-user-edit"></i> Rename
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="closeManageTeam(); restoreUser('${u}')" style="padding:2px 12px;">
+                        <i class="fas fa-undo"></i> Restore
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function toggleUserForMergeModal(username) {
+        if (selectedUsersForMerge.has(username)) {
+            selectedUsersForMerge.delete(username);
+        } else {
+            selectedUsersForMerge.add(username);
+        }
+        populateMergeUsers();
+        updateMergeSelectionDisplay();
+    }
+
+    function updateMergeSelectionDisplay() {
+        const count = selectedUsersForMerge.size;
+        mergeSelectedCountDisplay.textContent = count;
+        const mergeBtn = document.getElementById('executeMergeFromModal');
+        if (count < 2) {
+            mergeBtn.disabled = true;
+            mergeBtn.style.opacity = '0.5';
+        } else {
+            mergeBtn.disabled = false;
+            mergeBtn.style.opacity = '1';
+        }
+        // Update target user dropdown
+        const targetUsers = new Set();
+        records.forEach(r => {
+            if (r.addedBy && !isUserRemoved(r.addedBy) && !selectedUsersForMerge.has(r.addedBy)) {
+                targetUsers.add(r.addedBy);
+            }
+        });
+        const targetArray = Array.from(targetUsers).sort();
+        const currentValue = mergeTargetUserSelect.value;
+        mergeTargetUserSelect.innerHTML = '<option value="">Select target user...</option>';
+        targetArray.forEach(u => {
+            const opt = document.createElement('option');
+            opt.value = u;
+            opt.textContent = u + (u === userName ? ' (You)' : '') + (u.toLowerCase() === 'admin' ? ' (Admin)' : '');
+            if (u === currentValue) opt.selected = true;
+            mergeTargetUserSelect.appendChild(opt);
+        });
+    }
+
+    function executeMergeFromModal() {
+        const targetUser = mergeTargetUserSelect.value;
+        if (!targetUser) {
+            showToast('⚠️ Please select a target user.', true);
+            return;
+        }
+        
+        const usersToMerge = Array.from(selectedUsersForMerge);
+        if (usersToMerge.length < 2) {
+            showToast('⚠️ Please select at least 2 users to merge.', true);
+            return;
+        }
+        
+        if (!confirm(`Are you sure you want to merge ${usersToMerge.length} user(s) into "${targetUser}"?\n\nThis action CANNOT be undone!`)) {
+            return;
+        }
+        
+        if (!confirm(`⚠️ FINAL WARNING: All records from ${usersToMerge.join(', ')} will be transferred to ${targetUser}. The original accounts will be removed. Continue?`)) {
+            return;
+        }
+        
+        setSyncStatus('Merging users...', 'syncing');
+        const mergeBtn = document.getElementById('executeMergeFromModal');
+        mergeBtn.disabled = true;
+        mergeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Merging...';
+        
+        const recordsToTransfer = records.filter(r => usersToMerge.includes(r.addedBy));
+        let transferredCount = 0;
+        let errorCount = 0;
+        
+        const promises = recordsToTransfer.map(record => {
+            const firebaseKey = record._firebaseKey;
+            if (!firebaseKey) return Promise.resolve();
+            
+            const updatedRecord = {
+                ...record,
+                addedBy: targetUser,
+                mergedFrom: record.addedBy,
+                mergedAt: new Date().toISOString(),
+                mergedBy: userName
+            };
+            
+            return database.ref('censusRecords/' + firebaseKey).update(updatedRecord)
+                .then(() => {
+                    transferredCount++;
+                })
+                .catch(err => {
+                    console.error('Error transferring record:', err);
+                    errorCount++;
+                });
+        });
+        
+        Promise.all(promises).then(() => {
+            usersToMerge.forEach(user => {
+                if (!removedUsers.includes(user)) {
+                    removedUsers.push(user);
+                }
+            });
+            saveRemovedUsers();
+            
+            selectedUsersForMerge.clear();
+            closeManageTeam();
+            mergeBtn.disabled = false;
+            mergeBtn.innerHTML = '<i class="fas fa-merge"></i> Merge Users';
+            
+            setSyncStatus('Synced', 'synced');
+            showToast(`✅ Merge complete! ${transferredCount} records transferred to "${targetUser}". ${usersToMerge.length} user(s) removed.`);
+            
+            database.ref('censusRecords').once('value');
+        });
+    }
+
+    // =============================================
     // RENAME USER FUNCTIONS
     // =============================================
     function showRenameModal(targetUser = null) {
         if (!isLoggedIn) return;
         
-        // If targetUser is provided, admin is renaming someone else
         renameTargetUser = targetUser;
         
         if (targetUser && targetUser !== userName) {
-            // Admin renaming another user
             if (!isAdmin) {
                 showToast('⛔ Only admin can rename other users.', true);
                 return;
@@ -1788,14 +2078,9 @@
                 showToast('⛔ Cannot rename the admin account.', true);
                 return;
             }
-            if (isUserRemoved(targetUser)) {
-                showToast('⛔ Cannot rename a removed user.', true);
-                return;
-            }
             renameModalSubtitle.textContent = `Renaming user "${targetUser}" to a new name.`;
             currentNameInput.value = targetUser;
         } else {
-            // User renaming themselves
             renameTargetUser = userName;
             renameModalSubtitle.textContent = 'Change your display name. This will update all your records.';
             currentNameInput.value = userName;
@@ -1839,7 +2124,6 @@
             return;
         }
         
-        // Check if the new name is already taken (by an active user)
         const activeUsers = new Set();
         records.forEach(r => {
             if (r.addedBy && !isUserRemoved(r.addedBy) && r.addedBy !== currentName) {
@@ -1853,7 +2137,6 @@
             return;
         }
         
-        // Check if new name is in removed users list
         if (isUserRemoved(newName) && newName !== currentName) {
             renameError.textContent = 'This name belongs to a removed user. Please choose another.';
             renameError.style.display = 'block';
@@ -1865,12 +2148,10 @@
             return;
         }
         
-        // Execute rename
         setSyncStatus('Renaming user...', 'syncing');
         executeRenameBtn.disabled = true;
         executeRenameBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Renaming...';
         
-        // Get all records from the user
         const userRecords = records.filter(r => r.addedBy === currentName);
         let updatedCount = 0;
         let errorCount = 0;
@@ -1898,28 +2179,17 @@
         });
         
         Promise.all(promises).then(() => {
-            // If this was the current user, update their stored name
             if (currentName === userName) {
                 userName = newName;
                 localStorage.setItem('censusUserName', newName);
-                // If admin was renamed, update admin status
                 if (isAdmin) {
                     localStorage.setItem('censusIsAdmin', 'true');
                 }
             }
             
-            // If admin renamed another user, update any references in removedUsers
             if (isAdmin && currentName !== userName) {
-                // Check if there are any removed users with the old name
                 const oldRemovedIndex = removedUsers.indexOf(currentName);
                 if (oldRemovedIndex !== -1) {
-                    // If the user was removed, remove them from removed list and add the new name if needed
-                    // Actually, we should keep the old name in removed list if it was removed
-                    // The new name should not be in removed list since the user is being renamed
-                    // We'll remove the old name from removed list if it was there and the user is being restored
-                    // Actually, if the user was removed, they shouldn't be able to be renamed by admin
-                    // So we just handle the case where the user was removed but admin is renaming them
-                    // This is a special case - we'll remove them from removed list
                     removedUsers = removedUsers.filter(u => u !== currentName);
                     saveRemovedUsers();
                 }
@@ -1931,181 +2201,6 @@
             setSyncStatus('Synced', 'synced');
             
             showToast(`✅ User "${currentName}" renamed to "${newName}". ${updatedCount} record(s) updated.`);
-            
-            // Refresh data
-            database.ref('censusRecords').once('value');
-        });
-    }
-
-    // =============================================
-    // MERGE USERS FUNCTIONS
-    // =============================================
-    function toggleMergeMode() {
-        if (!isAdmin) {
-            showToast('⛔ Only admin can merge users.', true);
-            return;
-        }
-        
-        mergeMode = !mergeMode;
-        if (mergeMode) {
-            mergeControls.style.display = 'block';
-            mergeModeBtn.innerHTML = '<i class="fas fa-times"></i> Cancel Merge';
-            mergeModeBtn.className = 'btn btn-sm btn-secondary';
-            selectedUsersForMerge.clear();
-            updateMergeSelection();
-            showToast('🔀 Merge mode activated. Select users to merge.');
-        } else {
-            mergeControls.style.display = 'none';
-            mergeModeBtn.innerHTML = '<i class="fas fa-merge"></i> Merge Users';
-            mergeModeBtn.className = 'btn btn-sm btn-purple';
-            selectedUsersForMerge.clear();
-            updateMergeSelection();
-            document.querySelectorAll('.user-stat-card.selected-for-merge').forEach(el => {
-                el.classList.remove('selected-for-merge');
-            });
-        }
-        renderAdminStats();
-    }
-
-    function toggleUserForMerge(username) {
-        if (!mergeMode) return;
-        if (username === userName) {
-            showToast('⛔ You cannot merge yourself.', true);
-            return;
-        }
-        if (username.toLowerCase() === 'admin') {
-            showToast('⛔ Cannot merge the admin account.', true);
-            return;
-        }
-        if (isUserRemoved(username)) {
-            showToast('⛔ Cannot merge a removed user.', true);
-            return;
-        }
-        
-        if (selectedUsersForMerge.has(username)) {
-            selectedUsersForMerge.delete(username);
-        } else {
-            selectedUsersForMerge.add(username);
-        }
-        updateMergeSelection();
-        renderAdminStats();
-    }
-
-    function updateMergeSelection() {
-        const count = selectedUsersForMerge.size;
-        selectedMergeCount.textContent = count;
-        
-        const mergeBtn = document.querySelector('#mergeControls .btn-success');
-        if (mergeBtn) {
-            if (count < 2) {
-                mergeBtn.disabled = true;
-                mergeBtn.style.opacity = '0.5';
-            } else {
-                mergeBtn.disabled = false;
-                mergeBtn.style.opacity = '1';
-            }
-        }
-    }
-
-    function confirmMergeUsers() {
-        if (selectedUsersForMerge.size < 2) {
-            showToast('⚠️ Please select at least 2 users to merge.', true);
-            return;
-        }
-        
-        const users = Array.from(selectedUsersForMerge);
-        mergeSelectedUsersList.innerHTML = users.map(u => 
-            `<span class="user-tag"><i class="fas fa-user"></i> ${u}</span>`
-        ).join(' ');
-        
-        const allUsers = new Set();
-        records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy) && !selectedUsersForMerge.has(r.addedBy)) {
-                allUsers.add(r.addedBy);
-            }
-        });
-        
-        mergeTargetUser.innerHTML = '<option value="">Select target user...</option>';
-        Array.from(allUsers).sort().forEach(u => {
-            const opt = document.createElement('option');
-            opt.value = u;
-            opt.textContent = u + (u === userName ? ' (You)' : '');
-            mergeTargetUser.appendChild(opt);
-        });
-        
-        mergeUsersModal.style.display = 'flex';
-    }
-
-    function closeMergeModal() {
-        mergeUsersModal.style.display = 'none';
-    }
-
-    function executeMerge() {
-        const targetUser = mergeTargetUser.value;
-        if (!targetUser) {
-            showToast('⚠️ Please select a target user.', true);
-            return;
-        }
-        
-        const usersToMerge = Array.from(selectedUsersForMerge);
-        
-        if (!confirm(`Are you sure you want to merge ${usersToMerge.length} user(s) into "${targetUser}"?\n\nThis action CANNOT be undone!`)) {
-            return;
-        }
-        
-        if (!confirm(`⚠️ FINAL WARNING: All records from ${usersToMerge.join(', ')} will be transferred to ${targetUser}. The original accounts will be removed. Continue?`)) {
-            return;
-        }
-        
-        setSyncStatus('Merging users...', 'syncing');
-        document.getElementById('executeMergeBtn').disabled = true;
-        document.getElementById('executeMergeBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Merging...';
-        
-        const recordsToTransfer = records.filter(r => usersToMerge.includes(r.addedBy));
-        let transferredCount = 0;
-        let errorCount = 0;
-        
-        const promises = recordsToTransfer.map(record => {
-            const firebaseKey = record._firebaseKey;
-            if (!firebaseKey) return Promise.resolve();
-            
-            const updatedRecord = {
-                ...record,
-                addedBy: targetUser,
-                mergedFrom: record.addedBy,
-                mergedAt: new Date().toISOString(),
-                mergedBy: userName
-            };
-            
-            return database.ref('censusRecords/' + firebaseKey).update(updatedRecord)
-                .then(() => {
-                    transferredCount++;
-                })
-                .catch(err => {
-                    console.error('Error transferring record:', err);
-                    errorCount++;
-                });
-        });
-        
-        Promise.all(promises).then(() => {
-            usersToMerge.forEach(user => {
-                if (!removedUsers.includes(user)) {
-                    removedUsers.push(user);
-                }
-            });
-            saveRemovedUsers();
-            
-            selectedUsersForMerge.clear();
-            mergeMode = false;
-            mergeControls.style.display = 'none';
-            mergeModeBtn.innerHTML = '<i class="fas fa-merge"></i> Merge Users';
-            mergeModeBtn.className = 'btn btn-sm btn-purple';
-            closeMergeModal();
-            document.getElementById('executeMergeBtn').disabled = false;
-            document.getElementById('executeMergeBtn').innerHTML = '<i class="fas fa-merge"></i> Merge Users';
-            
-            setSyncStatus('Synced', 'synced');
-            showToast(`✅ Merge complete! ${transferredCount} records transferred to "${targetUser}". ${usersToMerge.length} user(s) removed.`);
             
             database.ref('censusRecords').once('value');
         });
@@ -2143,7 +2238,12 @@
             removedUsersList.innerHTML = removedUsers.map(user => `
                 <div class="removed-user-item">
                     <span><i class="fas fa-user-slash" style="color:#6c757d;"></i> <strong>${user}</strong> <span style="font-size:0.6rem; color:#6c757d;">(removed)</span></span>
-                    <button class="restore-btn" onclick="restoreUser('${user}')"><i class="fas fa-undo"></i> Restore</button>
+                    <div style="display:flex; gap:4px;">
+                        <button class="btn btn-sm btn-purple" onclick="showRenameModal('${user}')" style="padding:2px 10px; font-size:0.6rem;">
+                            <i class="fas fa-user-edit"></i> Rename
+                        </button>
+                        <button class="restore-btn" onclick="restoreUser('${user}')"><i class="fas fa-undo"></i> Restore</button>
+                    </div>
                 </div>
             `).join('');
         } else {
@@ -2166,88 +2266,6 @@
         return removedUsers.includes(username);
     }
 
-    function showRemoveUserModal() {
-        if (!isAdmin) return;
-        
-        removeUserModal.style.display = 'flex';
-        
-        const users = new Set();
-        records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy)) {
-                users.add(r.addedBy);
-            }
-        });
-        
-        const userArray = Array.from(users).sort();
-        const currentUser = userName;
-        
-        if (userArray.length === 0) {
-            modalUserList.innerHTML = '<p style="text-align:center; color:#6a8ba0; padding:1rem;">No active team members found.</p>';
-            return;
-        }
-        
-        modalUserList.innerHTML = userArray.map(u => {
-            const isCurrent = u === currentUser;
-            const isAdminUser = u.toLowerCase() === 'admin';
-            const recordCount = records.filter(r => r.addedBy === u).length;
-            const isRemoved = isUserRemoved(u);
-            
-            return `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem; border-bottom:1px solid #e2ebf3; background:${isRemoved ? '#f8f9fa' : 'white'}; border-radius:6px; margin-bottom:4px;">
-                    <div>
-                        <strong style="color:${isRemoved ? '#6c757d' : '#0d3b52'};">${u} ${isCurrent ? '⭐' : ''} ${isAdminUser ? '🔑' : ''}</strong>
-                        <span style="font-size:0.7rem; color:#6a8ba0; margin-left:8px;">${recordCount} records</span>
-                        ${isRemoved ? '<span class="removed-badge">Removed</span>' : ''}
-                    </div>
-                    <div style="display:flex; gap:4px; align-items:center;">
-                        ${!isRemoved && !isAdminUser && u !== currentUser ? 
-                            `<button class="btn btn-sm btn-purple" onclick="showRenameModal('${u}')" style="padding:2px 10px; font-size:0.6rem;">
-                                <i class="fas fa-user-edit"></i> Rename
-                            </button>` : ''
-                        }
-                        ${!isRemoved && !isAdminUser && u !== currentUser ? 
-                            `<button class="btn btn-sm danger" onclick="removeUserFromTeam('${u}')" style="padding:2px 12px;">
-                                <i class="fas fa-user-minus"></i> Remove
-                            </button>` : 
-                            !isRemoved && u === currentUser ?
-                            `<span style="font-size:0.6rem; color:#6a8ba0;">(You)</span>` :
-                            !isRemoved && isAdminUser ?
-                            `<span style="font-size:0.6rem; color:#6a8ba0;">(Admin)</span>` :
-                            `<button class="btn btn-sm btn-success" onclick="restoreUser('${u}')" style="padding:2px 12px;">
-                                <i class="fas fa-undo"></i> Restore
-                            </button>`
-                        }
-                    </div>
-                </div>
-            `;
-        }).join('');
-        
-        if (removedUsers.length > 0) {
-            modalUserList.innerHTML += `
-                <div style="margin-top:1rem; padding-top:0.5rem; border-top:2px solid #f8d7da;">
-                    <h5 style="font-size:0.7rem; color:#721c24;"><i class="fas fa-user-slash"></i> Removed Users</h5>
-                    ${removedUsers.map(u => `
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.3rem 0.5rem; background:#f8f9fa; border-radius:6px; margin-bottom:2px;">
-                            <span style="color:#6c757d;"><i class="fas fa-user-slash"></i> ${u}</span>
-                            <div style="display:flex; gap:4px;">
-                                <button class="btn btn-sm btn-purple" onclick="showRenameModal('${u}')" style="padding:2px 10px; font-size:0.6rem;">
-                                    <i class="fas fa-user-edit"></i> Rename
-                                </button>
-                                <button class="btn btn-sm btn-success" onclick="restoreUser('${u}')" style="padding:2px 12px;">
-                                    <i class="fas fa-undo"></i> Restore
-                                </button>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-    }
-
-    function closeRemoveUserModal() {
-        removeUserModal.style.display = 'none';
-    }
-
     function removeUserFromTeam(username) {
         if (!isAdmin) return;
         if (username.toLowerCase() === 'admin') {
@@ -2268,7 +2286,6 @@
         removedUsers.push(username);
         saveRemovedUsers();
         showToast(`✅ ${username} has been removed from the team. Their records remain.`);
-        closeRemoveUserModal();
         updateAdminStats();
         updateUserList();
         renderTable();
@@ -2787,21 +2804,14 @@
             const isAdminUser = user.toLowerCase() === 'admin';
             const isCurrentUser = user === userName;
             const isRemoved = isUserRemoved(user);
-            const isSelected = mergeMode && selectedUsersForMerge.has(user);
             
             const card = document.createElement('div');
-            card.className = 'user-stat-card' + (isSelected ? ' selected-for-merge' : '');
+            card.className = 'user-stat-card';
             card.style.opacity = isRemoved ? '0.6' : '1';
             card.innerHTML = `
-                ${mergeMode && !isRemoved && !isAdminUser && user !== userName ? 
-                    `<input type="checkbox" class="merge-checkbox" ${isSelected ? 'checked' : ''} onclick="toggleUserForMerge('${user}')" title="Select for merge" />` : 
-                    mergeMode ? `<div style="width:16px; height:16px; display:inline-block;"></div>` : ''
-                }
-                <div class="user-name" style="${isRemoved ? 'text-decoration:line-through; color:#6c757d;' : ''}" onclick="${!isAdminUser && !isRemoved ? `showRenameModal('${user}')` : ''}">
+                <div class="user-name" style="${isRemoved ? 'text-decoration:line-through; color:#6c757d;' : ''}">
                     ${user} ${isAdminUser ? '🔑' : ''} ${isCurrentUser ? '★' : ''}
                     ${isRemoved ? '<span class="removed-badge">Removed</span>' : ''}
-                    ${isSelected ? '<span class="user-badge" style="background:#6f42c1; color:white;">Selected</span>' : ''}
-                    ${!isRemoved && !isAdminUser && user !== userName ? ' <span class="previous-name" style="font-size:0.55rem; color:#6a8ba0;">(click to rename)</span>' : ''}
                 </div>
                 <div class="user-count">📊 <span>${stats.count}</span> records</div>
                 <div class="user-totals">
@@ -2821,8 +2831,6 @@
                         <button class="btn btn-sm btn-purple" onclick="event.stopPropagation(); showRenameModal('${user}')" style="padding:2px 10px; font-size:0.6rem;">
                             <i class="fas fa-user-edit"></i> Rename
                         </button>
-                    ` : ''}
-                    ${!isRemoved && !isAdminUser && user !== userName && !mergeMode ? `
                         <button class="remove-user-btn" onclick="event.stopPropagation(); removeUserFromTeam('${user}')" title="Remove this user from the team">
                             <i class="fas fa-user-minus"></i> Remove
                         </button>
@@ -2832,14 +2840,14 @@
                             <i class="fas fa-undo"></i> Restore
                         </button>
                     ` : ''}
+                    ${isAdminUser ? `<span style="font-size:0.6rem; color:#6a8ba0;">Admin account</span>` : ''}
+                    ${user === userName && !isAdminUser ? `<span style="font-size:0.6rem; color:#6a8ba0;">(You)</span>` : ''}
                 </div>
             `;
             card.style.cursor = 'pointer';
             card.addEventListener('click', function(e) {
-                if (e.target.closest('.remove-user-btn') || e.target.closest('.merge-checkbox') || e.target.closest('.btn')) return;
-                if (mergeMode && !isRemoved && !isAdminUser && user !== userName) {
-                    toggleUserForMerge(user);
-                } else if (adminUserFilter.value === user) {
+                if (e.target.closest('.remove-user-btn') || e.target.closest('.btn')) return;
+                if (adminUserFilter.value === user) {
                     adminUserFilter.value = 'all';
                 } else {
                     adminUserFilter.value = user;
@@ -2871,7 +2879,6 @@
         userStatsGrid.appendChild(summaryCard);
         
         updateRemovedUsersUI();
-        updateMergeSelection();
     }
 
     // =============================================
@@ -4126,11 +4133,8 @@
     searchFieldSelect.addEventListener('change', applySearchFilter);
 
     // Close modals when clicking outside
-    removeUserModal.addEventListener('click', function(e) {
-        if (e.target === this) closeRemoveUserModal();
-    });
-    mergeUsersModal.addEventListener('click', function(e) {
-        if (e.target === this) closeMergeModal();
+    manageTeamModal.addEventListener('click', function(e) {
+        if (e.target === this) closeManageTeam();
     });
     renameUserModal.addEventListener('click', function(e) {
         if (e.target === this) closeRenameModal();
@@ -4175,9 +4179,8 @@
     console.log('✏️ Users can rename themselves (click name or Rename button)');
     console.log('👑 Admin can rename any user');
     console.log('🔄 Renamed records show previous name in history');
-    console.log('👑 Admin Dashboard: View team performance by user');
-    console.log('📅 Admin can filter by user and date range');
-    console.log('🚫 Removed users cannot log in');
+    console.log('📋 Manage Team: All team management in one place');
+    console.log('🔵 Manage Team button is blue');
     </script>
 </body>
 </html>
