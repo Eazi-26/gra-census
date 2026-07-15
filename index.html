@@ -184,6 +184,7 @@
             padding: 0.8rem 1rem;
             border: 1px solid #e2ebf3;
             transition: 0.2s;
+            position: relative;
         }
         .admin-stats .user-stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
         .admin-stats .user-stat-card .user-name { font-weight: 700; color: #0d3b52; font-size: 0.85rem; }
@@ -193,6 +194,37 @@
         .admin-stats .user-stat-card .user-totals span { font-weight: 600; color: #0d3b52; }
         .admin-stats .user-stat-card .user-badge { font-size: 0.6rem; padding: 1px 6px; border-radius: 10px; background: #d4edda; color: #155724; display: inline-block; }
         .admin-stats .user-stat-card .user-badge.admin { background: #f8d7da; color: #721c24; }
+        .admin-stats .user-stat-card .remove-user-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #b13e4b;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 2px 10px;
+            font-size: 0.6rem;
+            cursor: pointer;
+            transition: 0.2s;
+            opacity: 0.6;
+        }
+        .admin-stats .user-stat-card .remove-user-btn:hover {
+            opacity: 1;
+            background: #c44a58;
+            transform: scale(1.05);
+        }
+        .admin-stats .user-stat-card .remove-user-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .admin-stats .user-stat-card .removed-badge {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-size: 0.55rem;
+            font-weight: 600;
+        }
         
         /* Search Filter */
         .search-filter {
@@ -639,6 +671,7 @@
         .user-name.current-user { color: #1b6f9c; background: #e6f0f8; padding: 1px 6px; border-radius: 10px; }
         .user-name.other-user { color: #6f42c1; }
         .user-name.admin-user { color: #b13e4b; background: #fce8ea; padding: 1px 6px; border-radius: 10px; }
+        .user-name.removed-user { color: #6c757d; background: #e9ecef; padding: 1px 6px; border-radius: 10px; text-decoration: line-through; }
         
         /* Merge Section */
         .merge-section {
@@ -811,6 +844,35 @@
             outline: none;
         }
         
+        /* Removed Users Section */
+        .removed-users-section {
+            margin-top: 1rem;
+            border-top: 2px solid #f8d7da;
+            padding-top: 0.5rem;
+        }
+        .removed-users-section .removed-user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.3rem 0.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 0.2rem;
+        }
+        .removed-users-section .removed-user-item .restore-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 2px 12px;
+            font-size: 0.6rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .removed-users-section .removed-user-item .restore-btn:hover {
+            background: #34ce57;
+        }
+        
         @media (max-width: 480px) {
             body { padding: 0.5rem; }
             .card { padding: 0.8rem; border-radius: 14px; }
@@ -846,6 +908,7 @@
             .admin-stats .filter-controls { flex-direction: column; align-items: stretch; }
             .search-filter { flex-direction: column; align-items: stretch; }
             .search-filter .search-results { margin-left: 0; text-align: center; }
+            .admin-stats .user-stat-card .remove-user-btn { position: static; margin-top: 4px; }
         }
         
         @media (min-width: 481px) and (max-width: 768px) {
@@ -965,12 +1028,22 @@
                     <span style="font-size:0.75rem; color:#6a8ba0;">|</span>
                     <input type="date" id="adminDateFrom" style="max-width:140px;" />
                     <span style="font-size:0.75rem; color:#6a8ba0;">to</span>
-                    <input type="date" id="adminDateTo" style="max-width:140px;" />
+                    <input type="date" id="adminDateTo" style="max-width:140px" />
                     <button class="btn btn-sm btn-apply" onclick="applyAdminFilter()"><i class="fas fa-filter"></i> Apply</button>
                     <button class="btn btn-sm btn-reset" onclick="resetAdminFilter()"><i class="fas fa-undo"></i> Reset</button>
+                    <button class="btn btn-sm btn-danger" onclick="showRemoveUserModal()" style="margin-left:auto;">
+                        <i class="fas fa-user-minus"></i> Manage Team
+                    </button>
                 </div>
                 <div class="user-stats-grid" id="userStatsGrid">
                     <div style="text-align:center; color:#6a8ba0; padding:1rem; grid-column:1/-1;">Loading user statistics...</div>
+                </div>
+                <!-- Removed Users Section -->
+                <div class="removed-users-section" id="removedUsersSection" style="display:none;">
+                    <h5 style="font-size:0.75rem; color:#721c24; margin-bottom:0.3rem;">
+                        <i class="fas fa-user-slash"></i> Removed Users
+                    </h5>
+                    <div id="removedUsersList"></div>
                 </div>
             </div>
 
@@ -1224,6 +1297,24 @@
         </div>
     </div>
 
+    <!-- ============================================= -->
+    <!-- REMOVE USER MODAL -->
+    <!-- ============================================= -->
+    <div id="removeUserModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10000; backdrop-filter:blur(3px); align-items:center; justify-content:center; padding:1rem;">
+        <div style="background:white; border-radius:24px; padding:2rem; max-width:500px; width:100%; max-height:90vh; overflow-y:auto;">
+            <h3 style="color:#0d3b52; margin-bottom:0.5rem;"><i class="fas fa-user-minus" style="color:#b13e4b;"></i> Manage Team Members</h3>
+            <p style="color:#6a8ba0; font-size:0.85rem; margin-bottom:1rem;">Remove users who are no longer on the team. Their records will remain but show as "Removed".</p>
+            
+            <div id="modalUserList">
+                <p style="text-align:center; color:#6a8ba0; padding:1rem;">Loading users...</p>
+            </div>
+            
+            <div style="margin-top:1rem; border-top:1px solid #e2ebf3; padding-top:1rem;">
+                <button class="btn btn-secondary" onclick="closeRemoveUserModal()" style="width:100%;"><i class="fas fa-times"></i> Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -1259,6 +1350,7 @@
     let duplicateDetected = false;
     let searchTerm = '';
     let searchField = 'all';
+    let removedUsers = [];
 
     // Pagination variables
     let currentPage = 1;
@@ -1326,6 +1418,10 @@
     const adminUserFilter = document.getElementById('adminUserFilter');
     const adminDateFrom = document.getElementById('adminDateFrom');
     const adminDateTo = document.getElementById('adminDateTo');
+    const removeUserModal = document.getElementById('removeUserModal');
+    const modalUserList = document.getElementById('modalUserList');
+    const removedUsersSection = document.getElementById('removedUsersSection');
+    const removedUsersList = document.getElementById('removedUsersList');
 
     // Search DOM refs
     const searchInput = document.getElementById('searchInput');
@@ -1348,6 +1444,185 @@
     const toast = document.getElementById('toast');
     const toastMessage = document.getElementById('toastMessage');
 
+    // =============================================
+    // REMOVED USERS MANAGEMENT
+    // =============================================
+    function loadRemovedUsers() {
+        try {
+            const stored = localStorage.getItem('removedUsers');
+            if (stored) {
+                removedUsers = JSON.parse(stored);
+            } else {
+                removedUsers = [];
+            }
+        } catch (e) {
+            removedUsers = [];
+        }
+        updateRemovedUsersUI();
+    }
+
+    function saveRemovedUsers() {
+        try {
+            localStorage.setItem('removedUsers', JSON.stringify(removedUsers));
+        } catch (e) {
+            console.error('Error saving removed users:', e);
+        }
+        updateRemovedUsersUI();
+    }
+
+    function updateRemovedUsersUI() {
+        if (removedUsers.length > 0) {
+            removedUsersSection.style.display = 'block';
+            removedUsersList.innerHTML = removedUsers.map(user => `
+                <div class="removed-user-item">
+                    <span><i class="fas fa-user-slash" style="color:#6c757d;"></i> <strong>${user}</strong> <span style="font-size:0.6rem; color:#6c757d;">(removed)</span></span>
+                    <button class="restore-btn" onclick="restoreUser('${user}')"><i class="fas fa-undo"></i> Restore</button>
+                </div>
+            `).join('');
+        } else {
+            removedUsersSection.style.display = 'none';
+        }
+    }
+
+    function restoreUser(username) {
+        if (!confirm(`Restore "${username}" to the team? They will be able to log in again.`)) return;
+        
+        removedUsers = removedUsers.filter(u => u !== username);
+        saveRemovedUsers();
+        showToast(`✅ ${username} has been restored to the team`);
+        updateAdminStats();
+        updateUserList();
+        renderTable();
+    }
+
+    function isUserRemoved(username) {
+        return removedUsers.includes(username);
+    }
+
+    function showRemoveUserModal() {
+        if (!isAdmin) return;
+        
+        removeUserModal.style.display = 'flex';
+        
+        const users = new Set();
+        records.forEach(r => {
+            if (r.addedBy && !isUserRemoved(r.addedBy)) {
+                users.add(r.addedBy);
+            }
+        });
+        
+        const userArray = Array.from(users).sort();
+        const currentUser = userName;
+        
+        if (userArray.length === 0) {
+            modalUserList.innerHTML = '<p style="text-align:center; color:#6a8ba0; padding:1rem;">No active team members found.</p>';
+            return;
+        }
+        
+        modalUserList.innerHTML = userArray.map(u => {
+            const isCurrent = u === currentUser;
+            const isAdminUser = u.toLowerCase() === 'admin';
+            const recordCount = records.filter(r => r.addedBy === u).length;
+            const isRemoved = isUserRemoved(u);
+            
+            return `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem; border-bottom:1px solid #e2ebf3; background:${isRemoved ? '#f8f9fa' : 'white'}; border-radius:6px; margin-bottom:4px;">
+                    <div>
+                        <strong style="color:${isRemoved ? '#6c757d' : '#0d3b52'};">${u} ${isCurrent ? '⭐' : ''} ${isAdminUser ? '🔑' : ''}</strong>
+                        <span style="font-size:0.7rem; color:#6a8ba0; margin-left:8px;">${recordCount} records</span>
+                        ${isRemoved ? '<span class="removed-badge">Removed</span>' : ''}
+                    </div>
+                    <div>
+                        ${!isRemoved && !isAdminUser && u !== currentUser ? 
+                            `<button class="btn btn-sm danger" onclick="removeUserFromTeam('${u}')" style="padding:2px 12px;">
+                                <i class="fas fa-user-minus"></i> Remove
+                            </button>` : 
+                            !isRemoved && u === currentUser ?
+                            `<span style="font-size:0.6rem; color:#6a8ba0;">(You)</span>` :
+                            !isRemoved && isAdminUser ?
+                            `<span style="font-size:0.6rem; color:#6a8ba0;">(Admin)</span>` :
+                            `<button class="btn btn-sm btn-success" onclick="restoreUser('${u}')" style="padding:2px 12px;">
+                                <i class="fas fa-undo"></i> Restore
+                            </button>`
+                        }
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // Show removed users in modal too
+        if (removedUsers.length > 0) {
+            modalUserList.innerHTML += `
+                <div style="margin-top:1rem; padding-top:0.5rem; border-top:2px solid #f8d7da;">
+                    <h5 style="font-size:0.7rem; color:#721c24;"><i class="fas fa-user-slash"></i> Removed Users</h5>
+                    ${removedUsers.map(u => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.3rem 0.5rem; background:#f8f9fa; border-radius:6px; margin-bottom:2px;">
+                            <span style="color:#6c757d;"><i class="fas fa-user-slash"></i> ${u}</span>
+                            <button class="btn btn-sm btn-success" onclick="restoreUser('${u}')" style="padding:2px 12px;">
+                                <i class="fas fa-undo"></i> Restore
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+    }
+
+    function closeRemoveUserModal() {
+        removeUserModal.style.display = 'none';
+    }
+
+    function removeUserFromTeam(username) {
+        if (!isAdmin) return;
+        if (username.toLowerCase() === 'admin') {
+            showToast('⛔ Cannot remove the Admin user.', true);
+            return;
+        }
+        if (username === userName) {
+            showToast('⛔ You cannot remove yourself.', true);
+            return;
+        }
+        
+        const recordCount = records.filter(r => r.addedBy === username).length;
+        
+        if (!confirm(`Remove "${username}" from the team?\n\nThey have ${recordCount} record(s) in the system.\n- Their records will remain but show as "Removed"\n- They will no longer be able to log in`)) {
+            return;
+        }
+        
+        removedUsers.push(username);
+        saveRemovedUsers();
+        showToast(`✅ ${username} has been removed from the team. Their records remain.`);
+        closeRemoveUserModal();
+        updateAdminStats();
+        updateUserList();
+        renderTable();
+    }
+
+    // =============================================
+    // UNIQUE USERNAME CHECK - Updated to check removed users
+    // =============================================
+    function checkUsernameAvailability(name) {
+        if (!name) return true;
+        const users = new Set();
+        records.forEach(r => {
+            if (r.addedBy && !isUserRemoved(r.addedBy)) users.add(r.addedBy);
+        });
+        if (name.toLowerCase() === 'admin') {
+            return true;
+        }
+        const nameLower = name.toLowerCase();
+        for (let user of users) {
+            if (user.toLowerCase() === nameLower) {
+                return false;
+            }
+        }
+        // Check if user is in removed list
+        if (isUserRemoved(name)) {
+            return false;
+        }
+        return true;
+    }
+
     function showToast(message, isError = false) {
         toastMessage.textContent = message;
         toast.className = 'toast show';
@@ -1366,27 +1641,6 @@
         if (type === 'synced') syncStatus.innerHTML = '<i class="fas fa-check-circle"></i> Synced';
         else if (type === 'syncing') syncStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
         else if (type === 'error') syncStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error';
-    }
-
-    // =============================================
-    // UNIQUE USERNAME CHECK
-    // =============================================
-    function checkUsernameAvailability(name) {
-        if (!name) return true;
-        const users = new Set();
-        records.forEach(r => {
-            if (r.addedBy) users.add(r.addedBy);
-        });
-        if (name.toLowerCase() === 'admin') {
-            return true;
-        }
-        const nameLower = name.toLowerCase();
-        for (let user of users) {
-            if (user.toLowerCase() === nameLower) {
-                return false;
-            }
-        }
-        return true;
     }
 
     // =============================================
@@ -1453,19 +1707,16 @@
                 };
 
                 if (searchField === 'all') {
-                    // Search all fields
                     return Object.values(searchableFields).some(value =>
                         value.toLowerCase().includes(searchTerm)
                     );
                 } else {
-                    // Search specific field
                     const fieldValue = searchableFields[searchField] || '';
                     return fieldValue.toLowerCase().includes(searchTerm);
                 }
             });
         }
 
-        // Reset to first page when searching
         currentPage = 1;
         updatePagination();
         renderTable();
@@ -1514,6 +1765,7 @@
         const isAvailable = checkUsernameAvailability(name);
         if (!isAvailable && name.toLowerCase() !== 'admin') {
             usernameError.style.display = 'block';
+            usernameError.textContent = '⚠️ This username is no longer active or taken. Please contact admin.';
         } else {
             usernameError.style.display = 'none';
         }
@@ -1532,7 +1784,8 @@
             const isAvailable = checkUsernameAvailability(name);
             if (!isAvailable) {
                 usernameError.style.display = 'block';
-                loginError.textContent = 'This username is already taken. Please choose another name.';
+                usernameError.textContent = '⚠️ This username is no longer active or taken. Please contact admin.';
+                loginError.textContent = 'This username is no longer active on the team.';
                 loginError.style.display = 'block';
                 loginName.focus();
                 return;
@@ -1635,6 +1888,14 @@
         const storedAdmin = localStorage.getItem('censusIsAdmin') === 'true';
         
         if (storedName) {
+            // Check if user has been removed
+            if (storedName.toLowerCase() !== 'admin' && isUserRemoved(storedName)) {
+                localStorage.removeItem('censusUserName');
+                localStorage.removeItem('censusIsAdmin');
+                showToast('⚠️ Your account has been deactivated. Contact admin.', true);
+                return;
+            }
+            
             isAdmin = storedAdmin;
             userName = storedName;
             isLoggedIn = true;
@@ -1697,25 +1958,28 @@
     }
 
     // =============================================
-    // PERMISSION CHECKS
+    // PERMISSION CHECKS - Updated for removed users
     // =============================================
     function canEditRecord(record) {
         if (isAdmin) return true;
+        if (isUserRemoved(record.addedBy)) return false;
         return record.addedBy === userName;
     }
 
     function canDeleteRecord(record) {
         if (isAdmin) return true;
+        if (isUserRemoved(record.addedBy)) return false;
         return record.addedBy === userName;
     }
 
     function canViewRecord(record) {
         if (isAdmin) return true;
+        if (isUserRemoved(record.addedBy)) return false;
         return record.addedBy === userName;
     }
 
     // =============================================
-    // ADMIN STATS
+    // ADMIN STATS - Updated for removed users
     // =============================================
     function updateAdminStats() {
         if (!isAdmin) {
@@ -1726,7 +1990,9 @@
         adminStatsPanel.classList.add('visible');
         
         const users = new Set();
-        records.forEach(r => { if (r.addedBy) users.add(r.addedBy); });
+        records.forEach(r => {
+            if (r.addedBy && !isUserRemoved(r.addedBy)) users.add(r.addedBy);
+        });
         const userArray = Array.from(users).sort();
         
         const currentFilter = adminUserFilter.value;
@@ -1734,10 +2000,24 @@
         userArray.forEach(u => {
             const option = document.createElement('option');
             option.value = u;
-            option.textContent = u + (u.toLowerCase() === 'admin' ? ' 🔑' : '');
+            option.textContent = u + (u.toLowerCase() === 'admin' ? ' 🔑' : '') + (u === userName ? ' ★' : '');
             if (u === currentFilter) option.selected = true;
             adminUserFilter.appendChild(option);
         });
+        
+        // Add removed users to filter
+        if (removedUsers.length > 0) {
+            const optGroup = document.createElement('optgroup');
+            optGroup.label = 'Removed Users';
+            removedUsers.forEach(u => {
+                const option = document.createElement('option');
+                option.value = u;
+                option.textContent = u + ' (removed)';
+                if (u === currentFilter) option.selected = true;
+                optGroup.appendChild(option);
+            });
+            adminUserFilter.appendChild(optGroup);
+        }
         
         applyAdminFilter();
     }
@@ -1833,11 +2113,16 @@
             
             const isAdminUser = user.toLowerCase() === 'admin';
             const isCurrentUser = user === userName;
+            const isRemoved = isUserRemoved(user);
             
             const card = document.createElement('div');
             card.className = 'user-stat-card';
+            card.style.opacity = isRemoved ? '0.6' : '1';
             card.innerHTML = `
-                <div class="user-name">${user} ${isAdminUser ? '🔑' : ''} ${isCurrentUser ? '★' : ''}</div>
+                <div class="user-name" style="${isRemoved ? 'text-decoration:line-through; color:#6c757d;' : ''}">
+                    ${user} ${isAdminUser ? '🔑' : ''} ${isCurrentUser ? '★' : ''}
+                    ${isRemoved ? '<span class="removed-badge">Removed</span>' : ''}
+                </div>
                 <div class="user-count">📊 <span>${stats.count}</span> records</div>
                 <div class="user-totals">
                     ₵${stats.totalLiability.toFixed(2)} liability · 
@@ -1849,10 +2134,22 @@
                         ${isAdminUser ? '👑 Admin' : '👤 User'}
                     </span>
                     ${stats.count > 0 ? `<span class="user-badge" style="background:#e8f0fe; color:#1b6f9c;">${stats.count} record${stats.count > 1 ? 's' : ''}</span>` : ''}
+                    ${isRemoved ? `<span class="user-badge" style="background:#f8d7da; color:#721c24;">🚫 Removed</span>` : ''}
                 </div>
+                ${!isRemoved && !isAdminUser && user !== userName ? `
+                    <button class="remove-user-btn" onclick="removeUserFromTeam('${user}')" title="Remove this user from the team">
+                        <i class="fas fa-user-minus"></i> Remove
+                    </button>
+                ` : ''}
+                ${isRemoved ? `
+                    <button class="remove-user-btn" onclick="restoreUser('${user}')" style="background:#28a745; opacity:0.7;" title="Restore this user">
+                        <i class="fas fa-undo"></i> Restore
+                    </button>
+                ` : ''}
             `;
             card.style.cursor = 'pointer';
-            card.addEventListener('click', function() {
+            card.addEventListener('click', function(e) {
+                if (e.target.closest('.remove-user-btn')) return;
                 if (adminUserFilter.value === user) {
                     adminUserFilter.value = 'all';
                 } else {
@@ -1863,6 +2160,7 @@
             userStatsGrid.appendChild(card);
         });
         
+        // Summary card
         const summaryCard = document.createElement('div');
         summaryCard.className = 'user-stat-card';
         summaryCard.style.background = '#0d3b52';
@@ -1877,10 +2175,14 @@
                 ₵${totalOutstanding.toFixed(2)} total outstanding
             </div>
             <div style="margin-top:4px;">
-                <span class="user-badge" style="background:#cce5ff; color:#004085;">${userNames.length} team members</span>
+                <span class="user-badge" style="background:#cce5ff; color:#004085;">${userNames.length} active team members</span>
+                ${removedUsers.length > 0 ? `<span class="user-badge" style="background:#f8d7da; color:#721c24;">${removedUsers.length} removed</span>` : ''}
             </div>
         `;
         userStatsGrid.appendChild(summaryCard);
+        
+        // Update removed users section
+        updateRemovedUsersUI();
     }
 
     // =============================================
@@ -1919,7 +2221,7 @@
             userRoleDisplay.textContent = '🔑 Admin';
             userRoleDisplay.style.background = '#f8d7da';
             userRoleDisplay.style.color = '#721c24';
-            permissionInfo.innerHTML = '<i class="fas fa-crown"></i> Admin: Can view, edit and delete ALL records';
+            permissionInfo.innerHTML = '<i class="fas fa-crown"></i> Admin: Can view, edit and delete ALL records. Can manage team members.';
             clearAllBtn.style.display = 'inline-flex';
             adminStatsPanel.classList.add('visible');
         } else {
@@ -2057,14 +2359,19 @@
     }
 
     // =============================================
-    // UPDATE USER LIST
+    // UPDATE USER LIST - Updated for removed users
     // =============================================
     function updateUserList() {
         const users = new Set();
-        records.forEach(r => { if (r.addedBy) users.add(r.addedBy); });
-        if (users.size === 0) { userListSpan.textContent = 'No team members yet'; return; }
+        records.forEach(r => { 
+            if (r.addedBy && !isUserRemoved(r.addedBy)) users.add(r.addedBy); 
+        });
+        if (users.size === 0) { 
+            userListSpan.textContent = 'No active team members'; 
+            return; 
+        }
         const sortedUsers = Array.from(users).sort();
-        userListSpan.innerHTML = sortedUsers.map(u => {
+        let html = sortedUsers.map(u => {
             const isAdminUser = u.toLowerCase() === 'admin';
             if (u === userName) {
                 return `<span style="background:#1b6f9c; color:white; padding:1px 8px; border-radius:10px; font-weight:600;">${u} (You)${isAdminUser ? ' 🔑' : ''}</span>`;
@@ -2074,6 +2381,11 @@
             }
             return `<span style="background:#e8e0f0; color:#6f42c1; padding:1px 8px; border-radius:10px;">${u}</span>`;
         }).join(' ');
+        
+        if (removedUsers.length > 0) {
+            html += ` <span style="font-size:0.55rem; color:#6c757d; margin-left:4px;">| ${removedUsers.length} removed</span>`;
+        }
+        userListSpan.innerHTML = html;
     }
 
     // =============================================
@@ -2123,7 +2435,6 @@
             records = mergedRecords;
             records.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             
-            // Apply search filter
             if (searchTerm) {
                 applySearchFilter();
             } else {
@@ -2140,7 +2451,6 @@
             lastUpdatedSpan.textContent = 'Updated: ' + getTimestamp();
             setSyncStatus('Synced', 'synced');
             
-            // Save local records to localStorage
             try {
                 const localOnlyRecords = records.filter(r => r._source === 'local' || !r._firebaseKey);
                 if (localOnlyRecords.length > 0) {
@@ -2538,7 +2848,7 @@
     }
 
     // =============================================
-    // RENDER TABLE
+    // RENDER TABLE - Updated for removed users
     // =============================================
     function renderTable() {
         tableBody.innerHTML = '';
@@ -2574,6 +2884,7 @@
             const actualIndex = records.findIndex(r => r._firebaseKey === rec._firebaseKey);
             const canEdit = canEditRecord(rec);
             const canDelete = canDeleteRecord(rec);
+            const isRemoved = isUserRemoved(rec.addedBy);
             
             const cells = [
                 rec.tin || '—', rec.name || '—', rec.telephone || '—', rec.email || '—',
@@ -2583,8 +2894,7 @@
             
             const statusCell = document.createElement('td');
             const status = rec.fileStatus || '—';
-            const statusClass = status.toLowerCase();
-            statusCell.innerHTML = `<span class="status-${statusClass}">${status}</span>`;
+            statusCell.innerHTML = `<span class="status-${status.toLowerCase()}">${status}</span>`;
             row.appendChild(statusCell);
             
             const taxTypesCell = document.createElement('td');
@@ -2606,7 +2916,10 @@
             const span = document.createElement('span');
             span.textContent = addedBy;
             span.className = 'user-name';
-            if (addedBy.toLowerCase() === 'admin') {
+            if (isRemoved) {
+                span.className += ' removed-user';
+                span.textContent = addedBy + ' 🚫';
+            } else if (addedBy.toLowerCase() === 'admin') {
                 span.className += ' admin-user';
                 span.textContent = addedBy + ' 🔑';
             } else if (addedBy === userName) {
@@ -3109,9 +3422,15 @@
     searchInput.addEventListener('input', applySearchFilter);
     searchFieldSelect.addEventListener('change', applySearchFilter);
 
+    // Close modal when clicking outside
+    removeUserModal.addEventListener('click', function(e) {
+        if (e.target === this) closeRemoveUserModal();
+    });
+
     // =============================================
     // INITIALIZE
     // =============================================
+    loadRemovedUsers();
     checkAutoLogin();
     
     if (!isLoggedIn) {
@@ -3125,7 +3444,7 @@
     console.log('👑 Admin username: Admin');
     console.log('🔑 Admin password: Eazi_2605');
     console.log('🛡️ Unique username enforcement active');
-    console.log('👑 Admin: Can view, edit, and delete ALL user data');
+    console.log('👑 Admin: Can view, edit, delete ALL records & manage team members');
     console.log('🔍 Search filter added: Search by TIN, Name, Location, etc.');
     console.log('📱 Fully responsive design');
     console.log('💰 Using Ghana Cedi sign: ₵');
@@ -3138,6 +3457,9 @@
     console.log('📊 Source column shows Offline vs Synced records');
     console.log('👑 Admin Dashboard: View team performance by user');
     console.log('📅 Admin can filter by user and date range');
+    console.log('👥 Admin can remove users from the team');
+    console.log('🔄 Removed users can be restored');
+    console.log('🚫 Removed users cannot log in');
     </script>
 </body>
 </html>
