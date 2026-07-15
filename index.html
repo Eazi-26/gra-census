@@ -173,6 +173,8 @@
         .admin-stats .filter-controls .btn-apply:hover { background: #134b66; }
         .admin-stats .filter-controls .btn-reset { background: #1b6f9c; color: white; }
         .admin-stats .filter-controls .btn-reset:hover { background: #134b66; }
+        .admin-stats .filter-controls .btn-merge-users { background: #6f42c1; color: white; }
+        .admin-stats .filter-controls .btn-merge-users:hover { background: #7c4fd3; }
         .admin-stats .user-stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -224,6 +226,19 @@
             border-radius: 10px;
             font-size: 0.55rem;
             font-weight: 600;
+        }
+        .admin-stats .user-stat-card .merge-checkbox {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 16px;
+            height: 16px;
+            accent-color: #6f42c1;
+            cursor: pointer;
+        }
+        .admin-stats .user-stat-card.selected-for-merge {
+            border: 2px solid #6f42c1;
+            background: #f3edf9;
         }
         
         /* Search Filter */
@@ -463,6 +478,8 @@
         .btn-sm:hover { background: #eaf2f9; border-color: #1b6f9c; }
         .btn-sm.danger { color: #b13e4b; border-color: #b13e4b; }
         .btn-sm.danger:hover { background: #fce8ea; }
+        .btn-purple { background: #6f42c1; color: white; }
+        .btn-purple:hover { background: #7c4fd3; }
         
         .actions {
             display: flex;
@@ -672,6 +689,7 @@
         .user-name.other-user { color: #6f42c1; }
         .user-name.admin-user { color: #b13e4b; background: #fce8ea; padding: 1px 6px; border-radius: 10px; }
         .user-name.removed-user { color: #6c757d; background: #e9ecef; padding: 1px 6px; border-radius: 10px; text-decoration: line-through; }
+        .user-name.merged-user { color: #6f42c1; background: #f3edf9; padding: 1px 6px; border-radius: 10px; }
         
         /* Merge Section */
         .merge-section {
@@ -873,6 +891,93 @@
             background: #34ce57;
         }
         
+        /* Merge Users Modal */
+        #mergeUsersModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 10001;
+            backdrop-filter: blur(3px);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        #mergeUsersModal .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        #mergeUsersModal .modal-content h3 {
+            color: #0d3b52;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #mergeUsersModal .modal-content .selected-users-list {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 0.8rem;
+            margin: 0.8rem 0;
+            border: 1px solid #e2ebf3;
+        }
+        #mergeUsersModal .modal-content .selected-users-list .user-tag {
+            display: inline-block;
+            background: #6f42c1;
+            color: white;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            margin: 2px 4px 2px 0;
+        }
+        #mergeUsersModal .modal-content .target-user-select {
+            margin: 0.8rem 0;
+        }
+        #mergeUsersModal .modal-content .target-user-select select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #d4e0ea;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+        #mergeUsersModal .modal-content .target-user-select select:focus {
+            border-color: #6f42c1;
+            box-shadow: 0 0 0 3px rgba(111,66,193,0.1);
+        }
+        #mergeUsersModal .modal-content .warning-box {
+            background: #fff3cd;
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            margin: 0.8rem 0;
+            border: 1px solid #d4a017;
+        }
+        #mergeUsersModal .modal-content .warning-box .warning-title {
+            font-weight: 700;
+            color: #856404;
+            font-size: 0.85rem;
+        }
+        #mergeUsersModal .modal-content .warning-box .warning-text {
+            color: #856404;
+            font-size: 0.75rem;
+            margin-top: 2px;
+        }
+        #mergeUsersModal .modal-content .modal-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        #mergeUsersModal .modal-content .modal-actions .btn { flex: 1; justify-content: center; }
+        
         @media (max-width: 480px) {
             body { padding: 0.5rem; }
             .card { padding: 0.8rem; border-radius: 14px; }
@@ -909,6 +1014,7 @@
             .search-filter { flex-direction: column; align-items: stretch; }
             .search-filter .search-results { margin-left: 0; text-align: center; }
             .admin-stats .user-stat-card .remove-user-btn { position: static; margin-top: 4px; }
+            #mergeUsersModal .modal-content { padding: 1.5rem; margin: 0.5rem; }
         }
         
         @media (min-width: 481px) and (max-width: 768px) {
@@ -1031,6 +1137,9 @@
                     <input type="date" id="adminDateTo" style="max-width:140px" />
                     <button class="btn btn-sm btn-apply" onclick="applyAdminFilter()"><i class="fas fa-filter"></i> Apply</button>
                     <button class="btn btn-sm btn-reset" onclick="resetAdminFilter()"><i class="fas fa-undo"></i> Reset</button>
+                    <button class="btn btn-sm btn-purple" onclick="toggleMergeMode()" id="mergeModeBtn">
+                        <i class="fas fa-merge"></i> Merge Users
+                    </button>
                     <button class="btn btn-sm btn-danger" onclick="showRemoveUserModal()" style="margin-left:auto;">
                         <i class="fas fa-user-minus"></i> Manage Team
                     </button>
@@ -1044,6 +1153,21 @@
                         <i class="fas fa-user-slash"></i> Removed Users
                     </h5>
                     <div id="removedUsersList"></div>
+                </div>
+                <!-- Merge Controls -->
+                <div id="mergeControls" style="display:none; margin-top:1rem; padding:1rem; background:#f3edf9; border-radius:12px; border:2px solid #6f42c1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                        <span style="font-weight:600; color:#6f42c1;">
+                            <i class="fas fa-merge"></i> Merge Mode: <span id="selectedMergeCount">0</span> users selected
+                        </span>
+                        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                            <button class="btn btn-sm btn-success" onclick="confirmMergeUsers()"><i class="fas fa-merge"></i> Merge Selected</button>
+                            <button class="btn btn-sm btn-secondary" onclick="toggleMergeMode()"><i class="fas fa-times"></i> Cancel</button>
+                        </div>
+                    </div>
+                    <div style="font-size:0.7rem; color:#6a8ba0; margin-top:0.3rem;">
+                        <i class="fas fa-info-circle"></i> Select 2 or more users to merge them into one. All records will be transferred to the target user.
+                    </div>
                 </div>
             </div>
 
@@ -1315,6 +1439,46 @@
         </div>
     </div>
 
+    <!-- ============================================= -->
+    <!-- MERGE USERS MODAL -->
+    <!-- ============================================= -->
+    <div id="mergeUsersModal">
+        <div class="modal-content">
+            <h3><i class="fas fa-merge" style="color:#6f42c1;"></i> Merge Users</h3>
+            <p style="color:#6a8ba0; font-size:0.85rem; margin-bottom:0.5rem;">
+                You are about to merge the following users into one account. All their records will be transferred.
+            </p>
+            
+            <div class="selected-users-list" id="mergeSelectedUsersList">
+                <span style="color:#6a8ba0; font-size:0.8rem;">Loading selected users...</span>
+            </div>
+            
+            <div class="target-user-select">
+                <label style="font-weight:600; font-size:0.8rem; color:#1e4a62; display:block; margin-bottom:4px;">
+                    <i class="fas fa-arrow-right"></i> Target User (keep this account)
+                </label>
+                <select id="mergeTargetUser">
+                    <option value="">Select target user...</option>
+                </select>
+            </div>
+            
+            <div class="warning-box">
+                <div class="warning-title"><i class="fas fa-exclamation-triangle"></i> Important</div>
+                <div class="warning-text">
+                    • All records from the selected users will be transferred to the target user<br>
+                    • The original user accounts will be <strong>removed</strong> from the team<br>
+                    • This action <strong>cannot be undone</strong> without restoring from backup<br>
+                    • Merged records will show the original user's name in the "Merged From" field
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeMergeModal()"><i class="fas fa-times"></i> Cancel</button>
+                <button class="btn btn-purple" id="executeMergeBtn" onclick="executeMerge()"><i class="fas fa-merge"></i> Merge Users</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -1351,6 +1515,8 @@
     let searchTerm = '';
     let searchField = 'all';
     let removedUsers = [];
+    let mergeMode = false;
+    let selectedUsersForMerge = new Set();
 
     // Pagination variables
     let currentPage = 1;
@@ -1422,6 +1588,12 @@
     const modalUserList = document.getElementById('modalUserList');
     const removedUsersSection = document.getElementById('removedUsersSection');
     const removedUsersList = document.getElementById('removedUsersList');
+    const mergeControls = document.getElementById('mergeControls');
+    const selectedMergeCount = document.getElementById('selectedMergeCount');
+    const mergeModeBtn = document.getElementById('mergeModeBtn');
+    const mergeUsersModal = document.getElementById('mergeUsersModal');
+    const mergeSelectedUsersList = document.getElementById('mergeSelectedUsersList');
+    const mergeTargetUser = document.getElementById('mergeTargetUser');
 
     // Search DOM refs
     const searchInput = document.getElementById('searchInput');
@@ -1443,6 +1615,187 @@
 
     const toast = document.getElementById('toast');
     const toastMessage = document.getElementById('toastMessage');
+
+    // =============================================
+    // MERGE USERS FUNCTIONS
+    // =============================================
+    function toggleMergeMode() {
+        if (!isAdmin) {
+            showToast('⛔ Only admin can merge users.', true);
+            return;
+        }
+        
+        mergeMode = !mergeMode;
+        if (mergeMode) {
+            mergeControls.style.display = 'block';
+            mergeModeBtn.innerHTML = '<i class="fas fa-times"></i> Cancel Merge';
+            mergeModeBtn.className = 'btn btn-sm btn-secondary';
+            selectedUsersForMerge.clear();
+            updateMergeSelection();
+            showToast('🔀 Merge mode activated. Select users to merge.');
+        } else {
+            mergeControls.style.display = 'none';
+            mergeModeBtn.innerHTML = '<i class="fas fa-merge"></i> Merge Users';
+            mergeModeBtn.className = 'btn btn-sm btn-purple';
+            selectedUsersForMerge.clear();
+            updateMergeSelection();
+            // Remove highlight from all cards
+            document.querySelectorAll('.user-stat-card.selected-for-merge').forEach(el => {
+                el.classList.remove('selected-for-merge');
+            });
+        }
+        renderAdminStats();
+    }
+
+    function toggleUserForMerge(username) {
+        if (!mergeMode) return;
+        if (username === userName) {
+            showToast('⛔ You cannot merge yourself.', true);
+            return;
+        }
+        if (username.toLowerCase() === 'admin') {
+            showToast('⛔ Cannot merge the admin account.', true);
+            return;
+        }
+        if (isUserRemoved(username)) {
+            showToast('⛔ Cannot merge a removed user.', true);
+            return;
+        }
+        
+        if (selectedUsersForMerge.has(username)) {
+            selectedUsersForMerge.delete(username);
+        } else {
+            selectedUsersForMerge.add(username);
+        }
+        updateMergeSelection();
+        renderAdminStats();
+    }
+
+    function updateMergeSelection() {
+        const count = selectedUsersForMerge.size;
+        selectedMergeCount.textContent = count;
+        
+        if (count < 2) {
+            document.querySelector('#mergeControls .btn-success').disabled = true;
+            document.querySelector('#mergeControls .btn-success').style.opacity = '0.5';
+        } else {
+            document.querySelector('#mergeControls .btn-success').disabled = false;
+            document.querySelector('#mergeControls .btn-success').style.opacity = '1';
+        }
+    }
+
+    function confirmMergeUsers() {
+        if (selectedUsersForMerge.size < 2) {
+            showToast('⚠️ Please select at least 2 users to merge.', true);
+            return;
+        }
+        
+        // Prepare modal
+        const users = Array.from(selectedUsersForMerge);
+        mergeSelectedUsersList.innerHTML = users.map(u => 
+            `<span class="user-tag"><i class="fas fa-user"></i> ${u}</span>`
+        ).join(' ');
+        
+        // Populate target user dropdown
+        const allUsers = new Set();
+        records.forEach(r => {
+            if (r.addedBy && !isUserRemoved(r.addedBy) && !selectedUsersForMerge.has(r.addedBy)) {
+                allUsers.add(r.addedBy);
+            }
+        });
+        
+        mergeTargetUser.innerHTML = '<option value="">Select target user...</option>';
+        Array.from(allUsers).sort().forEach(u => {
+            const opt = document.createElement('option');
+            opt.value = u;
+            opt.textContent = u + (u === userName ? ' (You)' : '');
+            mergeTargetUser.appendChild(opt);
+        });
+        
+        // Show modal
+        mergeUsersModal.style.display = 'flex';
+    }
+
+    function closeMergeModal() {
+        mergeUsersModal.style.display = 'none';
+    }
+
+    function executeMerge() {
+        const targetUser = mergeTargetUser.value;
+        if (!targetUser) {
+            showToast('⚠️ Please select a target user.', true);
+            return;
+        }
+        
+        const usersToMerge = Array.from(selectedUsersForMerge);
+        
+        if (!confirm(`Are you sure you want to merge ${usersToMerge.length} user(s) into "${targetUser}"?\n\nThis action CANNOT be undone!`)) {
+            return;
+        }
+        
+        if (!confirm(`⚠️ FINAL WARNING: All records from ${usersToMerge.join(', ')} will be transferred to ${targetUser}. The original accounts will be removed. Continue?`)) {
+            return;
+        }
+        
+        setSyncStatus('Merging users...', 'syncing');
+        document.getElementById('executeMergeBtn').disabled = true;
+        document.getElementById('executeMergeBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Merging...';
+        
+        // Get all records from users to merge
+        const recordsToTransfer = records.filter(r => usersToMerge.includes(r.addedBy));
+        let transferredCount = 0;
+        let errorCount = 0;
+        
+        // Process each record
+        const promises = recordsToTransfer.map(record => {
+            const firebaseKey = record._firebaseKey;
+            if (!firebaseKey) return Promise.resolve();
+            
+            // Update the record to change addedBy to target user
+            const updatedRecord = {
+                ...record,
+                addedBy: targetUser,
+                mergedFrom: record.addedBy,
+                mergedAt: new Date().toISOString(),
+                mergedBy: userName
+            };
+            
+            return database.ref('censusRecords/' + firebaseKey).update(updatedRecord)
+                .then(() => {
+                    transferredCount++;
+                })
+                .catch(err => {
+                    console.error('Error transferring record:', err);
+                    errorCount++;
+                });
+        });
+        
+        Promise.all(promises).then(() => {
+            // Remove merged users from the team
+            usersToMerge.forEach(user => {
+                if (!removedUsers.includes(user)) {
+                    removedUsers.push(user);
+                }
+            });
+            saveRemovedUsers();
+            
+            // Clean up
+            selectedUsersForMerge.clear();
+            mergeMode = false;
+            mergeControls.style.display = 'none';
+            mergeModeBtn.innerHTML = '<i class="fas fa-merge"></i> Merge Users';
+            mergeModeBtn.className = 'btn btn-sm btn-purple';
+            closeMergeModal();
+            document.getElementById('executeMergeBtn').disabled = false;
+            document.getElementById('executeMergeBtn').innerHTML = '<i class="fas fa-merge"></i> Merge Users';
+            
+            setSyncStatus('Synced', 'synced');
+            showToast(`✅ Merge complete! ${transferredCount} records transferred to "${targetUser}". ${usersToMerge.length} user(s) removed.`);
+            
+            // Refresh data
+            database.ref('censusRecords').once('value');
+        });
+    }
 
     // =============================================
     // REMOVED USERS MANAGEMENT
@@ -1550,7 +1903,6 @@
             `;
         }).join('');
         
-        // Show removed users in modal too
         if (removedUsers.length > 0) {
             modalUserList.innerHTML += `
                 <div style="margin-top:1rem; padding-top:0.5rem; border-top:2px solid #f8d7da;">
@@ -1599,7 +1951,7 @@
     }
 
     // =============================================
-    // UNIQUE USERNAME CHECK - Updated to check removed users
+    // UNIQUE USERNAME CHECK
     // =============================================
     function checkUsernameAvailability(name) {
         if (!name) return true;
@@ -1616,7 +1968,6 @@
                 return false;
             }
         }
-        // Check if user is in removed list
         if (isUserRemoved(name)) {
             return false;
         }
@@ -1888,7 +2239,6 @@
         const storedAdmin = localStorage.getItem('censusIsAdmin') === 'true';
         
         if (storedName) {
-            // Check if user has been removed
             if (storedName.toLowerCase() !== 'admin' && isUserRemoved(storedName)) {
                 localStorage.removeItem('censusUserName');
                 localStorage.removeItem('censusIsAdmin');
@@ -1958,7 +2308,7 @@
     }
 
     // =============================================
-    // PERMISSION CHECKS - Updated for removed users
+    // PERMISSION CHECKS
     // =============================================
     function canEditRecord(record) {
         if (isAdmin) return true;
@@ -1979,7 +2329,7 @@
     }
 
     // =============================================
-    // ADMIN STATS - Updated for removed users
+    // ADMIN STATS
     // =============================================
     function updateAdminStats() {
         if (!isAdmin) {
@@ -2005,7 +2355,6 @@
             adminUserFilter.appendChild(option);
         });
         
-        // Add removed users to filter
         if (removedUsers.length > 0) {
             const optGroup = document.createElement('optgroup');
             optGroup.label = 'Removed Users';
@@ -2114,14 +2463,20 @@
             const isAdminUser = user.toLowerCase() === 'admin';
             const isCurrentUser = user === userName;
             const isRemoved = isUserRemoved(user);
+            const isSelected = mergeMode && selectedUsersForMerge.has(user);
             
             const card = document.createElement('div');
-            card.className = 'user-stat-card';
+            card.className = 'user-stat-card' + (isSelected ? ' selected-for-merge' : '');
             card.style.opacity = isRemoved ? '0.6' : '1';
             card.innerHTML = `
+                ${mergeMode && !isRemoved && !isAdminUser && user !== userName ? 
+                    `<input type="checkbox" class="merge-checkbox" ${isSelected ? 'checked' : ''} onclick="toggleUserForMerge('${user}')" title="Select for merge" />` : 
+                    mergeMode ? `<div style="width:16px; height:16px; display:inline-block;"></div>` : ''
+                }
                 <div class="user-name" style="${isRemoved ? 'text-decoration:line-through; color:#6c757d;' : ''}">
                     ${user} ${isAdminUser ? '🔑' : ''} ${isCurrentUser ? '★' : ''}
                     ${isRemoved ? '<span class="removed-badge">Removed</span>' : ''}
+                    ${isSelected ? '<span class="user-badge" style="background:#6f42c1; color:white;">Selected</span>' : ''}
                 </div>
                 <div class="user-count">📊 <span>${stats.count}</span> records</div>
                 <div class="user-totals">
@@ -2136,7 +2491,7 @@
                     ${stats.count > 0 ? `<span class="user-badge" style="background:#e8f0fe; color:#1b6f9c;">${stats.count} record${stats.count > 1 ? 's' : ''}</span>` : ''}
                     ${isRemoved ? `<span class="user-badge" style="background:#f8d7da; color:#721c24;">🚫 Removed</span>` : ''}
                 </div>
-                ${!isRemoved && !isAdminUser && user !== userName ? `
+                ${!isRemoved && !isAdminUser && user !== userName && !mergeMode ? `
                     <button class="remove-user-btn" onclick="removeUserFromTeam('${user}')" title="Remove this user from the team">
                         <i class="fas fa-user-minus"></i> Remove
                     </button>
@@ -2149,8 +2504,10 @@
             `;
             card.style.cursor = 'pointer';
             card.addEventListener('click', function(e) {
-                if (e.target.closest('.remove-user-btn')) return;
-                if (adminUserFilter.value === user) {
+                if (e.target.closest('.remove-user-btn') || e.target.closest('.merge-checkbox')) return;
+                if (mergeMode && !isRemoved && !isAdminUser && user !== userName) {
+                    toggleUserForMerge(user);
+                } else if (adminUserFilter.value === user) {
                     adminUserFilter.value = 'all';
                 } else {
                     adminUserFilter.value = user;
@@ -2181,8 +2538,8 @@
         `;
         userStatsGrid.appendChild(summaryCard);
         
-        // Update removed users section
         updateRemovedUsersUI();
+        updateMergeSelection();
     }
 
     // =============================================
@@ -2221,7 +2578,7 @@
             userRoleDisplay.textContent = '🔑 Admin';
             userRoleDisplay.style.background = '#f8d7da';
             userRoleDisplay.style.color = '#721c24';
-            permissionInfo.innerHTML = '<i class="fas fa-crown"></i> Admin: Can view, edit and delete ALL records. Can manage team members.';
+            permissionInfo.innerHTML = '<i class="fas fa-crown"></i> Admin: Can view, edit, delete ALL records. Can manage team members and merge users.';
             clearAllBtn.style.display = 'inline-flex';
             adminStatsPanel.classList.add('visible');
         } else {
@@ -2359,7 +2716,7 @@
     }
 
     // =============================================
-    // UPDATE USER LIST - Updated for removed users
+    // UPDATE USER LIST
     // =============================================
     function updateUserList() {
         const users = new Set();
@@ -2848,7 +3205,7 @@
     }
 
     // =============================================
-    // RENDER TABLE - Updated for removed users
+    // RENDER TABLE
     // =============================================
     function renderTable() {
         tableBody.innerHTML = '';
@@ -2885,6 +3242,7 @@
             const canEdit = canEditRecord(rec);
             const canDelete = canDeleteRecord(rec);
             const isRemoved = isUserRemoved(rec.addedBy);
+            const hasMergedFrom = rec.mergedFrom && rec.mergedFrom !== rec.addedBy;
             
             const cells = [
                 rec.tin || '—', rec.name || '—', rec.telephone || '—', rec.email || '—',
@@ -2919,6 +3277,10 @@
             if (isRemoved) {
                 span.className += ' removed-user';
                 span.textContent = addedBy + ' 🚫';
+            } else if (hasMergedFrom) {
+                span.className += ' merged-user';
+                span.textContent = addedBy + ' 🔄';
+                span.title = `Merged from: ${rec.mergedFrom}`;
             } else if (addedBy.toLowerCase() === 'admin') {
                 span.className += ' admin-user';
                 span.textContent = addedBy + ' 🔑';
@@ -3235,7 +3597,7 @@
     function downloadExcel() {
         const visibleRecords = records.filter(rec => canViewRecord(rec));
         if (visibleRecords.length === 0) { showToast('No records to export.', true); return; }
-        const headers = ['TIN/Ghana Card', 'Name', 'Telephone', 'Email', 'Location', 'Tax Office', 'Taxpayer Type', 'Sector', 'File Status', 'Tax Types', 'Liability (GHS)', 'Payment (GHS)', 'Outstanding (GHS)', 'Added By', 'Date Added', 'Source'];
+        const headers = ['TIN/Ghana Card', 'Name', 'Telephone', 'Email', 'Location', 'Tax Office', 'Taxpayer Type', 'Sector', 'File Status', 'Tax Types', 'Liability (GHS)', 'Payment (GHS)', 'Outstanding (GHS)', 'Added By', 'Date Added', 'Source', 'Merged From', 'Merged At'];
         const rows = visibleRecords.map(r => [
             r.tin || '', r.name || '', r.telephone || '', r.email || '',
             r.location || '', r.taxOffice || '', r.taxpayerType || '', r.sector || '', r.fileStatus || '', r.taxTypes || '',
@@ -3244,7 +3606,9 @@
             parseFloat(r.outstanding || 0).toFixed(2),
             r.addedBy || '',
             r.addedDate ? new Date(r.addedDate).toLocaleString() : '',
-            r._source || 'Unknown'
+            r._source || 'Unknown',
+            r.mergedFrom || '',
+            r.mergedAt ? new Date(r.mergedAt).toLocaleString() : ''
         ]);
         let csvContent = headers.join(',') + '\n';
         rows.forEach(row => {
@@ -3287,7 +3651,7 @@
                 r.addedBy || '',
                 r.addedDate ? new Date(r.addedDate).toLocaleString() : '',
                 r._source || 'Unknown',
-                r.mergedFrom || 'Original',
+                r.mergedFrom || '',
                 r.mergedAt ? new Date(r.mergedAt).toLocaleString() : ''
             ]);
             let csvContent = headers.join(',') + '\n';
@@ -3422,9 +3786,12 @@
     searchInput.addEventListener('input', applySearchFilter);
     searchFieldSelect.addEventListener('change', applySearchFilter);
 
-    // Close modal when clicking outside
+    // Close modals when clicking outside
     removeUserModal.addEventListener('click', function(e) {
         if (e.target === this) closeRemoveUserModal();
+    });
+    mergeUsersModal.addEventListener('click', function(e) {
+        if (e.target === this) closeMergeModal();
     });
 
     // =============================================
@@ -3453,12 +3820,11 @@
     console.log('📄 Pagination: 30 records per page');
     console.log('📂 Offline data loaded automatically');
     console.log('🛡️ Duplicate detection enabled');
-    console.log('🔀 Merge fixed: Now properly imports JSON files');
-    console.log('📊 Source column shows Offline vs Synced records');
+    console.log('🔀 Merge: Import JSON files & merge users');
+    console.log('👥 Admin can merge 2+ users into one account');
+    console.log('🔄 Merged records show original owner in "Merged From" field');
     console.log('👑 Admin Dashboard: View team performance by user');
     console.log('📅 Admin can filter by user and date range');
-    console.log('👥 Admin can remove users from the team');
-    console.log('🔄 Removed users can be restored');
     console.log('🚫 Removed users cannot log in');
     </script>
 </body>
