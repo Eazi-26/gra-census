@@ -128,10 +128,13 @@
         /* Header */
         .header-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem; }
         .header-user-info { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: #6a8ba0; }
-        .header-user-info .user-name { font-weight: 700; color: #1b6f9c; }
+        .header-user-info .user-name { font-weight: 700; color: #1b6f9c; cursor: pointer; }
+        .header-user-info .user-name:hover { text-decoration: underline; }
         .header-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
         .btn-logout { background: #b13e4b; color: white; padding: 4px 14px; border-radius: 30px; font-size: 0.75rem; border: none; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 4px; }
         .btn-logout:hover { background: #c44a58; }
+        .btn-rename { background: #6f42c1; color: white; padding: 4px 14px; border-radius: 30px; font-size: 0.75rem; border: none; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 4px; }
+        .btn-rename:hover { background: #7c4fd3; }
         
         .user-legend {
             display: flex;
@@ -173,8 +176,8 @@
         .admin-stats .filter-controls .btn-apply:hover { background: #134b66; }
         .admin-stats .filter-controls .btn-reset { background: #1b6f9c; color: white; }
         .admin-stats .filter-controls .btn-reset:hover { background: #134b66; }
-        .admin-stats .filter-controls .btn-merge-users { background: #6f42c1; color: white; }
-        .admin-stats .filter-controls .btn-merge-users:hover { background: #7c4fd3; }
+        .admin-stats .filter-controls .btn-purple { background: #6f42c1; color: white; }
+        .admin-stats .filter-controls .btn-purple:hover { background: #7c4fd3; }
         .admin-stats .user-stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -189,7 +192,8 @@
             position: relative;
         }
         .admin-stats .user-stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-        .admin-stats .user-stat-card .user-name { font-weight: 700; color: #0d3b52; font-size: 0.85rem; }
+        .admin-stats .user-stat-card .user-name { font-weight: 700; color: #0d3b52; font-size: 0.85rem; cursor: pointer; }
+        .admin-stats .user-stat-card .user-name:hover { text-decoration: underline; }
         .admin-stats .user-stat-card .user-count { font-size: 0.75rem; color: #6a8ba0; }
         .admin-stats .user-stat-card .user-count span { font-weight: 700; color: #1b6f9c; }
         .admin-stats .user-stat-card .user-totals { font-size: 0.7rem; color: #6a8ba0; margin-top: 2px; }
@@ -215,9 +219,24 @@
             background: #c44a58;
             transform: scale(1.05);
         }
-        .admin-stats .user-stat-card .remove-user-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
+        .admin-stats .user-stat-card .rename-user-btn {
+            position: absolute;
+            top: 8px;
+            right: 70px;
+            background: #6f42c1;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 2px 10px;
+            font-size: 0.6rem;
+            cursor: pointer;
+            transition: 0.2s;
+            opacity: 0.6;
+        }
+        .admin-stats .user-stat-card .rename-user-btn:hover {
+            opacity: 1;
+            background: #7c4fd3;
+            transform: scale(1.05);
         }
         .admin-stats .user-stat-card .removed-badge {
             background: #f8d7da;
@@ -239,6 +258,11 @@
         .admin-stats .user-stat-card.selected-for-merge {
             border: 2px solid #6f42c1;
             background: #f3edf9;
+        }
+        .admin-stats .user-stat-card .previous-name {
+            font-size: 0.6rem;
+            color: #6a8ba0;
+            margin-left: 4px;
         }
         
         /* Search Filter */
@@ -474,12 +498,12 @@
         .btn-warning:hover { background: #e6b422; }
         .btn-secondary { background: #6c757d; color: white; }
         .btn-secondary:hover { background: #5a6268; }
+        .btn-purple { background: #6f42c1; color: white; }
+        .btn-purple:hover { background: #7c4fd3; }
         .btn-sm { padding: 4px 12px; font-size: 0.7rem; border-radius: 20px; border: 1px solid #d4e0ea; background: white; cursor: pointer; transition: 0.2s; }
         .btn-sm:hover { background: #eaf2f9; border-color: #1b6f9c; }
         .btn-sm.danger { color: #b13e4b; border-color: #b13e4b; }
         .btn-sm.danger:hover { background: #fce8ea; }
-        .btn-purple { background: #6f42c1; color: white; }
-        .btn-purple:hover { background: #7c4fd3; }
         
         .actions {
             display: flex;
@@ -690,6 +714,7 @@
         .user-name.admin-user { color: #b13e4b; background: #fce8ea; padding: 1px 6px; border-radius: 10px; }
         .user-name.removed-user { color: #6c757d; background: #e9ecef; padding: 1px 6px; border-radius: 10px; text-decoration: line-through; }
         .user-name.merged-user { color: #6f42c1; background: #f3edf9; padding: 1px 6px; border-radius: 10px; }
+        .user-name.renamed { color: #1b6f9c; background: #d4edda; padding: 1px 6px; border-radius: 10px; }
         
         /* Merge Section */
         .merge-section {
@@ -978,6 +1003,86 @@
         }
         #mergeUsersModal .modal-content .modal-actions .btn { flex: 1; justify-content: center; }
         
+        /* Rename User Modal */
+        #renameUserModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 10002;
+            backdrop-filter: blur(3px);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        #renameUserModal .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 2rem;
+            max-width: 450px;
+            width: 100%;
+        }
+        #renameUserModal .modal-content h3 {
+            color: #0d3b52;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #renameUserModal .modal-content p.subtitle {
+            color: #6a8ba0;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+        #renameUserModal .modal-content .field-group { margin-bottom: 1rem; }
+        #renameUserModal .modal-content .field-group label {
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #1e4a62;
+            display: block;
+            margin-bottom: 4px;
+        }
+        #renameUserModal .modal-content .field-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #d4e0ea;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: 0.2s;
+            outline: none;
+        }
+        #renameUserModal .modal-content .field-group input:focus {
+            border-color: #6f42c1;
+            box-shadow: 0 0 0 3px rgba(111,66,193,0.1);
+        }
+        #renameUserModal .modal-content .field-group .error-msg {
+            color: #b13e4b;
+            font-size: 0.75rem;
+            display: none;
+            margin-top: 4px;
+        }
+        #renameUserModal .modal-content .warning-box {
+            background: #fff3cd;
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            margin: 0.8rem 0;
+            border: 1px solid #d4a017;
+        }
+        #renameUserModal .modal-content .warning-box .warning-text {
+            color: #856404;
+            font-size: 0.75rem;
+        }
+        #renameUserModal .modal-content .modal-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        #renameUserModal .modal-content .modal-actions .btn { flex: 1; justify-content: center; }
+        
         @media (max-width: 480px) {
             body { padding: 0.5rem; }
             .card { padding: 0.8rem; border-radius: 14px; }
@@ -1013,8 +1118,11 @@
             .admin-stats .filter-controls { flex-direction: column; align-items: stretch; }
             .search-filter { flex-direction: column; align-items: stretch; }
             .search-filter .search-results { margin-left: 0; text-align: center; }
-            .admin-stats .user-stat-card .remove-user-btn { position: static; margin-top: 4px; }
+            .admin-stats .user-stat-card .remove-user-btn, 
+            .admin-stats .user-stat-card .rename-user-btn { position: static; margin-top: 4px; }
+            .admin-stats .user-stat-card .rename-user-btn { margin-right: 4px; }
             #mergeUsersModal .modal-content { padding: 1.5rem; margin: 0.5rem; }
+            #renameUserModal .modal-content { padding: 1.5rem; margin: 0.5rem; }
         }
         
         @media (min-width: 481px) and (max-width: 768px) {
@@ -1101,12 +1209,13 @@
                     <div>
                         <h1><i class="fas fa-database" style="color:#1b6f9c;"></i> GRA Census</h1>
                         <div class="header-user-info">
-                            <span><i class="fas fa-user"></i> <span class="user-name" id="userNameDisplay">User</span></span>
+                            <span><i class="fas fa-user"></i> <span class="user-name" id="userNameDisplay" onclick="showRenameModal()" title="Click to rename">User</span></span>
                             <span id="userRoleDisplay" class="badge" style="background:#e8f0fe; color:#1b6f9c;">User</span>
                             <span id="connectionStatus" class="online-badge"><i class="fas fa-wifi"></i> Online</span>
                             <span class="firebase-badge"><i class="fas fa-fire"></i> Live Sync</span>
                             <span id="syncStatus" class="sync-status synced"><i class="fas fa-check-circle"></i> Synced</span>
                             <span class="local-badge"><i class="fas fa-server"></i> Offline Data</span>
+                            <button class="btn-rename" onclick="showRenameModal()"><i class="fas fa-user-edit"></i> Rename</button>
                         </div>
                     </div>
                     <div class="header-actions">
@@ -1422,6 +1531,43 @@
     </div>
 
     <!-- ============================================= -->
+    <!-- RENAME USER MODAL -->
+    <!-- ============================================= -->
+    <div id="renameUserModal">
+        <div class="modal-content">
+            <h3><i class="fas fa-user-edit" style="color:#6f42c1;"></i> Rename User</h3>
+            <p class="subtitle" id="renameModalSubtitle">Change your display name. This will update all your records.</p>
+            
+            <div class="field-group">
+                <label><i class="fas fa-user"></i> Current Name</label>
+                <input type="text" id="currentNameInput" readonly style="background:#f0f7fe; cursor:not-allowed;" />
+            </div>
+            
+            <div class="field-group">
+                <label><i class="fas fa-user-edit"></i> New Name <span style="color:#b13e4b;">*</span></label>
+                <input type="text" id="newNameInput" placeholder="Enter new name" />
+                <div class="error-msg" id="renameError">This name is already taken. Please choose another.</div>
+            </div>
+            
+            <div class="warning-box">
+                <div class="warning-text">
+                    <i class="fas fa-info-circle"></i> 
+                    <strong>What happens when you rename:</strong><br>
+                    • Your display name will be updated everywhere<br>
+                    • All your records will show the new name<br>
+                    • Your previous name will be shown in the history<br>
+                    • You will need to log in with your new name next time
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeRenameModal()"><i class="fas fa-times"></i> Cancel</button>
+                <button class="btn btn-purple" id="executeRenameBtn" onclick="executeRename()"><i class="fas fa-save"></i> Save New Name</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
     <!-- REMOVE USER MODAL -->
     <!-- ============================================= -->
     <div id="removeUserModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10000; backdrop-filter:blur(3px); align-items:center; justify-content:center; padding:1rem;">
@@ -1517,6 +1663,7 @@
     let removedUsers = [];
     let mergeMode = false;
     let selectedUsersForMerge = new Set();
+    let renameTargetUser = null; // For admin renaming other users
 
     // Pagination variables
     let currentPage = 1;
@@ -1594,6 +1741,12 @@
     const mergeUsersModal = document.getElementById('mergeUsersModal');
     const mergeSelectedUsersList = document.getElementById('mergeSelectedUsersList');
     const mergeTargetUser = document.getElementById('mergeTargetUser');
+    const renameUserModal = document.getElementById('renameUserModal');
+    const currentNameInput = document.getElementById('currentNameInput');
+    const newNameInput = document.getElementById('newNameInput');
+    const renameError = document.getElementById('renameError');
+    const renameModalSubtitle = document.getElementById('renameModalSubtitle');
+    const executeRenameBtn = document.getElementById('executeRenameBtn');
 
     // Search DOM refs
     const searchInput = document.getElementById('searchInput');
@@ -1615,6 +1768,174 @@
 
     const toast = document.getElementById('toast');
     const toastMessage = document.getElementById('toastMessage');
+
+    // =============================================
+    // RENAME USER FUNCTIONS
+    // =============================================
+    function showRenameModal(targetUser = null) {
+        if (!isLoggedIn) return;
+        
+        // If targetUser is provided, admin is renaming someone else
+        renameTargetUser = targetUser;
+        
+        if (targetUser && targetUser !== userName) {
+            // Admin renaming another user
+            if (!isAdmin) {
+                showToast('⛔ Only admin can rename other users.', true);
+                return;
+            }
+            if (targetUser.toLowerCase() === 'admin') {
+                showToast('⛔ Cannot rename the admin account.', true);
+                return;
+            }
+            if (isUserRemoved(targetUser)) {
+                showToast('⛔ Cannot rename a removed user.', true);
+                return;
+            }
+            renameModalSubtitle.textContent = `Renaming user "${targetUser}" to a new name.`;
+            currentNameInput.value = targetUser;
+        } else {
+            // User renaming themselves
+            renameTargetUser = userName;
+            renameModalSubtitle.textContent = 'Change your display name. This will update all your records.';
+            currentNameInput.value = userName;
+        }
+        
+        newNameInput.value = '';
+        renameError.style.display = 'none';
+        renameUserModal.style.display = 'flex';
+        newNameInput.focus();
+    }
+
+    function closeRenameModal() {
+        renameUserModal.style.display = 'none';
+        renameTargetUser = null;
+        newNameInput.value = '';
+        renameError.style.display = 'none';
+    }
+
+    function executeRename() {
+        const newName = newNameInput.value.trim();
+        const currentName = currentNameInput.value.trim();
+        
+        if (!newName) {
+            renameError.textContent = 'Please enter a new name.';
+            renameError.style.display = 'block';
+            newNameInput.focus();
+            return;
+        }
+        
+        if (newName === currentName) {
+            renameError.textContent = 'New name is the same as current name.';
+            renameError.style.display = 'block';
+            newNameInput.focus();
+            return;
+        }
+        
+        if (newName.toLowerCase() === 'admin') {
+            renameError.textContent = 'Cannot use "Admin" as a name.';
+            renameError.style.display = 'block';
+            newNameInput.focus();
+            return;
+        }
+        
+        // Check if the new name is already taken (by an active user)
+        const activeUsers = new Set();
+        records.forEach(r => {
+            if (r.addedBy && !isUserRemoved(r.addedBy) && r.addedBy !== currentName) {
+                activeUsers.add(r.addedBy);
+            }
+        });
+        if (activeUsers.has(newName)) {
+            renameError.textContent = 'This name is already taken. Please choose another.';
+            renameError.style.display = 'block';
+            newNameInput.focus();
+            return;
+        }
+        
+        // Check if new name is in removed users list
+        if (isUserRemoved(newName) && newName !== currentName) {
+            renameError.textContent = 'This name belongs to a removed user. Please choose another.';
+            renameError.style.display = 'block';
+            newNameInput.focus();
+            return;
+        }
+        
+        if (!confirm(`Are you sure you want to rename "${currentName}" to "${newName}"?\n\nAll records will be updated to show the new name.`)) {
+            return;
+        }
+        
+        // Execute rename
+        setSyncStatus('Renaming user...', 'syncing');
+        executeRenameBtn.disabled = true;
+        executeRenameBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Renaming...';
+        
+        // Get all records from the user
+        const userRecords = records.filter(r => r.addedBy === currentName);
+        let updatedCount = 0;
+        let errorCount = 0;
+        
+        const promises = userRecords.map(record => {
+            const firebaseKey = record._firebaseKey;
+            if (!firebaseKey) return Promise.resolve();
+            
+            const updatedRecord = {
+                ...record,
+                addedBy: newName,
+                previousName: currentName,
+                renamedAt: new Date().toISOString(),
+                renamedBy: userName
+            };
+            
+            return database.ref('censusRecords/' + firebaseKey).update(updatedRecord)
+                .then(() => {
+                    updatedCount++;
+                })
+                .catch(err => {
+                    console.error('Error updating record:', err);
+                    errorCount++;
+                });
+        });
+        
+        Promise.all(promises).then(() => {
+            // If this was the current user, update their stored name
+            if (currentName === userName) {
+                userName = newName;
+                localStorage.setItem('censusUserName', newName);
+                // If admin was renamed, update admin status
+                if (isAdmin) {
+                    localStorage.setItem('censusIsAdmin', 'true');
+                }
+            }
+            
+            // If admin renamed another user, update any references in removedUsers
+            if (isAdmin && currentName !== userName) {
+                // Check if there are any removed users with the old name
+                const oldRemovedIndex = removedUsers.indexOf(currentName);
+                if (oldRemovedIndex !== -1) {
+                    // If the user was removed, remove them from removed list and add the new name if needed
+                    // Actually, we should keep the old name in removed list if it was removed
+                    // The new name should not be in removed list since the user is being renamed
+                    // We'll remove the old name from removed list if it was there and the user is being restored
+                    // Actually, if the user was removed, they shouldn't be able to be renamed by admin
+                    // So we just handle the case where the user was removed but admin is renaming them
+                    // This is a special case - we'll remove them from removed list
+                    removedUsers = removedUsers.filter(u => u !== currentName);
+                    saveRemovedUsers();
+                }
+            }
+            
+            closeRenameModal();
+            executeRenameBtn.disabled = false;
+            executeRenameBtn.innerHTML = '<i class="fas fa-save"></i> Save New Name';
+            setSyncStatus('Synced', 'synced');
+            
+            showToast(`✅ User "${currentName}" renamed to "${newName}". ${updatedCount} record(s) updated.`);
+            
+            // Refresh data
+            database.ref('censusRecords').once('value');
+        });
+    }
 
     // =============================================
     // MERGE USERS FUNCTIONS
@@ -1639,7 +1960,6 @@
             mergeModeBtn.className = 'btn btn-sm btn-purple';
             selectedUsersForMerge.clear();
             updateMergeSelection();
-            // Remove highlight from all cards
             document.querySelectorAll('.user-stat-card.selected-for-merge').forEach(el => {
                 el.classList.remove('selected-for-merge');
             });
@@ -1675,12 +1995,15 @@
         const count = selectedUsersForMerge.size;
         selectedMergeCount.textContent = count;
         
-        if (count < 2) {
-            document.querySelector('#mergeControls .btn-success').disabled = true;
-            document.querySelector('#mergeControls .btn-success').style.opacity = '0.5';
-        } else {
-            document.querySelector('#mergeControls .btn-success').disabled = false;
-            document.querySelector('#mergeControls .btn-success').style.opacity = '1';
+        const mergeBtn = document.querySelector('#mergeControls .btn-success');
+        if (mergeBtn) {
+            if (count < 2) {
+                mergeBtn.disabled = true;
+                mergeBtn.style.opacity = '0.5';
+            } else {
+                mergeBtn.disabled = false;
+                mergeBtn.style.opacity = '1';
+            }
         }
     }
 
@@ -1690,13 +2013,11 @@
             return;
         }
         
-        // Prepare modal
         const users = Array.from(selectedUsersForMerge);
         mergeSelectedUsersList.innerHTML = users.map(u => 
             `<span class="user-tag"><i class="fas fa-user"></i> ${u}</span>`
         ).join(' ');
         
-        // Populate target user dropdown
         const allUsers = new Set();
         records.forEach(r => {
             if (r.addedBy && !isUserRemoved(r.addedBy) && !selectedUsersForMerge.has(r.addedBy)) {
@@ -1712,7 +2033,6 @@
             mergeTargetUser.appendChild(opt);
         });
         
-        // Show modal
         mergeUsersModal.style.display = 'flex';
     }
 
@@ -1741,17 +2061,14 @@
         document.getElementById('executeMergeBtn').disabled = true;
         document.getElementById('executeMergeBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Merging...';
         
-        // Get all records from users to merge
         const recordsToTransfer = records.filter(r => usersToMerge.includes(r.addedBy));
         let transferredCount = 0;
         let errorCount = 0;
         
-        // Process each record
         const promises = recordsToTransfer.map(record => {
             const firebaseKey = record._firebaseKey;
             if (!firebaseKey) return Promise.resolve();
             
-            // Update the record to change addedBy to target user
             const updatedRecord = {
                 ...record,
                 addedBy: targetUser,
@@ -1771,7 +2088,6 @@
         });
         
         Promise.all(promises).then(() => {
-            // Remove merged users from the team
             usersToMerge.forEach(user => {
                 if (!removedUsers.includes(user)) {
                     removedUsers.push(user);
@@ -1779,7 +2095,6 @@
             });
             saveRemovedUsers();
             
-            // Clean up
             selectedUsersForMerge.clear();
             mergeMode = false;
             mergeControls.style.display = 'none';
@@ -1792,7 +2107,6 @@
             setSyncStatus('Synced', 'synced');
             showToast(`✅ Merge complete! ${transferredCount} records transferred to "${targetUser}". ${usersToMerge.length} user(s) removed.`);
             
-            // Refresh data
             database.ref('censusRecords').once('value');
         });
     }
@@ -1885,7 +2199,12 @@
                         <span style="font-size:0.7rem; color:#6a8ba0; margin-left:8px;">${recordCount} records</span>
                         ${isRemoved ? '<span class="removed-badge">Removed</span>' : ''}
                     </div>
-                    <div>
+                    <div style="display:flex; gap:4px; align-items:center;">
+                        ${!isRemoved && !isAdminUser && u !== currentUser ? 
+                            `<button class="btn btn-sm btn-purple" onclick="showRenameModal('${u}')" style="padding:2px 10px; font-size:0.6rem;">
+                                <i class="fas fa-user-edit"></i> Rename
+                            </button>` : ''
+                        }
                         ${!isRemoved && !isAdminUser && u !== currentUser ? 
                             `<button class="btn btn-sm danger" onclick="removeUserFromTeam('${u}')" style="padding:2px 12px;">
                                 <i class="fas fa-user-minus"></i> Remove
@@ -1910,9 +2229,14 @@
                     ${removedUsers.map(u => `
                         <div style="display:flex; justify-content:space-between; align-items:center; padding:0.3rem 0.5rem; background:#f8f9fa; border-radius:6px; margin-bottom:2px;">
                             <span style="color:#6c757d;"><i class="fas fa-user-slash"></i> ${u}</span>
-                            <button class="btn btn-sm btn-success" onclick="restoreUser('${u}')" style="padding:2px 12px;">
-                                <i class="fas fa-undo"></i> Restore
-                            </button>
+                            <div style="display:flex; gap:4px;">
+                                <button class="btn btn-sm btn-purple" onclick="showRenameModal('${u}')" style="padding:2px 10px; font-size:0.6rem;">
+                                    <i class="fas fa-user-edit"></i> Rename
+                                </button>
+                                <button class="btn btn-sm btn-success" onclick="restoreUser('${u}')" style="padding:2px 12px;">
+                                    <i class="fas fa-undo"></i> Restore
+                                </button>
+                            </div>
                         </div>
                     `).join('')}
                 </div>
@@ -2473,10 +2797,11 @@
                     `<input type="checkbox" class="merge-checkbox" ${isSelected ? 'checked' : ''} onclick="toggleUserForMerge('${user}')" title="Select for merge" />` : 
                     mergeMode ? `<div style="width:16px; height:16px; display:inline-block;"></div>` : ''
                 }
-                <div class="user-name" style="${isRemoved ? 'text-decoration:line-through; color:#6c757d;' : ''}">
+                <div class="user-name" style="${isRemoved ? 'text-decoration:line-through; color:#6c757d;' : ''}" onclick="${!isAdminUser && !isRemoved ? `showRenameModal('${user}')` : ''}">
                     ${user} ${isAdminUser ? '🔑' : ''} ${isCurrentUser ? '★' : ''}
                     ${isRemoved ? '<span class="removed-badge">Removed</span>' : ''}
                     ${isSelected ? '<span class="user-badge" style="background:#6f42c1; color:white;">Selected</span>' : ''}
+                    ${!isRemoved && !isAdminUser && user !== userName ? ' <span class="previous-name" style="font-size:0.55rem; color:#6a8ba0;">(click to rename)</span>' : ''}
                 </div>
                 <div class="user-count">📊 <span>${stats.count}</span> records</div>
                 <div class="user-totals">
@@ -2491,20 +2816,27 @@
                     ${stats.count > 0 ? `<span class="user-badge" style="background:#e8f0fe; color:#1b6f9c;">${stats.count} record${stats.count > 1 ? 's' : ''}</span>` : ''}
                     ${isRemoved ? `<span class="user-badge" style="background:#f8d7da; color:#721c24;">🚫 Removed</span>` : ''}
                 </div>
-                ${!isRemoved && !isAdminUser && user !== userName && !mergeMode ? `
-                    <button class="remove-user-btn" onclick="removeUserFromTeam('${user}')" title="Remove this user from the team">
-                        <i class="fas fa-user-minus"></i> Remove
-                    </button>
-                ` : ''}
-                ${isRemoved ? `
-                    <button class="remove-user-btn" onclick="restoreUser('${user}')" style="background:#28a745; opacity:0.7;" title="Restore this user">
-                        <i class="fas fa-undo"></i> Restore
-                    </button>
-                ` : ''}
+                <div style="display:flex; gap:4px; margin-top:4px; flex-wrap:wrap;">
+                    ${!isRemoved && !isAdminUser && user !== userName ? `
+                        <button class="btn btn-sm btn-purple" onclick="event.stopPropagation(); showRenameModal('${user}')" style="padding:2px 10px; font-size:0.6rem;">
+                            <i class="fas fa-user-edit"></i> Rename
+                        </button>
+                    ` : ''}
+                    ${!isRemoved && !isAdminUser && user !== userName && !mergeMode ? `
+                        <button class="remove-user-btn" onclick="event.stopPropagation(); removeUserFromTeam('${user}')" title="Remove this user from the team">
+                            <i class="fas fa-user-minus"></i> Remove
+                        </button>
+                    ` : ''}
+                    ${isRemoved ? `
+                        <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); restoreUser('${user}')" style="padding:2px 10px; font-size:0.6rem;">
+                            <i class="fas fa-undo"></i> Restore
+                        </button>
+                    ` : ''}
+                </div>
             `;
             card.style.cursor = 'pointer';
             card.addEventListener('click', function(e) {
-                if (e.target.closest('.remove-user-btn') || e.target.closest('.merge-checkbox')) return;
+                if (e.target.closest('.remove-user-btn') || e.target.closest('.merge-checkbox') || e.target.closest('.btn')) return;
                 if (mergeMode && !isRemoved && !isAdminUser && user !== userName) {
                     toggleUserForMerge(user);
                 } else if (adminUserFilter.value === user) {
@@ -2578,7 +2910,7 @@
             userRoleDisplay.textContent = '🔑 Admin';
             userRoleDisplay.style.background = '#f8d7da';
             userRoleDisplay.style.color = '#721c24';
-            permissionInfo.innerHTML = '<i class="fas fa-crown"></i> Admin: Can view, edit, delete ALL records. Can manage team members and merge users.';
+            permissionInfo.innerHTML = '<i class="fas fa-crown"></i> Admin: Can view, edit, delete ALL records. Can manage team members, merge users, and rename users.';
             clearAllBtn.style.display = 'inline-flex';
             adminStatsPanel.classList.add('visible');
         } else {
@@ -3243,6 +3575,7 @@
             const canDelete = canDeleteRecord(rec);
             const isRemoved = isUserRemoved(rec.addedBy);
             const hasMergedFrom = rec.mergedFrom && rec.mergedFrom !== rec.addedBy;
+            const hasPreviousName = rec.previousName && rec.previousName !== rec.addedBy;
             
             const cells = [
                 rec.tin || '—', rec.name || '—', rec.telephone || '—', rec.email || '—',
@@ -3281,6 +3614,10 @@
                 span.className += ' merged-user';
                 span.textContent = addedBy + ' 🔄';
                 span.title = `Merged from: ${rec.mergedFrom}`;
+            } else if (hasPreviousName) {
+                span.className += ' renamed';
+                span.textContent = addedBy + ' ✏️';
+                span.title = `Previously: ${rec.previousName}`;
             } else if (addedBy.toLowerCase() === 'admin') {
                 span.className += ' admin-user';
                 span.textContent = addedBy + ' 🔑';
@@ -3597,7 +3934,7 @@
     function downloadExcel() {
         const visibleRecords = records.filter(rec => canViewRecord(rec));
         if (visibleRecords.length === 0) { showToast('No records to export.', true); return; }
-        const headers = ['TIN/Ghana Card', 'Name', 'Telephone', 'Email', 'Location', 'Tax Office', 'Taxpayer Type', 'Sector', 'File Status', 'Tax Types', 'Liability (GHS)', 'Payment (GHS)', 'Outstanding (GHS)', 'Added By', 'Date Added', 'Source', 'Merged From', 'Merged At'];
+        const headers = ['TIN/Ghana Card', 'Name', 'Telephone', 'Email', 'Location', 'Tax Office', 'Taxpayer Type', 'Sector', 'File Status', 'Tax Types', 'Liability (GHS)', 'Payment (GHS)', 'Outstanding (GHS)', 'Added By', 'Date Added', 'Source', 'Merged From', 'Merged At', 'Previous Name'];
         const rows = visibleRecords.map(r => [
             r.tin || '', r.name || '', r.telephone || '', r.email || '',
             r.location || '', r.taxOffice || '', r.taxpayerType || '', r.sector || '', r.fileStatus || '', r.taxTypes || '',
@@ -3608,7 +3945,8 @@
             r.addedDate ? new Date(r.addedDate).toLocaleString() : '',
             r._source || 'Unknown',
             r.mergedFrom || '',
-            r.mergedAt ? new Date(r.mergedAt).toLocaleString() : ''
+            r.mergedAt ? new Date(r.mergedAt).toLocaleString() : '',
+            r.previousName || ''
         ]);
         let csvContent = headers.join(',') + '\n';
         rows.forEach(row => {
@@ -3641,7 +3979,7 @@
         downloadAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
         downloadAllBtn.disabled = true;
         setTimeout(() => {
-            const headers = ['TIN/Ghana Card', 'Name', 'Telephone', 'Email', 'Location', 'Tax Office', 'Taxpayer Type', 'Sector', 'File Status', 'Tax Types', 'Liability (GHS)', 'Payment (GHS)', 'Outstanding (GHS)', 'Added By', 'Date Added', 'Source', 'Merged From', 'Merged At'];
+            const headers = ['TIN/Ghana Card', 'Name', 'Telephone', 'Email', 'Location', 'Tax Office', 'Taxpayer Type', 'Sector', 'File Status', 'Tax Types', 'Liability (GHS)', 'Payment (GHS)', 'Outstanding (GHS)', 'Added By', 'Date Added', 'Source', 'Merged From', 'Merged At', 'Previous Name'];
             const rows = visibleRecords.map(r => [
                 r.tin || '', r.name || '', r.telephone || '', r.email || '',
                 r.location || '', r.taxOffice || '', r.taxpayerType || '', r.sector || '', r.fileStatus || '', r.taxTypes || '',
@@ -3652,7 +3990,8 @@
                 r.addedDate ? new Date(r.addedDate).toLocaleString() : '',
                 r._source || 'Unknown',
                 r.mergedFrom || '',
-                r.mergedAt ? new Date(r.mergedAt).toLocaleString() : ''
+                r.mergedAt ? new Date(r.mergedAt).toLocaleString() : '',
+                r.previousName || ''
             ]);
             let csvContent = headers.join(',') + '\n';
             rows.forEach(row => {
@@ -3793,6 +4132,17 @@
     mergeUsersModal.addEventListener('click', function(e) {
         if (e.target === this) closeMergeModal();
     });
+    renameUserModal.addEventListener('click', function(e) {
+        if (e.target === this) closeRenameModal();
+    });
+
+    // Enter key on rename modal
+    newNameInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            executeRename();
+        }
+    });
 
     // =============================================
     // INITIALIZE
@@ -3822,7 +4172,9 @@
     console.log('🛡️ Duplicate detection enabled');
     console.log('🔀 Merge: Import JSON files & merge users');
     console.log('👥 Admin can merge 2+ users into one account');
-    console.log('🔄 Merged records show original owner in "Merged From" field');
+    console.log('✏️ Users can rename themselves (click name or Rename button)');
+    console.log('👑 Admin can rename any user');
+    console.log('🔄 Renamed records show previous name in history');
     console.log('👑 Admin Dashboard: View team performance by user');
     console.log('📅 Admin can filter by user and date range');
     console.log('🚫 Removed users cannot log in');
