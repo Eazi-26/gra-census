@@ -1734,18 +1734,41 @@
     const toastMessage = document.getElementById('toastMessage');
 
     // =============================================
+    // CRITICAL FIX: PERMISSION CHECKS
+    // =============================================
+    function canEditRecord(record) {
+        // Admin can edit ALL records
+        if (isAdmin) return true;
+        // Non-admin can ONLY edit their OWN records
+        return record.addedBy === userName;
+    }
+
+    function canDeleteRecord(record) {
+        // Admin can delete ALL records
+        if (isAdmin) return true;
+        // Non-admin can ONLY delete their OWN records
+        return record.addedBy === userName;
+    }
+
+    function canViewRecord(record) {
+        // Admin can view ALL records
+        if (isAdmin) return true;
+        // Non-admin can ONLY view their OWN records
+        return record.addedBy === userName;
+    }
+
+    // =============================================
     // ORPHAN RECORD DETECTION & FIX
     // =============================================
     function checkForOrphanedRecords() {
         if (!isAdmin) return;
         
-        // Get all unique user names from records
+        const orphanedRecords = [];
         const recordUsers = new Set();
         records.forEach(r => {
             if (r.addedBy) recordUsers.add(r.addedBy);
         });
         
-        // Get active users (not removed)
         const activeUsers = new Set();
         records.forEach(r => {
             if (r.addedBy && !isUserRemoved(r.addedBy)) {
@@ -1753,21 +1776,11 @@
             }
         });
         
-        // Find orphaned records (belong to users who are removed)
-        const orphanedRecords = [];
         records.forEach(r => {
             if (r.addedBy && isUserRemoved(r.addedBy)) {
                 orphanedRecords.push(r);
-            }
-        });
-        
-        // Also check for records with addedBy that doesn't exist as a user
-        records.forEach(r => {
-            if (r.addedBy && !recordUsers.has(r.addedBy) && !activeUsers.has(r.addedBy)) {
-                // This is an orphan - the user doesn't exist at all
-                if (!orphanedRecords.some(o => o._firebaseKey === r._firebaseKey)) {
-                    orphanedRecords.push(r);
-                }
+            } else if (r.addedBy && !recordUsers.has(r.addedBy) && !activeUsers.has(r.addedBy)) {
+                orphanedRecords.push(r);
             }
         });
         
@@ -2708,28 +2721,334 @@
     }
 
     // =============================================
-    // PERMISSION CHECKS
+    // RENDER TABLE - FIXED to only show user's own records
     // =============================================
-    function canEditRecord(record) {
-        if (isAdmin) return true;
-        if (isUserRemoved(record.addedBy)) return false;
-        return record.addedBy === userName;
-    }
-
-    function canDeleteRecord(record) {
-        if (isAdmin) return true;
-        if (isUserRemoved(record.addedBy)) return false;
-        return record.addedBy === userName;
-    }
-
-    function canViewRecord(record) {
-        if (isAdmin) return true;
-        if (isUserRemoved(record.addedBy)) return false;
-        return record.addedBy === userName;
+    function renderTable() {
+        tableBody.innerHTML = '';
+        
+        // CRITICAL FIX: Filter records by view permission
+        // For non-admin users, this will only show their own records
+        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
+        
+        if (visibleRecords.length === 0) {
+            if (isAdmin) {
+                tableBody.innerHTML = '<tr><td colspan="16" class="empty-state"><i class="fas fa-box-open"></i> No records in the system yet</td></tr>';
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="16" class="empty-state"><i class="fas fa-box-open"></i> You have no records yet. Add your first record!</td></tr>';
+            }
+            downloadBtn.disabled = true;
+            downloadAllBtn.disabled = true;
+            updateStats();
+            updateUserList();
+            updateDashboardStats();
+            return;
+        }
+        
+        downloadBtn.disabled = false;
+        downloadAllBtn.disabled = false;
+        
+        const displayRecords = paginatedRecords.filter(rec => canViewRecord(rec));
+        
+        if (displayRecords.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="16" class="empty-state"><i class="fas fa-info-circle"></i> No records on this page</td></tr>';
+            return;
+        }
+        
+        displayRecords.forEach((rec) => {
+            const row = document.createElement('tr');
+            const actualIndex = records.findIndex(r => r._firebaseKey === rec._firebaseKey);
+            const canEdit = canEditRecord(rec);
+            const canDelete = canDeleteRecord(rec);
+            const hasMergedFrom = rec.mergedFrom && rec.mergedFrom !== rec.addedBy;
+            const hasPreviousName = rec.previousName && rec.previousName !== rec.addedBy;
+            
+            const cells = [
+                rec.tin || '—', rec.name || '—', rec.telephone || '—', rec.email || '—',
+                rec.location || '—', rec.taxOffice || '—', rec.taxpayerType || '—', rec.sector || '—'
+            ];
+            cells.forEach(text => { const td = document.createElement('td'); td.textContent = text; row.appendChild(td); });
+            
+            const statusCell = document.createElement('td');
+            const status = rec.fileStatus || '—';
+            statusCell.innerHTML = `<span class="status-${status.toLowerCase()}">${status}</span>`;
+            row.appendChild(statusCell);
+            
+            const taxTypesCell = document.createElement('td');
+            taxTypesCell.textContent = rec.taxTypes || '—';
+            row.appendChild(taxTypesCell);
+            
+            const liabilityCell = document.createElement('td');
+            liabilityCell.innerHTML = `<span class="amount liability">${formatMoney(rec.liability || 0)}</span>`;
+            row.appendChild(liabilityCell);
+            const paymentCell = document.createElement('td');
+            paymentCell.innerHTML = `<span class="amount payment">${formatMoney(rec.payment || 0)}</span>`;
+            row.appendChild(paymentCell);
+            const outstandingCell = document.createElement('td');
+            outstandingCell.innerHTML = `<span class="amount outstanding">${formatMoney(rec.outstanding || 0)}</span>`;
+            row.appendChild(outstandingCell);
+            
+            const addedByCell = document.createElement('td');
+            const addedBy = rec.addedBy || '—';
+            const span = document.createElement('span');
+            span.textContent = addedBy;
+            span.className = 'user-name';
+            if (hasMergedFrom) {
+                span.className += ' merged-user';
+                span.textContent = addedBy + ' 🔄';
+                span.title = `Merged from: ${rec.mergedFrom}`;
+            } else if (hasPreviousName) {
+                span.className += ' renamed';
+                span.textContent = addedBy + ' ✏️';
+                span.title = `Previously: ${rec.previousName}`;
+            } else if (addedBy.toLowerCase() === 'admin') {
+                span.className += ' admin-user';
+                span.textContent = addedBy + ' 🔑';
+            } else if (addedBy === userName) {
+                span.className += ' current-user';
+                span.textContent = addedBy + ' ★';
+            } else {
+                span.className += ' other-user';
+            }
+            addedByCell.appendChild(span);
+            row.appendChild(addedByCell);
+            
+            const sourceCell = document.createElement('td');
+            const source = rec._source || 'unknown';
+            if (source === 'local') {
+                sourceCell.innerHTML = `<span class="source-badge local"><i class="fas fa-server"></i> Offline</span>`;
+            } else if (source === 'firebase') {
+                sourceCell.innerHTML = `<span class="source-badge firebase"><i class="fas fa-cloud"></i> Synced</span>`;
+            } else {
+                sourceCell.textContent = '—';
+            }
+            row.appendChild(sourceCell);
+            
+            const actionCell = document.createElement('td');
+            actionCell.style.whiteSpace = 'nowrap';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'action-btn edit-btn';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            editBtn.title = canEdit ? 'Edit record' : '🔒 Only the owner or Admin can edit';
+            if (!canEdit) editBtn.classList.add('disabled');
+            editBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (canEdit) startEdit(actualIndex);
+                else showToast('⛔ You do not have permission to edit this record.', true);
+            });
+            actionCell.appendChild(editBtn);
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'action-btn delete-btn';
+            deleteBtn.innerHTML = '<i class="fas fa-times-circle"></i>';
+            deleteBtn.title = canDelete ? 'Delete record' : '🔒 Only the owner or Admin can delete';
+            if (!canDelete) deleteBtn.classList.add('disabled');
+            deleteBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (canDelete) deleteRecord(rec._firebaseKey, rec);
+                else showToast('⛔ You do not have permission to delete this record.', true);
+            });
+            actionCell.appendChild(deleteBtn);
+            
+            row.appendChild(actionCell);
+            tableBody.appendChild(row);
+        });
+        
+        recordCountSpan.textContent = visibleRecords.length + ' records';
+        updateStats();
+        updateUserList();
+        updateDashboardStats();
+        updateSearchResults();
     }
 
     // =============================================
-    // ADMIN STATS
+    // UPDATE PAGINATION - FIXED to respect permissions
+    // =============================================
+    function updatePagination() {
+        // CRITICAL FIX: Only count records the user can view
+        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
+        const totalRecords = visibleRecords.length;
+        totalRecordsCount.textContent = totalRecords;
+        
+        if (recordsPerPage === -1) {
+            totalPages = 1;
+            paginatedRecords = visibleRecords;
+        } else {
+            totalPages = Math.ceil(totalRecords / recordsPerPage);
+            if (totalPages === 0) totalPages = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            const start = (currentPage - 1) * recordsPerPage;
+            const end = Math.min(start + recordsPerPage, totalRecords);
+            paginatedRecords = visibleRecords.slice(start, end);
+        }
+        
+        updatePaginationControls();
+        updateSearchResults();
+    }
+
+    // =============================================
+    // UPDATE USER LIST - Only show active users
+    // =============================================
+    function updateUserList() {
+        const users = new Set();
+        records.forEach(r => { 
+            if (r.addedBy && !isUserRemoved(r.addedBy)) users.add(r.addedBy); 
+        });
+        if (users.size === 0) { 
+            userListSpan.textContent = 'No active team members'; 
+            return; 
+        }
+        const sortedUsers = Array.from(users).sort();
+        let html = sortedUsers.map(u => {
+            const isAdminUser = u.toLowerCase() === 'admin';
+            if (u === userName) {
+                return `<span style="background:#1b6f9c; color:white; padding:1px 8px; border-radius:10px; font-weight:600;">${u} (You)${isAdminUser ? ' 🔑' : ''}</span>`;
+            }
+            if (isAdminUser) {
+                return `<span style="background:#f8d7da; color:#721c24; padding:1px 8px; border-radius:10px;">${u} 🔑</span>`;
+            }
+            return `<span style="background:#e8e0f0; color:#6f42c1; padding:1px 8px; border-radius:10px;">${u}</span>`;
+        }).join(' ');
+        
+        userListSpan.innerHTML = html;
+    }
+
+    // =============================================
+    // UPDATE STATS - Shows only the user's records (non-admin) or all (admin)
+    // =============================================
+    function updateStats() {
+        // Admin sees ALL records, non-admin sees only their own
+        const visibleRecords = records.filter(rec => canViewRecord(rec));
+        
+        let totalLiab = 0, totalPay = 0, totalOut = 0;
+        visibleRecords.forEach(r => {
+            totalLiab += parseFloat(r.liability) || 0;
+            totalPay += parseFloat(r.payment) || 0;
+            totalOut += parseFloat(r.outstanding) || 0;
+        });
+        
+        totalRecordsSpan.textContent = visibleRecords.length;
+        totalLiabilitySpan.textContent = formatMoney(totalLiab);
+        totalPaymentSpan.textContent = formatMoney(totalPay);
+        totalOutstandingSpan.textContent = formatMoney(totalOut);
+    }
+
+    // =============================================
+    // UPDATE DASHBOARD STATS - Shows only the user's records (non-admin) or all (admin)
+    // =============================================
+    function updateDashboardStats() {
+        // Admin sees ALL records, non-admin sees only their own
+        const visibleRecords = records.filter(rec => canViewRecord(rec));
+        
+        // Sector stats
+        const sectorMap = {};
+        const sectorLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U'];
+        sectorLetters.forEach(letter => { sectorMap[letter] = 0; });
+        let sectorTotal = 0;
+        visibleRecords.forEach(r => {
+            if (r.sector && sectorMap.hasOwnProperty(r.sector)) {
+                sectorMap[r.sector]++;
+                sectorTotal++;
+            }
+        });
+        const sectorGrid = document.getElementById('sectorGrid');
+        sectorGrid.innerHTML = '';
+        sectorLetters.forEach(letter => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `<span class="label">${letter}</span><span class="count">${sectorMap[letter]}</span>`;
+            sectorGrid.appendChild(div);
+        });
+        document.getElementById('sectorTotal').textContent = sectorTotal;
+
+        // Taxpayer type stats
+        const typeMap = { 'Company': 0, 'Individual': 0, 'NGO': 0, 'Other': 0 };
+        let typeTotal = 0;
+        visibleRecords.forEach(r => {
+            if (r.taxpayerType && typeMap.hasOwnProperty(r.taxpayerType)) {
+                typeMap[r.taxpayerType]++;
+                typeTotal++;
+            }
+        });
+        const typeList = document.getElementById('taxpayerTypeList');
+        typeList.innerHTML = '';
+        const typeColors = { 'Company': '#1b6f9c', 'Individual': '#6f42c1', 'NGO': '#20c997', 'Other': '#d4a017' };
+        Object.keys(typeMap).forEach(key => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `<span class="label"><span class="dot" style="background:${typeColors[key]}"></span>${key}</span><span class="count">${typeMap[key]}</span>`;
+            typeList.appendChild(div);
+        });
+        document.getElementById('taxpayerTypeTotal').textContent = typeTotal;
+
+        // File status stats
+        const statusMap = { 'Active': 0, 'Inactive': 0, 'Dormant': 0, 'Deregistered': 0, 'Unassigned': 0 };
+        let statusTotal = 0;
+        visibleRecords.forEach(r => {
+            if (r.fileStatus && statusMap.hasOwnProperty(r.fileStatus)) {
+                statusMap[r.fileStatus]++;
+                statusTotal++;
+            }
+        });
+        const statusList = document.getElementById('statusList');
+        statusList.innerHTML = '';
+        const statusColors = { 'Active': '#1f7b4b', 'Inactive': '#6c757d', 'Dormant': '#d4a017', 'Deregistered': '#b13e4b', 'Unassigned': '#6f42c1' };
+        Object.keys(statusMap).forEach(key => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `<span class="label"><span class="dot" style="background:${statusColors[key]}"></span>${key}</span><span class="count">${statusMap[key]}</span>`;
+            statusList.appendChild(div);
+        });
+        document.getElementById('statusTotal').textContent = statusTotal;
+
+        // Tax types stats
+        const taxTypeMap = {};
+        const allTaxTypes = [
+            'Personal Income Tax', 'Corporate Income Tax', 'VAT Standard, NHIL & GETFUND',
+            'PAYE', 'Customs', 'Excise', 'Capital Gains Tax', 'Withholding Tax',
+            'Withholding VAT', 'Gift Tax', 'Rent Tax', 'Stamp Duty', 'VIT',
+            'Financial Sector Recovery Levy', 'Growth and Sustainability Levy',
+            'Flat', 'Flat / COVID-19', 'NHIL/GETFUND/COVID-19', 'NHIL/GETFUND',
+            'Minerals Royalties', 'Tax Stamp', 'Modified Taxation', 'Standard',
+            'Petroleum Tax', 'Mining Tax', 'Communication Service Tax',
+            'Suspense', 'Other'
+        ];
+        allTaxTypes.forEach(type => { taxTypeMap[type] = 0; });
+        let totalRegistrations = 0;
+        visibleRecords.forEach(r => {
+            if (r.taxTypes && r.taxTypes !== 'None') {
+                const types = r.taxTypes.split(',').map(t => t.trim());
+                types.forEach(type => {
+                    if (taxTypeMap.hasOwnProperty(type)) {
+                        taxTypeMap[type]++;
+                        totalRegistrations++;
+                    }
+                });
+            }
+        });
+        const taxTypesList = document.getElementById('taxTypesList');
+        taxTypesList.innerHTML = '';
+        const sortedTaxTypes = Object.keys(taxTypeMap)
+            .filter(key => taxTypeMap[key] > 0)
+            .sort((a, b) => taxTypeMap[b] - taxTypeMap[a] || a.localeCompare(b));
+        if (sortedTaxTypes.length === 0) {
+            taxTypesList.innerHTML = '<div class="item"><span class="label">No tax types registered yet</span></div>';
+        } else {
+            sortedTaxTypes.forEach(key => {
+                const div = document.createElement('div');
+                div.className = 'item';
+                const count = taxTypeMap[key];
+                let displayName = key;
+                if (displayName.length > 20) displayName = displayName.substring(0, 18) + '…';
+                div.innerHTML = `<span class="label"><span class="dot" style="background:#20c997"></span>${displayName}</span><span class="count">${count}</span>`;
+                taxTypesList.appendChild(div);
+            });
+        }
+        document.getElementById('taxTypesTotal').textContent = totalRegistrations;
+    }
+
+    // =============================================
+    // ADMIN STATS - Only visible to Admin
     // =============================================
     function updateAdminStats() {
         if (!isAdmin) {
@@ -2786,7 +3105,6 @@
     }
 
     function renderAdminStats() {
-        // CRITICAL FIX: Only count records from active users
         let filteredRecords = [...records].filter(r => !isUserRemoved(r.addedBy));
         
         if (adminFilterUser !== 'all') {
@@ -2833,7 +3151,6 @@
         
         const userNames = Object.keys(userStats).sort();
         
-        // Calculate total records from active users
         let totalActiveRecords = 0;
         let totalActiveLiability = 0;
         let totalActivePayment = 0;
@@ -2880,7 +3197,6 @@
             userStatsGrid.appendChild(card);
         });
         
-        // Summary card - shows total from ACTIVE users only
         const summaryCard = document.createElement('div');
         summaryCard.className = 'user-stat-card';
         summaryCard.style.background = '#0d3b52';
@@ -2899,138 +3215,6 @@
             </div>
         `;
         userStatsGrid.appendChild(summaryCard);
-    }
-
-    // =============================================
-    // UPDATE STATS - Shows ALL records
-    // =============================================
-    function updateStats() {
-        const allRecords = records; // All records in the system
-        
-        let totalLiab = 0, totalPay = 0, totalOut = 0;
-        allRecords.forEach(r => {
-            totalLiab += parseFloat(r.liability) || 0;
-            totalPay += parseFloat(r.payment) || 0;
-            totalOut += parseFloat(r.outstanding) || 0;
-        });
-        
-        totalRecordsSpan.textContent = allRecords.length;
-        totalLiabilitySpan.textContent = formatMoney(totalLiab);
-        totalPaymentSpan.textContent = formatMoney(totalPay);
-        totalOutstandingSpan.textContent = formatMoney(totalOut);
-    }
-
-    // =============================================
-    // UPDATE DASHBOARD STATS - Shows ALL records
-    // =============================================
-    function updateDashboardStats() {
-        const allRecords = records; // All records in the system
-        
-        // Sector stats
-        const sectorMap = {};
-        const sectorLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U'];
-        sectorLetters.forEach(letter => { sectorMap[letter] = 0; });
-        let sectorTotal = 0;
-        allRecords.forEach(r => {
-            if (r.sector && sectorMap.hasOwnProperty(r.sector)) {
-                sectorMap[r.sector]++;
-                sectorTotal++;
-            }
-        });
-        const sectorGrid = document.getElementById('sectorGrid');
-        sectorGrid.innerHTML = '';
-        sectorLetters.forEach(letter => {
-            const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `<span class="label">${letter}</span><span class="count">${sectorMap[letter]}</span>`;
-            sectorGrid.appendChild(div);
-        });
-        document.getElementById('sectorTotal').textContent = sectorTotal;
-
-        // Taxpayer type stats
-        const typeMap = { 'Company': 0, 'Individual': 0, 'NGO': 0, 'Other': 0 };
-        let typeTotal = 0;
-        allRecords.forEach(r => {
-            if (r.taxpayerType && typeMap.hasOwnProperty(r.taxpayerType)) {
-                typeMap[r.taxpayerType]++;
-                typeTotal++;
-            }
-        });
-        const typeList = document.getElementById('taxpayerTypeList');
-        typeList.innerHTML = '';
-        const typeColors = { 'Company': '#1b6f9c', 'Individual': '#6f42c1', 'NGO': '#20c997', 'Other': '#d4a017' };
-        Object.keys(typeMap).forEach(key => {
-            const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `<span class="label"><span class="dot" style="background:${typeColors[key]}"></span>${key}</span><span class="count">${typeMap[key]}</span>`;
-            typeList.appendChild(div);
-        });
-        document.getElementById('taxpayerTypeTotal').textContent = typeTotal;
-
-        // File status stats
-        const statusMap = { 'Active': 0, 'Inactive': 0, 'Dormant': 0, 'Deregistered': 0, 'Unassigned': 0 };
-        let statusTotal = 0;
-        allRecords.forEach(r => {
-            if (r.fileStatus && statusMap.hasOwnProperty(r.fileStatus)) {
-                statusMap[r.fileStatus]++;
-                statusTotal++;
-            }
-        });
-        const statusList = document.getElementById('statusList');
-        statusList.innerHTML = '';
-        const statusColors = { 'Active': '#1f7b4b', 'Inactive': '#6c757d', 'Dormant': '#d4a017', 'Deregistered': '#b13e4b', 'Unassigned': '#6f42c1' };
-        Object.keys(statusMap).forEach(key => {
-            const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `<span class="label"><span class="dot" style="background:${statusColors[key]}"></span>${key}</span><span class="count">${statusMap[key]}</span>`;
-            statusList.appendChild(div);
-        });
-        document.getElementById('statusTotal').textContent = statusTotal;
-
-        // Tax types stats
-        const taxTypeMap = {};
-        const allTaxTypes = [
-            'Personal Income Tax', 'Corporate Income Tax', 'VAT Standard, NHIL & GETFUND',
-            'PAYE', 'Customs', 'Excise', 'Capital Gains Tax', 'Withholding Tax',
-            'Withholding VAT', 'Gift Tax', 'Rent Tax', 'Stamp Duty', 'VIT',
-            'Financial Sector Recovery Levy', 'Growth and Sustainability Levy',
-            'Flat', 'Flat / COVID-19', 'NHIL/GETFUND/COVID-19', 'NHIL/GETFUND',
-            'Minerals Royalties', 'Tax Stamp', 'Modified Taxation', 'Standard',
-            'Petroleum Tax', 'Mining Tax', 'Communication Service Tax',
-            'Suspense', 'Other'
-        ];
-        allTaxTypes.forEach(type => { taxTypeMap[type] = 0; });
-        let totalRegistrations = 0;
-        allRecords.forEach(r => {
-            if (r.taxTypes && r.taxTypes !== 'None') {
-                const types = r.taxTypes.split(',').map(t => t.trim());
-                types.forEach(type => {
-                    if (taxTypeMap.hasOwnProperty(type)) {
-                        taxTypeMap[type]++;
-                        totalRegistrations++;
-                    }
-                });
-            }
-        });
-        const taxTypesList = document.getElementById('taxTypesList');
-        taxTypesList.innerHTML = '';
-        const sortedTaxTypes = Object.keys(taxTypeMap)
-            .filter(key => taxTypeMap[key] > 0)
-            .sort((a, b) => taxTypeMap[b] - taxTypeMap[a] || a.localeCompare(b));
-        if (sortedTaxTypes.length === 0) {
-            taxTypesList.innerHTML = '<div class="item"><span class="label">No tax types registered yet</span></div>';
-        } else {
-            sortedTaxTypes.forEach(key => {
-                const div = document.createElement('div');
-                div.className = 'item';
-                const count = taxTypeMap[key];
-                let displayName = key;
-                if (displayName.length > 20) displayName = displayName.substring(0, 18) + '…';
-                div.innerHTML = `<span class="label"><span class="dot" style="background:#20c997"></span>${displayName}</span><span class="count">${count}</span>`;
-                taxTypesList.appendChild(div);
-            });
-        }
-        document.getElementById('taxTypesTotal').textContent = totalRegistrations;
     }
 
     // =============================================
@@ -3207,33 +3391,6 @@
     }
 
     // =============================================
-    // UPDATE USER LIST
-    // =============================================
-    function updateUserList() {
-        const users = new Set();
-        records.forEach(r => { 
-            if (r.addedBy && !isUserRemoved(r.addedBy)) users.add(r.addedBy); 
-        });
-        if (users.size === 0) { 
-            userListSpan.textContent = 'No active team members'; 
-            return; 
-        }
-        const sortedUsers = Array.from(users).sort();
-        let html = sortedUsers.map(u => {
-            const isAdminUser = u.toLowerCase() === 'admin';
-            if (u === userName) {
-                return `<span style="background:#1b6f9c; color:white; padding:1px 8px; border-radius:10px; font-weight:600;">${u} (You)${isAdminUser ? ' 🔑' : ''}</span>`;
-            }
-            if (isAdminUser) {
-                return `<span style="background:#f8d7da; color:#721c24; padding:1px 8px; border-radius:10px;">${u} 🔑</span>`;
-            }
-            return `<span style="background:#e8e0f0; color:#6f42c1; padding:1px 8px; border-radius:10px;">${u}</span>`;
-        }).join(' ');
-        
-        userListSpan.innerHTML = html;
-    }
-
-    // =============================================
     // FIREBASE - REAL-TIME READ
     // =============================================
     function setupFirebaseListener() {
@@ -3322,101 +3479,7 @@
     }
 
     // =============================================
-    // PAGINATION FUNCTIONS
-    // =============================================
-    function updatePagination() {
-        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
-        const totalRecords = visibleRecords.length;
-        totalRecordsCount.textContent = totalRecords;
-        
-        if (recordsPerPage === -1) {
-            totalPages = 1;
-            paginatedRecords = visibleRecords;
-        } else {
-            totalPages = Math.ceil(totalRecords / recordsPerPage);
-            if (totalPages === 0) totalPages = 1;
-            if (currentPage > totalPages) currentPage = totalPages;
-            const start = (currentPage - 1) * recordsPerPage;
-            const end = Math.min(start + recordsPerPage, totalRecords);
-            paginatedRecords = visibleRecords.slice(start, end);
-        }
-        
-        updatePaginationControls();
-        updateSearchResults();
-    }
-
-    function updatePaginationControls() {
-        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
-        const totalRecords = visibleRecords.length;
-        
-        if (totalRecords === 0) {
-            pageStart.textContent = 0;
-            pageEnd.textContent = 0;
-            totalRecordsCount.textContent = 0;
-            pageNumbers.innerHTML = '';
-            firstPageBtn.disabled = true;
-            prevPageBtn.disabled = true;
-            nextPageBtn.disabled = true;
-            lastPageBtn.disabled = true;
-            return;
-        }
-        
-        let start = 0, end = 0;
-        if (recordsPerPage === -1) {
-            start = 1;
-            end = totalRecords;
-        } else {
-            start = (currentPage - 1) * recordsPerPage + 1;
-            end = Math.min(currentPage * recordsPerPage, totalRecords);
-        }
-        
-        pageStart.textContent = start;
-        pageEnd.textContent = end;
-        totalRecordsCount.textContent = totalRecords;
-        
-        let pageNumbersHtml = '';
-        const maxPagesToShow = 7;
-        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-        if (endPage - startPage < maxPagesToShow - 1) {
-            startPage = Math.max(1, endPage - maxPagesToShow + 1);
-        }
-        
-        for (let i = startPage; i <= endPage; i++) {
-            pageNumbersHtml += `<button class="${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
-        }
-        pageNumbers.innerHTML = pageNumbersHtml;
-        
-        firstPageBtn.disabled = currentPage === 1 || totalPages === 0;
-        prevPageBtn.disabled = currentPage === 1 || totalPages === 0;
-        nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
-        lastPageBtn.disabled = currentPage === totalPages || totalPages === 0;
-    }
-
-    function goToPage(page) {
-        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
-        const totalRecords = visibleRecords.length;
-        if (recordsPerPage === -1) {
-            currentPage = 1;
-        } else {
-            if (page < 1) page = 1;
-            if (page > totalPages) page = totalPages;
-            currentPage = page;
-        }
-        updatePagination();
-        renderTable();
-    }
-
-    function changeRecordsPerPage() {
-        const val = parseInt(recordsPerPageSelect.value);
-        recordsPerPage = val;
-        currentPage = 1;
-        updatePagination();
-        renderTable();
-    }
-
-    // =============================================
-    // FIREBASE - ADD RECORD (same as before)
+    // FIREBASE - ADD RECORD
     // =============================================
     function addRecord() {
         const tin = tinInput.value.trim();
@@ -3691,145 +3754,6 @@
             resetForm();
             showToast('❌ Edit cancelled');
         }
-    }
-
-    // =============================================
-    // RENDER TABLE
-    // =============================================
-    function renderTable() {
-        tableBody.innerHTML = '';
-        
-        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
-        
-        if (visibleRecords.length === 0) {
-            if (isAdmin) {
-                tableBody.innerHTML = '<tr><td colspan="16" class="empty-state"><i class="fas fa-box-open"></i> No records in the system yet</td></tr>';
-            } else {
-                tableBody.innerHTML = '<tr><td colspan="16" class="empty-state"><i class="fas fa-box-open"></i> You have no records yet. Add your first record!</td></tr>';
-            }
-            downloadBtn.disabled = true;
-            downloadAllBtn.disabled = true;
-            updateStats();
-            updateUserList();
-            updateDashboardStats();
-            return;
-        }
-        
-        downloadBtn.disabled = false;
-        downloadAllBtn.disabled = false;
-        
-        const displayRecords = paginatedRecords;
-        
-        if (displayRecords.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="16" class="empty-state"><i class="fas fa-info-circle"></i> No records on this page</td></tr>';
-            return;
-        }
-        
-        displayRecords.forEach((rec) => {
-            const row = document.createElement('tr');
-            const actualIndex = records.findIndex(r => r._firebaseKey === rec._firebaseKey);
-            const canEdit = canEditRecord(rec);
-            const canDelete = canDeleteRecord(rec);
-            const hasMergedFrom = rec.mergedFrom && rec.mergedFrom !== rec.addedBy;
-            const hasPreviousName = rec.previousName && rec.previousName !== rec.addedBy;
-            
-            const cells = [
-                rec.tin || '—', rec.name || '—', rec.telephone || '—', rec.email || '—',
-                rec.location || '—', rec.taxOffice || '—', rec.taxpayerType || '—', rec.sector || '—'
-            ];
-            cells.forEach(text => { const td = document.createElement('td'); td.textContent = text; row.appendChild(td); });
-            
-            const statusCell = document.createElement('td');
-            const status = rec.fileStatus || '—';
-            statusCell.innerHTML = `<span class="status-${status.toLowerCase()}">${status}</span>`;
-            row.appendChild(statusCell);
-            
-            const taxTypesCell = document.createElement('td');
-            taxTypesCell.textContent = rec.taxTypes || '—';
-            row.appendChild(taxTypesCell);
-            
-            const liabilityCell = document.createElement('td');
-            liabilityCell.innerHTML = `<span class="amount liability">${formatMoney(rec.liability || 0)}</span>`;
-            row.appendChild(liabilityCell);
-            const paymentCell = document.createElement('td');
-            paymentCell.innerHTML = `<span class="amount payment">${formatMoney(rec.payment || 0)}</span>`;
-            row.appendChild(paymentCell);
-            const outstandingCell = document.createElement('td');
-            outstandingCell.innerHTML = `<span class="amount outstanding">${formatMoney(rec.outstanding || 0)}</span>`;
-            row.appendChild(outstandingCell);
-            
-            const addedByCell = document.createElement('td');
-            const addedBy = rec.addedBy || '—';
-            const span = document.createElement('span');
-            span.textContent = addedBy;
-            span.className = 'user-name';
-            if (hasMergedFrom) {
-                span.className += ' merged-user';
-                span.textContent = addedBy + ' 🔄';
-                span.title = `Merged from: ${rec.mergedFrom}`;
-            } else if (hasPreviousName) {
-                span.className += ' renamed';
-                span.textContent = addedBy + ' ✏️';
-                span.title = `Previously: ${rec.previousName}`;
-            } else if (addedBy.toLowerCase() === 'admin') {
-                span.className += ' admin-user';
-                span.textContent = addedBy + ' 🔑';
-            } else if (addedBy === userName) {
-                span.className += ' current-user';
-                span.textContent = addedBy + ' ★';
-            } else {
-                span.className += ' other-user';
-            }
-            addedByCell.appendChild(span);
-            row.appendChild(addedByCell);
-            
-            const sourceCell = document.createElement('td');
-            const source = rec._source || 'unknown';
-            if (source === 'local') {
-                sourceCell.innerHTML = `<span class="source-badge local"><i class="fas fa-server"></i> Offline</span>`;
-            } else if (source === 'firebase') {
-                sourceCell.innerHTML = `<span class="source-badge firebase"><i class="fas fa-cloud"></i> Synced</span>`;
-            } else {
-                sourceCell.textContent = '—';
-            }
-            row.appendChild(sourceCell);
-            
-            const actionCell = document.createElement('td');
-            actionCell.style.whiteSpace = 'nowrap';
-            
-            const editBtn = document.createElement('button');
-            editBtn.className = 'action-btn edit-btn';
-            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-            editBtn.title = canEdit ? 'Edit record' : '🔒 Only the owner or Admin can edit';
-            if (!canEdit) editBtn.classList.add('disabled');
-            editBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                if (canEdit) startEdit(actualIndex);
-                else showToast('⛔ You do not have permission to edit this record.', true);
-            });
-            actionCell.appendChild(editBtn);
-            
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'action-btn delete-btn';
-            deleteBtn.innerHTML = '<i class="fas fa-times-circle"></i>';
-            deleteBtn.title = canDelete ? 'Delete record' : '🔒 Only the owner or Admin can delete';
-            if (!canDelete) deleteBtn.classList.add('disabled');
-            deleteBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                if (canDelete) deleteRecord(rec._firebaseKey, rec);
-                else showToast('⛔ You do not have permission to delete this record.', true);
-            });
-            actionCell.appendChild(deleteBtn);
-            
-            row.appendChild(actionCell);
-            tableBody.appendChild(row);
-        });
-        
-        recordCountSpan.textContent = visibleRecords.length + ' records';
-        updateStats();
-        updateUserList();
-        updateDashboardStats();
-        updateSearchResults();
     }
 
     // =============================================
@@ -4207,10 +4131,12 @@
     console.log('✅ Removed users are COMPLETELY removed from the system');
     console.log('✅ Removed users do NOT appear in the summary dashboard');
     console.log('✅ Removed users\' records are transferred to Admin');
-    console.log('📊 Total Records shows ALL records (460)');
-    console.log('📊 User Summary shows only ACTIVE users\' records (421)');
+    console.log('📊 Total Records shows ALL records');
+    console.log('📊 User Summary shows only ACTIVE users\' records');
     console.log('🔍 Orphan record detection: finds records from removed users');
     console.log('🔧 Fix Orphan Records: transfers orphaned records to Admin');
+    console.log('🔒 NON-ADMIN USERS CAN ONLY SEE THEIR OWN RECORDS (FIXED)');
+    console.log('👤 Angela will only see Angela\'s records');
     </script>
 </body>
 </html>
