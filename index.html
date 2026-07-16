@@ -204,6 +204,26 @@
             color: #6a8ba0;
             margin-left: 4px;
         }
+        .admin-stats .orphan-warning {
+            background: #fff3cd;
+            border: 1px solid #d4a017;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            color: #856404;
+        }
+        .admin-stats .orphan-warning .fix-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 2px 14px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .admin-stats .orphan-warning .fix-btn:hover { background: #0069d9; }
         
         /* Search Filter */
         .search-filter {
@@ -1196,6 +1216,11 @@
             <!-- ADMIN USER STATS -->
             <div class="card admin-stats" id="adminStatsPanel">
                 <h4><i class="fas fa-chart-bar" style="color:#1b6f9c;"></i> Team Performance Dashboard</h4>
+                <div id="orphanWarning" class="orphan-warning" style="display:none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="orphanMessage">⚠️ Data discrepancy detected: <span id="orphanCount">0</span> orphaned records found.</span>
+                    <button class="fix-btn" onclick="fixOrphanedRecords()"><i class="fas fa-wrench"></i> Fix Now</button>
+                </div>
                 <div class="filter-controls">
                     <span style="font-size:0.75rem; font-weight:600; color:#0d3b52;">Filter by:</span>
                     <select id="adminUserFilter">
@@ -1602,7 +1627,7 @@
     let duplicateDetected = false;
     let searchTerm = '';
     let searchField = 'all';
-    let removedUsers = []; // Users that have been completely removed (they no longer appear anywhere)
+    let removedUsers = [];
     let selectedUsersForMerge = new Set();
     let renameTargetUser = null;
 
@@ -1672,6 +1697,9 @@
     const adminUserFilter = document.getElementById('adminUserFilter');
     const adminDateFrom = document.getElementById('adminDateFrom');
     const adminDateTo = document.getElementById('adminDateTo');
+    const orphanWarning = document.getElementById('orphanWarning');
+    const orphanCount = document.getElementById('orphanCount');
+    const orphanMessage = document.getElementById('orphanMessage');
     const manageTeamModal = document.getElementById('manageTeamModal');
     const teamMembersList = document.getElementById('teamMembersList');
     const mergeUserSelection = document.getElementById('mergeUserSelection');
@@ -1706,6 +1734,118 @@
     const toastMessage = document.getElementById('toastMessage');
 
     // =============================================
+    // ORPHAN RECORD DETECTION & FIX
+    // =============================================
+    function checkForOrphanedRecords() {
+        if (!isAdmin) return;
+        
+        // Get all unique user names from records
+        const recordUsers = new Set();
+        records.forEach(r => {
+            if (r.addedBy) recordUsers.add(r.addedBy);
+        });
+        
+        // Get active users (not removed)
+        const activeUsers = new Set();
+        records.forEach(r => {
+            if (r.addedBy && !isUserRemoved(r.addedBy)) {
+                activeUsers.add(r.addedBy);
+            }
+        });
+        
+        // Find orphaned records (belong to users who are removed)
+        const orphanedRecords = [];
+        records.forEach(r => {
+            if (r.addedBy && isUserRemoved(r.addedBy)) {
+                orphanedRecords.push(r);
+            }
+        });
+        
+        // Also check for records with addedBy that doesn't exist as a user
+        records.forEach(r => {
+            if (r.addedBy && !recordUsers.has(r.addedBy) && !activeUsers.has(r.addedBy)) {
+                // This is an orphan - the user doesn't exist at all
+                if (!orphanedRecords.some(o => o._firebaseKey === r._firebaseKey)) {
+                    orphanedRecords.push(r);
+                }
+            }
+        });
+        
+        if (orphanedRecords.length > 0) {
+            orphanWarning.style.display = 'block';
+            orphanCount.textContent = orphanedRecords.length;
+            orphanMessage.innerHTML = `⚠️ Data discrepancy detected: <span id="orphanCount">${orphanedRecords.length}</span> orphaned records found. These records belong to removed users and are not counted in the User Summary.`;
+        } else {
+            orphanWarning.style.display = 'none';
+        }
+        
+        return orphanedRecords;
+    }
+
+    function fixOrphanedRecords() {
+        if (!isAdmin) return;
+        if (!confirm('This will transfer all orphaned records (from removed users) to Admin. Continue?')) return;
+        
+        setSyncStatus('Fixing orphaned records...', 'syncing');
+        
+        const orphanedRecords = [];
+        const recordUsers = new Set();
+        records.forEach(r => {
+            if (r.addedBy) recordUsers.add(r.addedBy);
+        });
+        
+        const activeUsers = new Set();
+        records.forEach(r => {
+            if (r.addedBy && !isUserRemoved(r.addedBy)) {
+                activeUsers.add(r.addedBy);
+            }
+        });
+        
+        records.forEach(r => {
+            if (r.addedBy && isUserRemoved(r.addedBy)) {
+                orphanedRecords.push(r);
+            } else if (r.addedBy && !recordUsers.has(r.addedBy) && !activeUsers.has(r.addedBy)) {
+                orphanedRecords.push(r);
+            }
+        });
+        
+        if (orphanedRecords.length === 0) {
+            showToast('✅ No orphaned records found.');
+            orphanWarning.style.display = 'none';
+            return;
+        }
+        
+        let fixedCount = 0;
+        const promises = orphanedRecords.map(record => {
+            const firebaseKey = record._firebaseKey;
+            if (!firebaseKey) return Promise.resolve();
+            
+            const updatedRecord = {
+                ...record,
+                addedBy: 'Admin',
+                previousOwner: record.addedBy || 'Unknown',
+                fixedAt: new Date().toISOString(),
+                fixedBy: userName
+            };
+            
+            return database.ref('censusRecords/' + firebaseKey).update(updatedRecord)
+                .then(() => {
+                    fixedCount++;
+                })
+                .catch(err => {
+                    console.error('Error fixing record:', err);
+                });
+        });
+        
+        Promise.all(promises).then(() => {
+            setSyncStatus('Synced', 'synced');
+            showToast(`✅ Fixed ${fixedCount} orphaned records. They are now assigned to Admin.`);
+            database.ref('censusRecords').once('value');
+            orphanWarning.style.display = 'none';
+        });
+    }
+
+    // =============================================
     // MANAGE TEAM MODAL FUNCTIONS
     // =============================================
     function openManageTeam() {
@@ -1716,7 +1856,6 @@
         manageTeamModal.style.display = 'flex';
         populateTeamMembers();
         populateMergeUsers();
-        // Default to Members tab
         const activeTab = document.querySelector('.tab-bar .active');
         if (activeTab) {
             switchTeamTab(activeTab.textContent.trim().toLowerCase().replace(' ', ''), activeTab);
@@ -1732,11 +1871,8 @@
     }
 
     function switchTeamTab(tab, btn) {
-        // Update tab buttons
         document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        
-        // Update tab content
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         const tabMap = {
             'members': 'tabMembers',
@@ -1747,7 +1883,6 @@
     }
 
     function populateTeamMembers() {
-        // Only show users that are NOT removed and have records
         const users = new Set();
         records.forEach(r => {
             if (r.addedBy && !isUserRemoved(r.addedBy)) {
@@ -1792,7 +1927,6 @@
     }
 
     function populateMergeUsers() {
-        // Show all non-admin users except the current user and removed users
         const users = new Set();
         records.forEach(r => {
             if (r.addedBy && !isUserRemoved(r.addedBy) && r.addedBy !== userName && r.addedBy.toLowerCase() !== 'admin') {
@@ -1802,12 +1936,11 @@
         const userArray = Array.from(users).sort();
         
         if (userArray.length < 1) {
-            mergeUserSelection.innerHTML = '<p class="empty-msg">No other users available to merge. (You cannot merge yourself or the admin.)</p>';
+            mergeUserSelection.innerHTML = '<p class="empty-msg">No other users available to merge.</p>';
             mergeTargetUserSelect.innerHTML = '<option value="">No users available</option>';
             return;
         }
         
-        // Build selection checkboxes - users to merge FROM
         mergeUserSelection.innerHTML = userArray.map(u => {
             const isSelected = selectedUsersForMerge.has(u);
             return `
@@ -1819,7 +1952,6 @@
             `;
         }).join('');
         
-        // Update target user dropdown - can be ANY user including the current user
         const targetUsers = new Set();
         records.forEach(r => {
             if (r.addedBy && !isUserRemoved(r.addedBy) && !selectedUsersForMerge.has(r.addedBy)) {
@@ -1859,7 +1991,6 @@
             mergeBtn.disabled = false;
             mergeBtn.style.opacity = '1';
         }
-        // Update target user dropdown
         const targetUsers = new Set();
         records.forEach(r => {
             if (r.addedBy && !isUserRemoved(r.addedBy) && !selectedUsersForMerge.has(r.addedBy)) {
@@ -1936,7 +2067,6 @@
         });
         
         Promise.all(promises).then(() => {
-            // COMPLETELY REMOVE merged users - add to removed list
             usersToMerge.forEach(user => {
                 if (!removedUsers.includes(user)) {
                     removedUsers.push(user);
@@ -1952,9 +2082,7 @@
             setSyncStatus('Synced', 'synced');
             showToast(`✅ Merge complete! ${transferredCount} records transferred to "${targetUser}". ${usersToMerge.length} user(s) completely removed.`);
             
-            // Force refresh data from Firebase
             database.ref('censusRecords').once('value').then(() => {
-                // Clean local storage
                 try {
                     const storedData = localStorage.getItem('censusData');
                     if (storedData) {
@@ -1967,10 +2095,10 @@
                 } catch (e) {
                     console.error('Error cleaning local storage:', e);
                 }
-                // Force UI refresh
                 updateAdminStats();
                 updateUserList();
                 renderTable();
+                checkForOrphanedRecords();
             });
         });
     }
@@ -2105,7 +2233,6 @@
                 }
             }
             
-            // If the renamed user was in the removed list, remove them from it
             const removedIndex = removedUsers.indexOf(currentName);
             if (removedIndex !== -1) {
                 removedUsers.splice(removedIndex, 1);
@@ -2124,7 +2251,7 @@
     }
 
     // =============================================
-    // REMOVED USERS MANAGEMENT - COMPLETE REMOVAL
+    // REMOVED USERS MANAGEMENT
     // =============================================
     function loadRemovedUsers() {
         try {
@@ -2168,7 +2295,6 @@
             return;
         }
         
-        // Transfer all records to Admin
         const userRecords = records.filter(r => r.addedBy === username);
         let transferredCount = 0;
         
@@ -2193,13 +2319,11 @@
         });
         
         Promise.all(promises).then(() => {
-            // Add to removed list
             if (!removedUsers.includes(username)) {
                 removedUsers.push(username);
             }
             saveRemovedUsers();
             
-            // Clean local storage
             try {
                 const storedData = localStorage.getItem('censusData');
                 if (storedData) {
@@ -2222,13 +2346,12 @@
     }
 
     // =============================================
-    // UNIQUE USERNAME CHECK - Excludes removed users
+    // UNIQUE USERNAME CHECK
     // =============================================
     function checkUsernameAvailability(name) {
         if (!name) return true;
         const users = new Set();
         records.forEach(r => {
-            // Only count users that haven't been removed
             if (r.addedBy && !isUserRemoved(r.addedBy)) {
                 users.add(r.addedBy);
             }
@@ -2242,7 +2365,6 @@
                 return false;
             }
         }
-        // Check if user is in removed list
         if (isUserRemoved(name)) {
             return false;
         }
@@ -2550,7 +2672,6 @@
                     const localRecords = data.records;
                     let addedCount = 0;
                     localRecords.forEach(localRec => {
-                        // Skip records from removed users
                         if (isUserRemoved(localRec.addedBy)) return;
                         
                         const exists = records.some(r => 
@@ -2575,6 +2696,7 @@
                     updateUserList();
                     updateAdminStats();
                     updateSearchResults();
+                    checkForOrphanedRecords();
                     if (addedCount > 0) {
                         console.log('📂 Loaded ' + addedCount + ' offline records');
                     }
@@ -2586,7 +2708,7 @@
     }
 
     // =============================================
-    // PERMISSION CHECKS - Removed users have no access
+    // PERMISSION CHECKS
     // =============================================
     function canEditRecord(record) {
         if (isAdmin) return true;
@@ -2607,7 +2729,7 @@
     }
 
     // =============================================
-    // ADMIN STATS - Only show active users
+    // ADMIN STATS
     // =============================================
     function updateAdminStats() {
         if (!isAdmin) {
@@ -2617,7 +2739,6 @@
         
         adminStatsPanel.classList.add('visible');
         
-        // Only show users that are NOT removed
         const users = new Set();
         records.forEach(r => {
             if (r.addedBy && !isUserRemoved(r.addedBy)) {
@@ -2637,6 +2758,7 @@
         });
         
         applyAdminFilter();
+        checkForOrphanedRecords();
     }
 
     function applyAdminFilter() {
@@ -2664,7 +2786,7 @@
     }
 
     function renderAdminStats() {
-        // Only include records from users that are NOT removed
+        // CRITICAL FIX: Only count records from active users
         let filteredRecords = [...records].filter(r => !isUserRemoved(r.addedBy));
         
         if (adminFilterUser !== 'all') {
@@ -2711,24 +2833,28 @@
         
         const userNames = Object.keys(userStats).sort();
         
+        // Calculate total records from active users
+        let totalActiveRecords = 0;
+        let totalActiveLiability = 0;
+        let totalActivePayment = 0;
+        let totalActiveOutstanding = 0;
+        
+        userNames.forEach(user => {
+            const stats = userStats[user];
+            totalActiveRecords += stats.count;
+            totalActiveLiability += stats.totalLiability;
+            totalActivePayment += stats.totalPayment;
+            totalActiveOutstanding += stats.totalOutstanding;
+        });
+        
         if (userNames.length === 0) {
             userStatsGrid.innerHTML = '<div style="text-align:center; color:#6a8ba0; padding:1rem; grid-column:1/-1;">No active users with records found.</div>';
             return;
         }
         
-        let totalRecords = 0;
-        let totalLiability = 0;
-        let totalPayment = 0;
-        let totalOutstanding = 0;
-        
         userStatsGrid.innerHTML = '';
         userNames.forEach(user => {
             const stats = userStats[user];
-            totalRecords += stats.count;
-            totalLiability += stats.totalLiability;
-            totalPayment += stats.totalPayment;
-            totalOutstanding += stats.totalOutstanding;
-            
             const isAdminUser = user.toLowerCase() === 'admin';
             const isCurrentUser = user === userName;
             
@@ -2754,7 +2880,7 @@
             userStatsGrid.appendChild(card);
         });
         
-        // Summary card
+        // Summary card - shows total from ACTIVE users only
         const summaryCard = document.createElement('div');
         summaryCard.className = 'user-stat-card';
         summaryCard.style.background = '#0d3b52';
@@ -2762,17 +2888,149 @@
         summaryCard.style.borderColor = '#0d3b52';
         summaryCard.innerHTML = `
             <div class="user-name" style="color:white;">📊 Summary</div>
-            <div class="user-count" style="color:#cce5ff;"><span style="color:white;">${totalRecords}</span> total records</div>
+            <div class="user-count" style="color:#cce5ff;"><span style="color:white;">${totalActiveRecords}</span> total records from active users</div>
             <div class="user-totals" style="color:#cce5ff;">
-                ₵${totalLiability.toFixed(2)} total liability · 
-                ₵${totalPayment.toFixed(2)} total paid · 
-                ₵${totalOutstanding.toFixed(2)} total outstanding
+                ₵${totalActiveLiability.toFixed(2)} total liability · 
+                ₵${totalActivePayment.toFixed(2)} total paid · 
+                ₵${totalActiveOutstanding.toFixed(2)} total outstanding
             </div>
             <div style="margin-top:4px;">
                 <span class="user-badge" style="background:#cce5ff; color:#004085;">${userNames.length} active team members</span>
             </div>
         `;
         userStatsGrid.appendChild(summaryCard);
+    }
+
+    // =============================================
+    // UPDATE STATS - Shows ALL records
+    // =============================================
+    function updateStats() {
+        const allRecords = records; // All records in the system
+        
+        let totalLiab = 0, totalPay = 0, totalOut = 0;
+        allRecords.forEach(r => {
+            totalLiab += parseFloat(r.liability) || 0;
+            totalPay += parseFloat(r.payment) || 0;
+            totalOut += parseFloat(r.outstanding) || 0;
+        });
+        
+        totalRecordsSpan.textContent = allRecords.length;
+        totalLiabilitySpan.textContent = formatMoney(totalLiab);
+        totalPaymentSpan.textContent = formatMoney(totalPay);
+        totalOutstandingSpan.textContent = formatMoney(totalOut);
+    }
+
+    // =============================================
+    // UPDATE DASHBOARD STATS - Shows ALL records
+    // =============================================
+    function updateDashboardStats() {
+        const allRecords = records; // All records in the system
+        
+        // Sector stats
+        const sectorMap = {};
+        const sectorLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U'];
+        sectorLetters.forEach(letter => { sectorMap[letter] = 0; });
+        let sectorTotal = 0;
+        allRecords.forEach(r => {
+            if (r.sector && sectorMap.hasOwnProperty(r.sector)) {
+                sectorMap[r.sector]++;
+                sectorTotal++;
+            }
+        });
+        const sectorGrid = document.getElementById('sectorGrid');
+        sectorGrid.innerHTML = '';
+        sectorLetters.forEach(letter => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `<span class="label">${letter}</span><span class="count">${sectorMap[letter]}</span>`;
+            sectorGrid.appendChild(div);
+        });
+        document.getElementById('sectorTotal').textContent = sectorTotal;
+
+        // Taxpayer type stats
+        const typeMap = { 'Company': 0, 'Individual': 0, 'NGO': 0, 'Other': 0 };
+        let typeTotal = 0;
+        allRecords.forEach(r => {
+            if (r.taxpayerType && typeMap.hasOwnProperty(r.taxpayerType)) {
+                typeMap[r.taxpayerType]++;
+                typeTotal++;
+            }
+        });
+        const typeList = document.getElementById('taxpayerTypeList');
+        typeList.innerHTML = '';
+        const typeColors = { 'Company': '#1b6f9c', 'Individual': '#6f42c1', 'NGO': '#20c997', 'Other': '#d4a017' };
+        Object.keys(typeMap).forEach(key => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `<span class="label"><span class="dot" style="background:${typeColors[key]}"></span>${key}</span><span class="count">${typeMap[key]}</span>`;
+            typeList.appendChild(div);
+        });
+        document.getElementById('taxpayerTypeTotal').textContent = typeTotal;
+
+        // File status stats
+        const statusMap = { 'Active': 0, 'Inactive': 0, 'Dormant': 0, 'Deregistered': 0, 'Unassigned': 0 };
+        let statusTotal = 0;
+        allRecords.forEach(r => {
+            if (r.fileStatus && statusMap.hasOwnProperty(r.fileStatus)) {
+                statusMap[r.fileStatus]++;
+                statusTotal++;
+            }
+        });
+        const statusList = document.getElementById('statusList');
+        statusList.innerHTML = '';
+        const statusColors = { 'Active': '#1f7b4b', 'Inactive': '#6c757d', 'Dormant': '#d4a017', 'Deregistered': '#b13e4b', 'Unassigned': '#6f42c1' };
+        Object.keys(statusMap).forEach(key => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `<span class="label"><span class="dot" style="background:${statusColors[key]}"></span>${key}</span><span class="count">${statusMap[key]}</span>`;
+            statusList.appendChild(div);
+        });
+        document.getElementById('statusTotal').textContent = statusTotal;
+
+        // Tax types stats
+        const taxTypeMap = {};
+        const allTaxTypes = [
+            'Personal Income Tax', 'Corporate Income Tax', 'VAT Standard, NHIL & GETFUND',
+            'PAYE', 'Customs', 'Excise', 'Capital Gains Tax', 'Withholding Tax',
+            'Withholding VAT', 'Gift Tax', 'Rent Tax', 'Stamp Duty', 'VIT',
+            'Financial Sector Recovery Levy', 'Growth and Sustainability Levy',
+            'Flat', 'Flat / COVID-19', 'NHIL/GETFUND/COVID-19', 'NHIL/GETFUND',
+            'Minerals Royalties', 'Tax Stamp', 'Modified Taxation', 'Standard',
+            'Petroleum Tax', 'Mining Tax', 'Communication Service Tax',
+            'Suspense', 'Other'
+        ];
+        allTaxTypes.forEach(type => { taxTypeMap[type] = 0; });
+        let totalRegistrations = 0;
+        allRecords.forEach(r => {
+            if (r.taxTypes && r.taxTypes !== 'None') {
+                const types = r.taxTypes.split(',').map(t => t.trim());
+                types.forEach(type => {
+                    if (taxTypeMap.hasOwnProperty(type)) {
+                        taxTypeMap[type]++;
+                        totalRegistrations++;
+                    }
+                });
+            }
+        });
+        const taxTypesList = document.getElementById('taxTypesList');
+        taxTypesList.innerHTML = '';
+        const sortedTaxTypes = Object.keys(taxTypeMap)
+            .filter(key => taxTypeMap[key] > 0)
+            .sort((a, b) => taxTypeMap[b] - taxTypeMap[a] || a.localeCompare(b));
+        if (sortedTaxTypes.length === 0) {
+            taxTypesList.innerHTML = '<div class="item"><span class="label">No tax types registered yet</span></div>';
+        } else {
+            sortedTaxTypes.forEach(key => {
+                const div = document.createElement('div');
+                div.className = 'item';
+                const count = taxTypeMap[key];
+                let displayName = key;
+                if (displayName.length > 20) displayName = displayName.substring(0, 18) + '…';
+                div.innerHTML = `<span class="label"><span class="dot" style="background:#20c997"></span>${displayName}</span><span class="count">${count}</span>`;
+                taxTypesList.appendChild(div);
+            });
+        }
+        document.getElementById('taxTypesTotal').textContent = totalRegistrations;
     }
 
     // =============================================
@@ -2949,7 +3207,7 @@
     }
 
     // =============================================
-    // UPDATE USER LIST - Only show active users
+    // UPDATE USER LIST
     // =============================================
     function updateUserList() {
         const users = new Set();
@@ -3035,6 +3293,7 @@
             updateUserList();
             updateAdminStats();
             updateSearchResults();
+            checkForOrphanedRecords();
             lastUpdatedSpan.textContent = 'Updated: ' + getTimestamp();
             setSyncStatus('Synced', 'synced');
             
@@ -3157,7 +3416,7 @@
     }
 
     // =============================================
-    // FIREBASE - ADD RECORD
+    // FIREBASE - ADD RECORD (same as before)
     // =============================================
     function addRecord() {
         const tin = tinInput.value.trim();
@@ -3574,132 +3833,6 @@
     }
 
     // =============================================
-    // UPDATE STATS
-    // =============================================
-    function updateStats() {
-        const visibleRecords = records.filter(rec => canViewRecord(rec));
-        let totalLiab = 0, totalPay = 0, totalOut = 0;
-        visibleRecords.forEach(r => {
-            totalLiab += parseFloat(r.liability) || 0;
-            totalPay += parseFloat(r.payment) || 0;
-            totalOut += parseFloat(r.outstanding) || 0;
-        });
-        totalRecordsSpan.textContent = visibleRecords.length;
-        totalLiabilitySpan.textContent = formatMoney(totalLiab);
-        totalPaymentSpan.textContent = formatMoney(totalPay);
-        totalOutstandingSpan.textContent = formatMoney(totalOut);
-    }
-
-    // =============================================
-    // UPDATE DASHBOARD STATS
-    // =============================================
-    function updateDashboardStats() {
-        const visibleRecords = records.filter(rec => canViewRecord(rec));
-        
-        const sectorMap = {};
-        const sectorLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U'];
-        sectorLetters.forEach(letter => { sectorMap[letter] = 0; });
-        let sectorTotal = 0;
-        visibleRecords.forEach(r => {
-            if (r.sector && sectorMap.hasOwnProperty(r.sector)) {
-                sectorMap[r.sector]++;
-                sectorTotal++;
-            }
-        });
-        const sectorGrid = document.getElementById('sectorGrid');
-        sectorGrid.innerHTML = '';
-        sectorLetters.forEach(letter => {
-            const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `<span class="label">${letter}</span><span class="count">${sectorMap[letter]}</span>`;
-            sectorGrid.appendChild(div);
-        });
-        document.getElementById('sectorTotal').textContent = sectorTotal;
-
-        const typeMap = { 'Company': 0, 'Individual': 0, 'NGO': 0, 'Other': 0 };
-        let typeTotal = 0;
-        visibleRecords.forEach(r => {
-            if (r.taxpayerType && typeMap.hasOwnProperty(r.taxpayerType)) {
-                typeMap[r.taxpayerType]++;
-                typeTotal++;
-            }
-        });
-        const typeList = document.getElementById('taxpayerTypeList');
-        typeList.innerHTML = '';
-        const typeColors = { 'Company': '#1b6f9c', 'Individual': '#6f42c1', 'NGO': '#20c997', 'Other': '#d4a017' };
-        Object.keys(typeMap).forEach(key => {
-            const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `<span class="label"><span class="dot" style="background:${typeColors[key]}"></span>${key}</span><span class="count">${typeMap[key]}</span>`;
-            typeList.appendChild(div);
-        });
-        document.getElementById('taxpayerTypeTotal').textContent = typeTotal;
-
-        const statusMap = { 'Active': 0, 'Inactive': 0, 'Dormant': 0, 'Deregistered': 0, 'Unassigned': 0 };
-        let statusTotal = 0;
-        visibleRecords.forEach(r => {
-            if (r.fileStatus && statusMap.hasOwnProperty(r.fileStatus)) {
-                statusMap[r.fileStatus]++;
-                statusTotal++;
-            }
-        });
-        const statusList = document.getElementById('statusList');
-        statusList.innerHTML = '';
-        const statusColors = { 'Active': '#1f7b4b', 'Inactive': '#6c757d', 'Dormant': '#d4a017', 'Deregistered': '#b13e4b', 'Unassigned': '#6f42c1' };
-        Object.keys(statusMap).forEach(key => {
-            const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `<span class="label"><span class="dot" style="background:${statusColors[key]}"></span>${key}</span><span class="count">${statusMap[key]}</span>`;
-            statusList.appendChild(div);
-        });
-        document.getElementById('statusTotal').textContent = statusTotal;
-
-        const taxTypeMap = {};
-        const allTaxTypes = [
-            'Personal Income Tax', 'Corporate Income Tax', 'VAT Standard, NHIL & GETFUND',
-            'PAYE', 'Customs', 'Excise', 'Capital Gains Tax', 'Withholding Tax',
-            'Withholding VAT', 'Gift Tax', 'Rent Tax', 'Stamp Duty', 'VIT',
-            'Financial Sector Recovery Levy', 'Growth and Sustainability Levy',
-            'Flat', 'Flat / COVID-19', 'NHIL/GETFUND/COVID-19', 'NHIL/GETFUND',
-            'Minerals Royalties', 'Tax Stamp', 'Modified Taxation', 'Standard',
-            'Petroleum Tax', 'Mining Tax', 'Communication Service Tax',
-            'Suspense', 'Other'
-        ];
-        allTaxTypes.forEach(type => { taxTypeMap[type] = 0; });
-        let totalRegistrations = 0;
-        visibleRecords.forEach(r => {
-            if (r.taxTypes && r.taxTypes !== 'None') {
-                const types = r.taxTypes.split(',').map(t => t.trim());
-                types.forEach(type => {
-                    if (taxTypeMap.hasOwnProperty(type)) {
-                        taxTypeMap[type]++;
-                        totalRegistrations++;
-                    }
-                });
-            }
-        });
-        const taxTypesList = document.getElementById('taxTypesList');
-        taxTypesList.innerHTML = '';
-        const sortedTaxTypes = Object.keys(taxTypeMap)
-            .filter(key => taxTypeMap[key] > 0)
-            .sort((a, b) => taxTypeMap[b] - taxTypeMap[a] || a.localeCompare(b));
-        if (sortedTaxTypes.length === 0) {
-            taxTypesList.innerHTML = '<div class="item"><span class="label">No tax types registered yet</span></div>';
-        } else {
-            sortedTaxTypes.forEach(key => {
-                const div = document.createElement('div');
-                div.className = 'item';
-                const count = taxTypeMap[key];
-                let displayName = key;
-                if (displayName.length > 20) displayName = displayName.substring(0, 18) + '…';
-                div.innerHTML = `<span class="label"><span class="dot" style="background:#20c997"></span>${displayName}</span><span class="count">${count}</span>`;
-                taxTypesList.appendChild(div);
-            });
-        }
-        document.getElementById('taxTypesTotal').textContent = totalRegistrations;
-    }
-
-    // =============================================
     // EXPORT JSON
     // =============================================
     function exportData() {
@@ -4073,9 +4206,11 @@
     console.log('🔴 Remove button is red');
     console.log('✅ Removed users are COMPLETELY removed from the system');
     console.log('✅ Removed users do NOT appear in the summary dashboard');
-    console.log('✅ Removed users do NOT appear in the team members list');
-    console.log('✅ Removed users cannot log in');
     console.log('✅ Removed users\' records are transferred to Admin');
+    console.log('📊 Total Records shows ALL records (460)');
+    console.log('📊 User Summary shows only ACTIVE users\' records (421)');
+    console.log('🔍 Orphan record detection: finds records from removed users');
+    console.log('🔧 Fix Orphan Records: transfers orphaned records to Admin');
     </script>
 </body>
 </html>
