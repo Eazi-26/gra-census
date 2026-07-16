@@ -1529,17 +1529,17 @@
             
             <!-- Merge Tab -->
             <div class="tab-content" id="tabMerge">
-                <p style="color:#6a8ba0; font-size:0.85rem; margin-bottom:0.8rem;">Merge 2 or more users into one account. All records will be transferred to the selected target user.</p>
+                <p style="color:#6a8ba0; font-size:0.85rem; margin-bottom:0.8rem;">Merge users into one account. Select the source user(s) and the target user.</p>
                 
                 <div class="merge-select">
                     <label style="font-weight:600; font-size:0.8rem; color:#1e4a62; display:block; margin-bottom:4px;">
-                        <i class="fas fa-user"></i> Select users to merge (click to select/deselect):
+                        <i class="fas fa-user"></i> Select source user(s) to merge (click to select/deselect):
                     </label>
                     <div id="mergeUserSelection" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:0.5rem;">
                         <p class="empty-msg" style="width:100%;">Loading users...</p>
                     </div>
                     <div style="font-size:0.7rem; color:#6a8ba0; margin-top:4px;">
-                        <span id="mergeSelectedCountDisplay">0</span> users selected
+                        <span id="mergeSelectedCountDisplay">0</span> user(s) selected to merge
                     </div>
                 </div>
                 
@@ -1847,19 +1847,20 @@
     function populateMergeUsers() {
         const users = new Set();
         records.forEach(r => {
+            // Show all non-admin users except the current user (they can't merge themselves)
             if (r.addedBy && !isUserRemoved(r.addedBy) && r.addedBy !== userName && r.addedBy.toLowerCase() !== 'admin') {
                 users.add(r.addedBy);
             }
         });
         const userArray = Array.from(users).sort();
         
-        if (userArray.length < 2) {
-            mergeUserSelection.innerHTML = '<p class="empty-msg">Need at least 2 users to merge. (You cannot merge yourself or the admin.)</p>';
+        if (userArray.length < 1) {
+            mergeUserSelection.innerHTML = '<p class="empty-msg">No other users available to merge. (You cannot merge yourself or the admin.)</p>';
             mergeTargetUserSelect.innerHTML = '<option value="">No users available</option>';
             return;
         }
         
-        // Build selection checkboxes
+        // Build selection checkboxes - users to merge FROM
         mergeUserSelection.innerHTML = userArray.map(u => {
             const isSelected = selectedUsersForMerge.has(u);
             return `
@@ -1871,11 +1872,14 @@
             `;
         }).join('');
         
-        // Update target user dropdown
+        // Update target user dropdown - can be ANY user including the current user
         const targetUsers = new Set();
         records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy) && !selectedUsersForMerge.has(r.addedBy)) {
-                targetUsers.add(r.addedBy);
+            if (r.addedBy && !isUserRemoved(r.addedBy)) {
+                // Don't show users that are selected for merge as target
+                if (!selectedUsersForMerge.has(r.addedBy)) {
+                    targetUsers.add(r.addedBy);
+                }
             }
         });
         const targetArray = Array.from(targetUsers).sort();
@@ -1928,7 +1932,8 @@
         const count = selectedUsersForMerge.size;
         mergeSelectedCountDisplay.textContent = count;
         const mergeBtn = document.getElementById('executeMergeFromModal');
-        if (count < 2) {
+        // Allow merging with just 1 user selected (or more)
+        if (count < 1) {
             mergeBtn.disabled = true;
             mergeBtn.style.opacity = '0.5';
         } else {
@@ -1962,8 +1967,14 @@
         }
         
         const usersToMerge = Array.from(selectedUsersForMerge);
-        if (usersToMerge.length < 2) {
-            showToast('⚠️ Please select at least 2 users to merge.', true);
+        if (usersToMerge.length < 1) {
+            showToast('⚠️ Please select at least 1 user to merge.', true);
+            return;
+        }
+        
+        // Check if target is in the merge list
+        if (usersToMerge.includes(targetUser)) {
+            showToast('⚠️ Target user cannot be one of the users being merged.', true);
             return;
         }
         
@@ -1980,6 +1991,7 @@
         mergeBtn.disabled = true;
         mergeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Merging...';
         
+        // Get all records from users to merge
         const recordsToTransfer = records.filter(r => usersToMerge.includes(r.addedBy));
         let transferredCount = 0;
         let errorCount = 0;
@@ -2007,6 +2019,7 @@
         });
         
         Promise.all(promises).then(() => {
+            // Add merged users to removed list so they no longer appear
             usersToMerge.forEach(user => {
                 if (!removedUsers.includes(user)) {
                     removedUsers.push(user);
@@ -2014,15 +2027,32 @@
             });
             saveRemovedUsers();
             
+            // Clear selection
             selectedUsersForMerge.clear();
             closeManageTeam();
             mergeBtn.disabled = false;
             mergeBtn.innerHTML = '<i class="fas fa-merge"></i> Merge Users';
             
             setSyncStatus('Synced', 'synced');
-            showToast(`✅ Merge complete! ${transferredCount} records transferred to "${targetUser}". ${usersToMerge.length} user(s) removed.`);
+            showToast(`✅ Merge complete! ${transferredCount} records transferred to "${targetUser}". ${usersToMerge.length} user(s) merged and removed.`);
             
-            database.ref('censusRecords').once('value');
+            // Force refresh data from Firebase to update everything
+            database.ref('censusRecords').once('value').then(() => {
+                // Also update localStorage to remove any local records from merged users
+                try {
+                    const storedData = localStorage.getItem('censusData');
+                    if (storedData) {
+                        const data = JSON.parse(storedData);
+                        if (data.records && data.records.length > 0) {
+                            // Remove any records from merged users from local storage
+                            data.records = data.records.filter(r => !usersToMerge.includes(r.addedBy));
+                            localStorage.setItem('censusData', JSON.stringify(data));
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error cleaning local storage:', e);
+                }
+            });
         });
     }
 
@@ -4113,7 +4143,7 @@
     console.log('📂 Offline data loaded automatically');
     console.log('🛡️ Duplicate detection enabled');
     console.log('🔀 Merge: Import JSON files & merge users');
-    console.log('👥 Admin can merge 2+ users into one account');
+    console.log('👥 Admin can merge 1 or more users into another user');
     console.log('✏️ Users can rename themselves (click name or Rename button)');
     console.log('👑 Admin can rename any user via Manage Team');
     console.log('🔄 Renamed records show previous name in history');
@@ -4122,6 +4152,7 @@
     console.log('🔵 Rename button is blue');
     console.log('🔵 Merge button is blue');
     console.log('🔴 Remove button is red');
+    console.log('✅ Merged users are properly removed from the team');
     </script>
 </body>
 </html>
