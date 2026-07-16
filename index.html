@@ -199,31 +199,19 @@
         .admin-stats .user-stat-card .user-totals span { font-weight: 600; color: #0d3b52; }
         .admin-stats .user-stat-card .user-badge { font-size: 0.6rem; padding: 1px 6px; border-radius: 10px; background: #d4edda; color: #155724; display: inline-block; }
         .admin-stats .user-stat-card .user-badge.admin { background: #f8d7da; color: #721c24; }
+        .admin-stats .user-stat-card .removed-badge {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-size: 0.55rem;
+            font-weight: 600;
+        }
         .admin-stats .user-stat-card .previous-name {
             font-size: 0.6rem;
             color: #6a8ba0;
             margin-left: 4px;
         }
-        .admin-stats .orphan-warning {
-            background: #fff3cd;
-            border: 1px solid #d4a017;
-            border-radius: 8px;
-            padding: 0.5rem 1rem;
-            margin-bottom: 0.5rem;
-            font-size: 0.8rem;
-            color: #856404;
-        }
-        .admin-stats .orphan-warning .fix-btn {
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            padding: 2px 14px;
-            font-size: 0.7rem;
-            cursor: pointer;
-            margin-left: 8px;
-        }
-        .admin-stats .orphan-warning .fix-btn:hover { background: #0069d9; }
         
         /* Search Filter */
         .search-filter {
@@ -674,6 +662,7 @@
         .user-name.current-user { color: #1b6f9c; background: #e6f0f8; padding: 1px 6px; border-radius: 10px; }
         .user-name.other-user { color: #6f42c1; }
         .user-name.admin-user { color: #b13e4b; background: #fce8ea; padding: 1px 6px; border-radius: 10px; }
+        .user-name.removed-user { color: #6c757d; background: #e9ecef; padding: 1px 6px; border-radius: 10px; text-decoration: line-through; }
         .user-name.merged-user { color: #6f42c1; background: #f3edf9; padding: 1px 6px; border-radius: 10px; }
         .user-name.renamed { color: #1b6f9c; background: #d4edda; padding: 1px 6px; border-radius: 10px; }
         
@@ -848,9 +837,33 @@
             outline: none;
         }
         
-        /* Removed Users Section - HIDDEN - users are completely removed */
+        /* Removed Users Section */
         .removed-users-section {
-            display: none !important;
+            margin-top: 1rem;
+            border-top: 2px solid #f8d7da;
+            padding-top: 0.5rem;
+        }
+        .removed-users-section .removed-user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.3rem 0.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 0.2rem;
+        }
+        .removed-users-section .removed-user-item .restore-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 2px 12px;
+            font-size: 0.6rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .removed-users-section .removed-user-item .restore-btn:hover {
+            background: #34ce57;
         }
         
         /* Manage Team Modal */
@@ -1216,11 +1229,6 @@
             <!-- ADMIN USER STATS -->
             <div class="card admin-stats" id="adminStatsPanel">
                 <h4><i class="fas fa-chart-bar" style="color:#1b6f9c;"></i> Team Performance Dashboard</h4>
-                <div id="orphanWarning" class="orphan-warning" style="display:none;">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span id="orphanMessage">⚠️ Data discrepancy detected: <span id="orphanCount">0</span> orphaned records found.</span>
-                    <button class="fix-btn" onclick="fixOrphanedRecords()"><i class="fas fa-wrench"></i> Fix Now</button>
-                </div>
                 <div class="filter-controls">
                     <span style="font-size:0.75rem; font-weight:600; color:#0d3b52;">Filter by:</span>
                     <select id="adminUserFilter">
@@ -1238,6 +1246,13 @@
                 </div>
                 <div class="user-stats-grid" id="userStatsGrid">
                     <div style="text-align:center; color:#6a8ba0; padding:1rem; grid-column:1/-1;">Loading user statistics...</div>
+                </div>
+                <!-- Removed Users Section -->
+                <div class="removed-users-section" id="removedUsersSection" style="display:none;">
+                    <h5 style="font-size:0.75rem; color:#721c24; margin-bottom:0.3rem;">
+                        <i class="fas fa-user-slash"></i> Removed Users
+                    </h5>
+                    <div id="removedUsersList"></div>
                 </div>
             </div>
 
@@ -1501,6 +1516,7 @@
             <div class="tab-bar">
                 <button class="active" onclick="switchTeamTab('members', this)"><i class="fas fa-users"></i> Members</button>
                 <button onclick="switchTeamTab('merge', this)"><i class="fas fa-merge"></i> Merge Users</button>
+                <button onclick="switchTeamTab('removed', this)"><i class="fas fa-user-slash"></i> Removed</button>
             </div>
             
             <!-- Members Tab -->
@@ -1546,6 +1562,14 @@
                 <div class="modal-actions">
                     <button class="btn btn-secondary" onclick="closeManageTeam()"><i class="fas fa-times"></i> Cancel</button>
                     <button class="btn btn-merge-modal" id="executeMergeFromModal" onclick="executeMergeFromModal()"><i class="fas fa-merge"></i> Merge Users</button>
+                </div>
+            </div>
+            
+            <!-- Removed Tab -->
+            <div class="tab-content" id="tabRemoved">
+                <p style="color:#6a8ba0; font-size:0.85rem; margin-bottom:0.8rem;">Restore users who were previously removed from the team.</p>
+                <div id="removedTeamMembersList">
+                    <p class="empty-msg">No removed users.</p>
                 </div>
             </div>
             
@@ -1697,11 +1721,11 @@
     const adminUserFilter = document.getElementById('adminUserFilter');
     const adminDateFrom = document.getElementById('adminDateFrom');
     const adminDateTo = document.getElementById('adminDateTo');
-    const orphanWarning = document.getElementById('orphanWarning');
-    const orphanCount = document.getElementById('orphanCount');
-    const orphanMessage = document.getElementById('orphanMessage');
+    const removedUsersSection = document.getElementById('removedUsersSection');
+    const removedUsersList = document.getElementById('removedUsersList');
     const manageTeamModal = document.getElementById('manageTeamModal');
     const teamMembersList = document.getElementById('teamMembersList');
+    const removedTeamMembersList = document.getElementById('removedTeamMembersList');
     const mergeUserSelection = document.getElementById('mergeUserSelection');
     const mergeTargetUserSelect = document.getElementById('mergeTargetUserSelect');
     const mergeSelectedCountDisplay = document.getElementById('mergeSelectedCountDisplay');
@@ -1734,131 +1758,6 @@
     const toastMessage = document.getElementById('toastMessage');
 
     // =============================================
-    // CRITICAL FIX: PERMISSION CHECKS
-    // =============================================
-    function canEditRecord(record) {
-        // Admin can edit ALL records
-        if (isAdmin) return true;
-        // Non-admin can ONLY edit their OWN records
-        return record.addedBy === userName;
-    }
-
-    function canDeleteRecord(record) {
-        // Admin can delete ALL records
-        if (isAdmin) return true;
-        // Non-admin can ONLY delete their OWN records
-        return record.addedBy === userName;
-    }
-
-    function canViewRecord(record) {
-        // Admin can view ALL records
-        if (isAdmin) return true;
-        // Non-admin can ONLY view their OWN records
-        return record.addedBy === userName;
-    }
-
-    // =============================================
-    // ORPHAN RECORD DETECTION & FIX
-    // =============================================
-    function checkForOrphanedRecords() {
-        if (!isAdmin) return;
-        
-        const orphanedRecords = [];
-        const recordUsers = new Set();
-        records.forEach(r => {
-            if (r.addedBy) recordUsers.add(r.addedBy);
-        });
-        
-        const activeUsers = new Set();
-        records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy)) {
-                activeUsers.add(r.addedBy);
-            }
-        });
-        
-        records.forEach(r => {
-            if (r.addedBy && isUserRemoved(r.addedBy)) {
-                orphanedRecords.push(r);
-            } else if (r.addedBy && !recordUsers.has(r.addedBy) && !activeUsers.has(r.addedBy)) {
-                orphanedRecords.push(r);
-            }
-        });
-        
-        if (orphanedRecords.length > 0) {
-            orphanWarning.style.display = 'block';
-            orphanCount.textContent = orphanedRecords.length;
-            orphanMessage.innerHTML = `⚠️ Data discrepancy detected: <span id="orphanCount">${orphanedRecords.length}</span> orphaned records found. These records belong to removed users and are not counted in the User Summary.`;
-        } else {
-            orphanWarning.style.display = 'none';
-        }
-        
-        return orphanedRecords;
-    }
-
-    function fixOrphanedRecords() {
-        if (!isAdmin) return;
-        if (!confirm('This will transfer all orphaned records (from removed users) to Admin. Continue?')) return;
-        
-        setSyncStatus('Fixing orphaned records...', 'syncing');
-        
-        const orphanedRecords = [];
-        const recordUsers = new Set();
-        records.forEach(r => {
-            if (r.addedBy) recordUsers.add(r.addedBy);
-        });
-        
-        const activeUsers = new Set();
-        records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy)) {
-                activeUsers.add(r.addedBy);
-            }
-        });
-        
-        records.forEach(r => {
-            if (r.addedBy && isUserRemoved(r.addedBy)) {
-                orphanedRecords.push(r);
-            } else if (r.addedBy && !recordUsers.has(r.addedBy) && !activeUsers.has(r.addedBy)) {
-                orphanedRecords.push(r);
-            }
-        });
-        
-        if (orphanedRecords.length === 0) {
-            showToast('✅ No orphaned records found.');
-            orphanWarning.style.display = 'none';
-            return;
-        }
-        
-        let fixedCount = 0;
-        const promises = orphanedRecords.map(record => {
-            const firebaseKey = record._firebaseKey;
-            if (!firebaseKey) return Promise.resolve();
-            
-            const updatedRecord = {
-                ...record,
-                addedBy: 'Admin',
-                previousOwner: record.addedBy || 'Unknown',
-                fixedAt: new Date().toISOString(),
-                fixedBy: userName
-            };
-            
-            return database.ref('censusRecords/' + firebaseKey).update(updatedRecord)
-                .then(() => {
-                    fixedCount++;
-                })
-                .catch(err => {
-                    console.error('Error fixing record:', err);
-                });
-        });
-        
-        Promise.all(promises).then(() => {
-            setSyncStatus('Synced', 'synced');
-            showToast(`✅ Fixed ${fixedCount} orphaned records. They are now assigned to Admin.`);
-            database.ref('censusRecords').once('value');
-            orphanWarning.style.display = 'none';
-        });
-    }
-
-    // =============================================
     // MANAGE TEAM MODAL FUNCTIONS
     // =============================================
     function openManageTeam() {
@@ -1869,6 +1768,8 @@
         manageTeamModal.style.display = 'flex';
         populateTeamMembers();
         populateMergeUsers();
+        populateRemovedUsers();
+        // Default to Members tab
         const activeTab = document.querySelector('.tab-bar .active');
         if (activeTab) {
             switchTeamTab(activeTab.textContent.trim().toLowerCase().replace(' ', ''), activeTab);
@@ -1884,12 +1785,16 @@
     }
 
     function switchTeamTab(tab, btn) {
+        // Update tab buttons
         document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        
+        // Update tab content
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         const tabMap = {
             'members': 'tabMembers',
-            'merge': 'tabMerge'
+            'merge': 'tabMerge',
+            'removed': 'tabRemoved'
         };
         const tabId = tabMap[tab] || 'tabMembers';
         document.getElementById(tabId).classList.add('active');
@@ -1942,6 +1847,7 @@
     function populateMergeUsers() {
         const users = new Set();
         records.forEach(r => {
+            // Show all non-admin users except the current user (they can't merge themselves)
             if (r.addedBy && !isUserRemoved(r.addedBy) && r.addedBy !== userName && r.addedBy.toLowerCase() !== 'admin') {
                 users.add(r.addedBy);
             }
@@ -1949,11 +1855,12 @@
         const userArray = Array.from(users).sort();
         
         if (userArray.length < 1) {
-            mergeUserSelection.innerHTML = '<p class="empty-msg">No other users available to merge.</p>';
+            mergeUserSelection.innerHTML = '<p class="empty-msg">No other users available to merge. (You cannot merge yourself or the admin.)</p>';
             mergeTargetUserSelect.innerHTML = '<option value="">No users available</option>';
             return;
         }
         
+        // Build selection checkboxes - users to merge FROM
         mergeUserSelection.innerHTML = userArray.map(u => {
             const isSelected = selectedUsersForMerge.has(u);
             return `
@@ -1965,10 +1872,14 @@
             `;
         }).join('');
         
+        // Update target user dropdown - can be ANY user including the current user
         const targetUsers = new Set();
         records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy) && !selectedUsersForMerge.has(r.addedBy)) {
-                targetUsers.add(r.addedBy);
+            if (r.addedBy && !isUserRemoved(r.addedBy)) {
+                // Don't show users that are selected for merge as target
+                if (!selectedUsersForMerge.has(r.addedBy)) {
+                    targetUsers.add(r.addedBy);
+                }
             }
         });
         const targetArray = Array.from(targetUsers).sort();
@@ -1981,6 +1892,30 @@
         });
         
         updateMergeSelectionDisplay();
+    }
+
+    function populateRemovedUsers() {
+        if (removedUsers.length === 0) {
+            removedTeamMembersList.innerHTML = '<p class="empty-msg">No removed users.</p>';
+            return;
+        }
+        
+        removedTeamMembersList.innerHTML = removedUsers.map(u => `
+            <div class="user-list-item">
+                <div class="user-info">
+                    <span style="color:#6c757d;"><i class="fas fa-user-slash"></i> <strong>${u}</strong></span>
+                    <span class="removed-badge">Removed</span>
+                </div>
+                <div class="user-actions">
+                    <button class="btn btn-sm btn-rename-modal" onclick="closeManageTeam(); showRenameModal('${u}')" style="padding:2px 10px;">
+                        <i class="fas fa-user-edit"></i> Rename
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="closeManageTeam(); restoreUser('${u}')" style="padding:2px 12px;">
+                        <i class="fas fa-undo"></i> Restore
+                    </button>
+                </div>
+            </div>
+        `).join('');
     }
 
     function toggleUserForMergeModal(username) {
@@ -1997,6 +1932,7 @@
         const count = selectedUsersForMerge.size;
         mergeSelectedCountDisplay.textContent = count;
         const mergeBtn = document.getElementById('executeMergeFromModal');
+        // Allow merging with just 1 user selected (or more)
         if (count < 1) {
             mergeBtn.disabled = true;
             mergeBtn.style.opacity = '0.5';
@@ -2004,6 +1940,7 @@
             mergeBtn.disabled = false;
             mergeBtn.style.opacity = '1';
         }
+        // Update target user dropdown
         const targetUsers = new Set();
         records.forEach(r => {
             if (r.addedBy && !isUserRemoved(r.addedBy) && !selectedUsersForMerge.has(r.addedBy)) {
@@ -2035,6 +1972,7 @@
             return;
         }
         
+        // Check if target is in the merge list
         if (usersToMerge.includes(targetUser)) {
             showToast('⚠️ Target user cannot be one of the users being merged.', true);
             return;
@@ -2044,7 +1982,7 @@
             return;
         }
         
-        if (!confirm(`⚠️ FINAL WARNING: All records from ${usersToMerge.join(', ')} will be transferred to ${targetUser}. The original accounts will be completely removed. Continue?`)) {
+        if (!confirm(`⚠️ FINAL WARNING: All records from ${usersToMerge.join(', ')} will be transferred to ${targetUser}. The original accounts will be removed. Continue?`)) {
             return;
         }
         
@@ -2053,6 +1991,7 @@
         mergeBtn.disabled = true;
         mergeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Merging...';
         
+        // Get all records from users to merge
         const recordsToTransfer = records.filter(r => usersToMerge.includes(r.addedBy));
         let transferredCount = 0;
         let errorCount = 0;
@@ -2080,6 +2019,7 @@
         });
         
         Promise.all(promises).then(() => {
+            // Add merged users to removed list so they no longer appear
             usersToMerge.forEach(user => {
                 if (!removedUsers.includes(user)) {
                     removedUsers.push(user);
@@ -2087,20 +2027,24 @@
             });
             saveRemovedUsers();
             
+            // Clear selection
             selectedUsersForMerge.clear();
             closeManageTeam();
             mergeBtn.disabled = false;
             mergeBtn.innerHTML = '<i class="fas fa-merge"></i> Merge Users';
             
             setSyncStatus('Synced', 'synced');
-            showToast(`✅ Merge complete! ${transferredCount} records transferred to "${targetUser}". ${usersToMerge.length} user(s) completely removed.`);
+            showToast(`✅ Merge complete! ${transferredCount} records transferred to "${targetUser}". ${usersToMerge.length} user(s) merged and removed.`);
             
+            // Force refresh data from Firebase to update everything
             database.ref('censusRecords').once('value').then(() => {
+                // Also update localStorage to remove any local records from merged users
                 try {
                     const storedData = localStorage.getItem('censusData');
                     if (storedData) {
                         const data = JSON.parse(storedData);
                         if (data.records && data.records.length > 0) {
+                            // Remove any records from merged users from local storage
                             data.records = data.records.filter(r => !usersToMerge.includes(r.addedBy));
                             localStorage.setItem('censusData', JSON.stringify(data));
                         }
@@ -2108,10 +2052,6 @@
                 } catch (e) {
                     console.error('Error cleaning local storage:', e);
                 }
-                updateAdminStats();
-                updateUserList();
-                renderTable();
-                checkForOrphanedRecords();
             });
         });
     }
@@ -2131,10 +2071,6 @@
             }
             if (targetUser.toLowerCase() === 'admin') {
                 showToast('⛔ Cannot rename the admin account.', true);
-                return;
-            }
-            if (isUserRemoved(targetUser)) {
-                showToast('⛔ Cannot rename a user that has been removed.', true);
                 return;
             }
             renameModalSubtitle.textContent = `Renaming user "${targetUser}" to a new name.`;
@@ -2197,7 +2133,7 @@
         }
         
         if (isUserRemoved(newName) && newName !== currentName) {
-            renameError.textContent = 'This name has been removed from the system. Please choose another.';
+            renameError.textContent = 'This name belongs to a removed user. Please choose another.';
             renameError.style.display = 'block';
             newNameInput.focus();
             return;
@@ -2246,10 +2182,12 @@
                 }
             }
             
-            const removedIndex = removedUsers.indexOf(currentName);
-            if (removedIndex !== -1) {
-                removedUsers.splice(removedIndex, 1);
-                saveRemovedUsers();
+            if (isAdmin && currentName !== userName) {
+                const oldRemovedIndex = removedUsers.indexOf(currentName);
+                if (oldRemovedIndex !== -1) {
+                    removedUsers = removedUsers.filter(u => u !== currentName);
+                    saveRemovedUsers();
+                }
             }
             
             closeRenameModal();
@@ -2277,6 +2215,7 @@
         } catch (e) {
             removedUsers = [];
         }
+        updateRemovedUsersUI();
     }
 
     function saveRemovedUsers() {
@@ -2285,6 +2224,37 @@
         } catch (e) {
             console.error('Error saving removed users:', e);
         }
+        updateRemovedUsersUI();
+    }
+
+    function updateRemovedUsersUI() {
+        if (removedUsers.length > 0) {
+            removedUsersSection.style.display = 'block';
+            removedUsersList.innerHTML = removedUsers.map(user => `
+                <div class="removed-user-item">
+                    <span><i class="fas fa-user-slash" style="color:#6c757d;"></i> <strong>${user}</strong> <span style="font-size:0.6rem; color:#6c757d;">(removed)</span></span>
+                    <div style="display:flex; gap:4px;">
+                        <button class="btn btn-sm btn-rename-modal" onclick="showRenameModal('${user}')" style="padding:2px 10px; font-size:0.6rem;">
+                            <i class="fas fa-user-edit"></i> Rename
+                        </button>
+                        <button class="restore-btn" onclick="restoreUser('${user}')"><i class="fas fa-undo"></i> Restore</button>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            removedUsersSection.style.display = 'none';
+        }
+    }
+
+    function restoreUser(username) {
+        if (!confirm(`Restore "${username}" to the team? They will be able to log in again.`)) return;
+        
+        removedUsers = removedUsers.filter(u => u !== username);
+        saveRemovedUsers();
+        showToast(`✅ ${username} has been restored to the team`);
+        updateAdminStats();
+        updateUserList();
+        renderTable();
     }
 
     function isUserRemoved(username) {
@@ -2304,58 +2274,16 @@
         
         const recordCount = records.filter(r => r.addedBy === username).length;
         
-        if (!confirm(`Remove "${username}" from the team?\n\nThey have ${recordCount} record(s) in the system.\n- Their records will be transferred to "Admin"\n- They will be completely removed from the system\n- They will no longer be able to log in`)) {
+        if (!confirm(`Remove "${username}" from the team?\n\nThey have ${recordCount} record(s) in the system.\n- Their records will remain but show as "Removed"\n- They will no longer be able to log in`)) {
             return;
         }
         
-        const userRecords = records.filter(r => r.addedBy === username);
-        let transferredCount = 0;
-        
-        const promises = userRecords.map(record => {
-            const firebaseKey = record._firebaseKey;
-            if (!firebaseKey) return Promise.resolve();
-            
-            const updatedRecord = {
-                ...record,
-                addedBy: 'Admin',
-                previousOwner: username,
-                transferredAt: new Date().toISOString()
-            };
-            
-            return database.ref('censusRecords/' + firebaseKey).update(updatedRecord)
-                .then(() => {
-                    transferredCount++;
-                })
-                .catch(err => {
-                    console.error('Error transferring record:', err);
-                });
-        });
-        
-        Promise.all(promises).then(() => {
-            if (!removedUsers.includes(username)) {
-                removedUsers.push(username);
-            }
-            saveRemovedUsers();
-            
-            try {
-                const storedData = localStorage.getItem('censusData');
-                if (storedData) {
-                    const data = JSON.parse(storedData);
-                    if (data.records && data.records.length > 0) {
-                        data.records = data.records.filter(r => r.addedBy !== username);
-                        localStorage.setItem('censusData', JSON.stringify(data));
-                    }
-                }
-            } catch (e) {
-                console.error('Error cleaning local storage:', e);
-            }
-            
-            showToast(`✅ "${username}" completely removed. ${transferredCount} records transferred to Admin.`);
-            updateAdminStats();
-            updateUserList();
-            renderTable();
-            database.ref('censusRecords').once('value');
-        });
+        removedUsers.push(username);
+        saveRemovedUsers();
+        showToast(`✅ ${username} has been removed from the team. Their records remain.`);
+        updateAdminStats();
+        updateUserList();
+        renderTable();
     }
 
     // =============================================
@@ -2365,9 +2293,7 @@
         if (!name) return true;
         const users = new Set();
         records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy)) {
-                users.add(r.addedBy);
-            }
+            if (r.addedBy && !isUserRemoved(r.addedBy)) users.add(r.addedBy);
         });
         if (name.toLowerCase() === 'admin') {
             return true;
@@ -2526,7 +2452,7 @@
         const isAvailable = checkUsernameAvailability(name);
         if (!isAvailable && name.toLowerCase() !== 'admin') {
             usernameError.style.display = 'block';
-            usernameError.textContent = '⚠️ This username has been removed from the system. Please contact admin.';
+            usernameError.textContent = '⚠️ This username is no longer active or taken. Please contact admin.';
         } else {
             usernameError.style.display = 'none';
         }
@@ -2545,8 +2471,8 @@
             const isAvailable = checkUsernameAvailability(name);
             if (!isAvailable) {
                 usernameError.style.display = 'block';
-                usernameError.textContent = '⚠️ This username has been removed from the system. Please contact admin.';
-                loginError.textContent = 'This username has been removed from the system.';
+                usernameError.textContent = '⚠️ This username is no longer active or taken. Please contact admin.';
+                loginError.textContent = 'This username is no longer active on the team.';
                 loginError.style.display = 'block';
                 loginName.focus();
                 return;
@@ -2652,7 +2578,7 @@
             if (storedName.toLowerCase() !== 'admin' && isUserRemoved(storedName)) {
                 localStorage.removeItem('censusUserName');
                 localStorage.removeItem('censusIsAdmin');
-                showToast('⚠️ Your account has been removed from the system.', true);
+                showToast('⚠️ Your account has been deactivated. Contact admin.', true);
                 return;
             }
             
@@ -2685,8 +2611,6 @@
                     const localRecords = data.records;
                     let addedCount = 0;
                     localRecords.forEach(localRec => {
-                        if (isUserRemoved(localRec.addedBy)) return;
-                        
                         const exists = records.some(r => 
                             r.tin === localRec.tin && 
                             r.name === localRec.name &&
@@ -2709,7 +2633,6 @@
                     updateUserList();
                     updateAdminStats();
                     updateSearchResults();
-                    checkForOrphanedRecords();
                     if (addedCount > 0) {
                         console.log('📂 Loaded ' + addedCount + ' offline records');
                     }
@@ -2721,334 +2644,28 @@
     }
 
     // =============================================
-    // RENDER TABLE - FIXED to only show user's own records
+    // PERMISSION CHECKS
     // =============================================
-    function renderTable() {
-        tableBody.innerHTML = '';
-        
-        // CRITICAL FIX: Filter records by view permission
-        // For non-admin users, this will only show their own records
-        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
-        
-        if (visibleRecords.length === 0) {
-            if (isAdmin) {
-                tableBody.innerHTML = '<tr><td colspan="16" class="empty-state"><i class="fas fa-box-open"></i> No records in the system yet</td></tr>';
-            } else {
-                tableBody.innerHTML = '<tr><td colspan="16" class="empty-state"><i class="fas fa-box-open"></i> You have no records yet. Add your first record!</td></tr>';
-            }
-            downloadBtn.disabled = true;
-            downloadAllBtn.disabled = true;
-            updateStats();
-            updateUserList();
-            updateDashboardStats();
-            return;
-        }
-        
-        downloadBtn.disabled = false;
-        downloadAllBtn.disabled = false;
-        
-        const displayRecords = paginatedRecords.filter(rec => canViewRecord(rec));
-        
-        if (displayRecords.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="16" class="empty-state"><i class="fas fa-info-circle"></i> No records on this page</td></tr>';
-            return;
-        }
-        
-        displayRecords.forEach((rec) => {
-            const row = document.createElement('tr');
-            const actualIndex = records.findIndex(r => r._firebaseKey === rec._firebaseKey);
-            const canEdit = canEditRecord(rec);
-            const canDelete = canDeleteRecord(rec);
-            const hasMergedFrom = rec.mergedFrom && rec.mergedFrom !== rec.addedBy;
-            const hasPreviousName = rec.previousName && rec.previousName !== rec.addedBy;
-            
-            const cells = [
-                rec.tin || '—', rec.name || '—', rec.telephone || '—', rec.email || '—',
-                rec.location || '—', rec.taxOffice || '—', rec.taxpayerType || '—', rec.sector || '—'
-            ];
-            cells.forEach(text => { const td = document.createElement('td'); td.textContent = text; row.appendChild(td); });
-            
-            const statusCell = document.createElement('td');
-            const status = rec.fileStatus || '—';
-            statusCell.innerHTML = `<span class="status-${status.toLowerCase()}">${status}</span>`;
-            row.appendChild(statusCell);
-            
-            const taxTypesCell = document.createElement('td');
-            taxTypesCell.textContent = rec.taxTypes || '—';
-            row.appendChild(taxTypesCell);
-            
-            const liabilityCell = document.createElement('td');
-            liabilityCell.innerHTML = `<span class="amount liability">${formatMoney(rec.liability || 0)}</span>`;
-            row.appendChild(liabilityCell);
-            const paymentCell = document.createElement('td');
-            paymentCell.innerHTML = `<span class="amount payment">${formatMoney(rec.payment || 0)}</span>`;
-            row.appendChild(paymentCell);
-            const outstandingCell = document.createElement('td');
-            outstandingCell.innerHTML = `<span class="amount outstanding">${formatMoney(rec.outstanding || 0)}</span>`;
-            row.appendChild(outstandingCell);
-            
-            const addedByCell = document.createElement('td');
-            const addedBy = rec.addedBy || '—';
-            const span = document.createElement('span');
-            span.textContent = addedBy;
-            span.className = 'user-name';
-            if (hasMergedFrom) {
-                span.className += ' merged-user';
-                span.textContent = addedBy + ' 🔄';
-                span.title = `Merged from: ${rec.mergedFrom}`;
-            } else if (hasPreviousName) {
-                span.className += ' renamed';
-                span.textContent = addedBy + ' ✏️';
-                span.title = `Previously: ${rec.previousName}`;
-            } else if (addedBy.toLowerCase() === 'admin') {
-                span.className += ' admin-user';
-                span.textContent = addedBy + ' 🔑';
-            } else if (addedBy === userName) {
-                span.className += ' current-user';
-                span.textContent = addedBy + ' ★';
-            } else {
-                span.className += ' other-user';
-            }
-            addedByCell.appendChild(span);
-            row.appendChild(addedByCell);
-            
-            const sourceCell = document.createElement('td');
-            const source = rec._source || 'unknown';
-            if (source === 'local') {
-                sourceCell.innerHTML = `<span class="source-badge local"><i class="fas fa-server"></i> Offline</span>`;
-            } else if (source === 'firebase') {
-                sourceCell.innerHTML = `<span class="source-badge firebase"><i class="fas fa-cloud"></i> Synced</span>`;
-            } else {
-                sourceCell.textContent = '—';
-            }
-            row.appendChild(sourceCell);
-            
-            const actionCell = document.createElement('td');
-            actionCell.style.whiteSpace = 'nowrap';
-            
-            const editBtn = document.createElement('button');
-            editBtn.className = 'action-btn edit-btn';
-            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-            editBtn.title = canEdit ? 'Edit record' : '🔒 Only the owner or Admin can edit';
-            if (!canEdit) editBtn.classList.add('disabled');
-            editBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                if (canEdit) startEdit(actualIndex);
-                else showToast('⛔ You do not have permission to edit this record.', true);
-            });
-            actionCell.appendChild(editBtn);
-            
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'action-btn delete-btn';
-            deleteBtn.innerHTML = '<i class="fas fa-times-circle"></i>';
-            deleteBtn.title = canDelete ? 'Delete record' : '🔒 Only the owner or Admin can delete';
-            if (!canDelete) deleteBtn.classList.add('disabled');
-            deleteBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                if (canDelete) deleteRecord(rec._firebaseKey, rec);
-                else showToast('⛔ You do not have permission to delete this record.', true);
-            });
-            actionCell.appendChild(deleteBtn);
-            
-            row.appendChild(actionCell);
-            tableBody.appendChild(row);
-        });
-        
-        recordCountSpan.textContent = visibleRecords.length + ' records';
-        updateStats();
-        updateUserList();
-        updateDashboardStats();
-        updateSearchResults();
+    function canEditRecord(record) {
+        if (isAdmin) return true;
+        if (isUserRemoved(record.addedBy)) return false;
+        return record.addedBy === userName;
+    }
+
+    function canDeleteRecord(record) {
+        if (isAdmin) return true;
+        if (isUserRemoved(record.addedBy)) return false;
+        return record.addedBy === userName;
+    }
+
+    function canViewRecord(record) {
+        if (isAdmin) return true;
+        if (isUserRemoved(record.addedBy)) return false;
+        return record.addedBy === userName;
     }
 
     // =============================================
-    // UPDATE PAGINATION - FIXED to respect permissions
-    // =============================================
-    function updatePagination() {
-        // CRITICAL FIX: Only count records the user can view
-        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
-        const totalRecords = visibleRecords.length;
-        totalRecordsCount.textContent = totalRecords;
-        
-        if (recordsPerPage === -1) {
-            totalPages = 1;
-            paginatedRecords = visibleRecords;
-        } else {
-            totalPages = Math.ceil(totalRecords / recordsPerPage);
-            if (totalPages === 0) totalPages = 1;
-            if (currentPage > totalPages) currentPage = totalPages;
-            const start = (currentPage - 1) * recordsPerPage;
-            const end = Math.min(start + recordsPerPage, totalRecords);
-            paginatedRecords = visibleRecords.slice(start, end);
-        }
-        
-        updatePaginationControls();
-        updateSearchResults();
-    }
-
-    // =============================================
-    // UPDATE USER LIST - Only show active users
-    // =============================================
-    function updateUserList() {
-        const users = new Set();
-        records.forEach(r => { 
-            if (r.addedBy && !isUserRemoved(r.addedBy)) users.add(r.addedBy); 
-        });
-        if (users.size === 0) { 
-            userListSpan.textContent = 'No active team members'; 
-            return; 
-        }
-        const sortedUsers = Array.from(users).sort();
-        let html = sortedUsers.map(u => {
-            const isAdminUser = u.toLowerCase() === 'admin';
-            if (u === userName) {
-                return `<span style="background:#1b6f9c; color:white; padding:1px 8px; border-radius:10px; font-weight:600;">${u} (You)${isAdminUser ? ' 🔑' : ''}</span>`;
-            }
-            if (isAdminUser) {
-                return `<span style="background:#f8d7da; color:#721c24; padding:1px 8px; border-radius:10px;">${u} 🔑</span>`;
-            }
-            return `<span style="background:#e8e0f0; color:#6f42c1; padding:1px 8px; border-radius:10px;">${u}</span>`;
-        }).join(' ');
-        
-        userListSpan.innerHTML = html;
-    }
-
-    // =============================================
-    // UPDATE STATS - Shows only the user's records (non-admin) or all (admin)
-    // =============================================
-    function updateStats() {
-        // Admin sees ALL records, non-admin sees only their own
-        const visibleRecords = records.filter(rec => canViewRecord(rec));
-        
-        let totalLiab = 0, totalPay = 0, totalOut = 0;
-        visibleRecords.forEach(r => {
-            totalLiab += parseFloat(r.liability) || 0;
-            totalPay += parseFloat(r.payment) || 0;
-            totalOut += parseFloat(r.outstanding) || 0;
-        });
-        
-        totalRecordsSpan.textContent = visibleRecords.length;
-        totalLiabilitySpan.textContent = formatMoney(totalLiab);
-        totalPaymentSpan.textContent = formatMoney(totalPay);
-        totalOutstandingSpan.textContent = formatMoney(totalOut);
-    }
-
-    // =============================================
-    // UPDATE DASHBOARD STATS - Shows only the user's records (non-admin) or all (admin)
-    // =============================================
-    function updateDashboardStats() {
-        // Admin sees ALL records, non-admin sees only their own
-        const visibleRecords = records.filter(rec => canViewRecord(rec));
-        
-        // Sector stats
-        const sectorMap = {};
-        const sectorLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U'];
-        sectorLetters.forEach(letter => { sectorMap[letter] = 0; });
-        let sectorTotal = 0;
-        visibleRecords.forEach(r => {
-            if (r.sector && sectorMap.hasOwnProperty(r.sector)) {
-                sectorMap[r.sector]++;
-                sectorTotal++;
-            }
-        });
-        const sectorGrid = document.getElementById('sectorGrid');
-        sectorGrid.innerHTML = '';
-        sectorLetters.forEach(letter => {
-            const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `<span class="label">${letter}</span><span class="count">${sectorMap[letter]}</span>`;
-            sectorGrid.appendChild(div);
-        });
-        document.getElementById('sectorTotal').textContent = sectorTotal;
-
-        // Taxpayer type stats
-        const typeMap = { 'Company': 0, 'Individual': 0, 'NGO': 0, 'Other': 0 };
-        let typeTotal = 0;
-        visibleRecords.forEach(r => {
-            if (r.taxpayerType && typeMap.hasOwnProperty(r.taxpayerType)) {
-                typeMap[r.taxpayerType]++;
-                typeTotal++;
-            }
-        });
-        const typeList = document.getElementById('taxpayerTypeList');
-        typeList.innerHTML = '';
-        const typeColors = { 'Company': '#1b6f9c', 'Individual': '#6f42c1', 'NGO': '#20c997', 'Other': '#d4a017' };
-        Object.keys(typeMap).forEach(key => {
-            const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `<span class="label"><span class="dot" style="background:${typeColors[key]}"></span>${key}</span><span class="count">${typeMap[key]}</span>`;
-            typeList.appendChild(div);
-        });
-        document.getElementById('taxpayerTypeTotal').textContent = typeTotal;
-
-        // File status stats
-        const statusMap = { 'Active': 0, 'Inactive': 0, 'Dormant': 0, 'Deregistered': 0, 'Unassigned': 0 };
-        let statusTotal = 0;
-        visibleRecords.forEach(r => {
-            if (r.fileStatus && statusMap.hasOwnProperty(r.fileStatus)) {
-                statusMap[r.fileStatus]++;
-                statusTotal++;
-            }
-        });
-        const statusList = document.getElementById('statusList');
-        statusList.innerHTML = '';
-        const statusColors = { 'Active': '#1f7b4b', 'Inactive': '#6c757d', 'Dormant': '#d4a017', 'Deregistered': '#b13e4b', 'Unassigned': '#6f42c1' };
-        Object.keys(statusMap).forEach(key => {
-            const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `<span class="label"><span class="dot" style="background:${statusColors[key]}"></span>${key}</span><span class="count">${statusMap[key]}</span>`;
-            statusList.appendChild(div);
-        });
-        document.getElementById('statusTotal').textContent = statusTotal;
-
-        // Tax types stats
-        const taxTypeMap = {};
-        const allTaxTypes = [
-            'Personal Income Tax', 'Corporate Income Tax', 'VAT Standard, NHIL & GETFUND',
-            'PAYE', 'Customs', 'Excise', 'Capital Gains Tax', 'Withholding Tax',
-            'Withholding VAT', 'Gift Tax', 'Rent Tax', 'Stamp Duty', 'VIT',
-            'Financial Sector Recovery Levy', 'Growth and Sustainability Levy',
-            'Flat', 'Flat / COVID-19', 'NHIL/GETFUND/COVID-19', 'NHIL/GETFUND',
-            'Minerals Royalties', 'Tax Stamp', 'Modified Taxation', 'Standard',
-            'Petroleum Tax', 'Mining Tax', 'Communication Service Tax',
-            'Suspense', 'Other'
-        ];
-        allTaxTypes.forEach(type => { taxTypeMap[type] = 0; });
-        let totalRegistrations = 0;
-        visibleRecords.forEach(r => {
-            if (r.taxTypes && r.taxTypes !== 'None') {
-                const types = r.taxTypes.split(',').map(t => t.trim());
-                types.forEach(type => {
-                    if (taxTypeMap.hasOwnProperty(type)) {
-                        taxTypeMap[type]++;
-                        totalRegistrations++;
-                    }
-                });
-            }
-        });
-        const taxTypesList = document.getElementById('taxTypesList');
-        taxTypesList.innerHTML = '';
-        const sortedTaxTypes = Object.keys(taxTypeMap)
-            .filter(key => taxTypeMap[key] > 0)
-            .sort((a, b) => taxTypeMap[b] - taxTypeMap[a] || a.localeCompare(b));
-        if (sortedTaxTypes.length === 0) {
-            taxTypesList.innerHTML = '<div class="item"><span class="label">No tax types registered yet</span></div>';
-        } else {
-            sortedTaxTypes.forEach(key => {
-                const div = document.createElement('div');
-                div.className = 'item';
-                const count = taxTypeMap[key];
-                let displayName = key;
-                if (displayName.length > 20) displayName = displayName.substring(0, 18) + '…';
-                div.innerHTML = `<span class="label"><span class="dot" style="background:#20c997"></span>${displayName}</span><span class="count">${count}</span>`;
-                taxTypesList.appendChild(div);
-            });
-        }
-        document.getElementById('taxTypesTotal').textContent = totalRegistrations;
-    }
-
-    // =============================================
-    // ADMIN STATS - Only visible to Admin
+    // ADMIN STATS
     // =============================================
     function updateAdminStats() {
         if (!isAdmin) {
@@ -3060,9 +2677,7 @@
         
         const users = new Set();
         records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy)) {
-                users.add(r.addedBy);
-            }
+            if (r.addedBy && !isUserRemoved(r.addedBy)) users.add(r.addedBy);
         });
         const userArray = Array.from(users).sort();
         
@@ -3076,8 +2691,20 @@
             adminUserFilter.appendChild(option);
         });
         
+        if (removedUsers.length > 0) {
+            const optGroup = document.createElement('optgroup');
+            optGroup.label = 'Removed Users';
+            removedUsers.forEach(u => {
+                const option = document.createElement('option');
+                option.value = u;
+                option.textContent = u + ' (removed)';
+                if (u === currentFilter) option.selected = true;
+                optGroup.appendChild(option);
+            });
+            adminUserFilter.appendChild(optGroup);
+        }
+        
         applyAdminFilter();
-        checkForOrphanedRecords();
     }
 
     function applyAdminFilter() {
@@ -3105,7 +2732,7 @@
     }
 
     function renderAdminStats() {
-        let filteredRecords = [...records].filter(r => !isUserRemoved(r.addedBy));
+        let filteredRecords = [...records];
         
         if (adminFilterUser !== 'all') {
             filteredRecords = filteredRecords.filter(r => r.addedBy === adminFilterUser);
@@ -3151,35 +2778,35 @@
         
         const userNames = Object.keys(userStats).sort();
         
-        let totalActiveRecords = 0;
-        let totalActiveLiability = 0;
-        let totalActivePayment = 0;
-        let totalActiveOutstanding = 0;
-        
-        userNames.forEach(user => {
-            const stats = userStats[user];
-            totalActiveRecords += stats.count;
-            totalActiveLiability += stats.totalLiability;
-            totalActivePayment += stats.totalPayment;
-            totalActiveOutstanding += stats.totalOutstanding;
-        });
-        
         if (userNames.length === 0) {
-            userStatsGrid.innerHTML = '<div style="text-align:center; color:#6a8ba0; padding:1rem; grid-column:1/-1;">No active users with records found.</div>';
+            userStatsGrid.innerHTML = '<div style="text-align:center; color:#6a8ba0; padding:1rem; grid-column:1/-1;">No records found matching the filters</div>';
             return;
         }
+        
+        let totalRecords = 0;
+        let totalLiability = 0;
+        let totalPayment = 0;
+        let totalOutstanding = 0;
         
         userStatsGrid.innerHTML = '';
         userNames.forEach(user => {
             const stats = userStats[user];
+            totalRecords += stats.count;
+            totalLiability += stats.totalLiability;
+            totalPayment += stats.totalPayment;
+            totalOutstanding += stats.totalOutstanding;
+            
             const isAdminUser = user.toLowerCase() === 'admin';
             const isCurrentUser = user === userName;
+            const isRemoved = isUserRemoved(user);
             
             const card = document.createElement('div');
             card.className = 'user-stat-card';
+            card.style.opacity = isRemoved ? '0.6' : '1';
             card.innerHTML = `
-                <div class="user-name">
+                <div class="user-name" style="${isRemoved ? 'text-decoration:line-through; color:#6c757d;' : ''}">
                     ${user} ${isAdminUser ? '🔑' : ''} ${isCurrentUser ? '★' : ''}
+                    ${isRemoved ? '<span class="removed-badge">Removed</span>' : ''}
                 </div>
                 <div class="user-count">📊 <span>${stats.count}</span> records</div>
                 <div class="user-totals">
@@ -3192,11 +2819,13 @@
                         ${isAdminUser ? '👑 Admin' : '👤 User'}
                     </span>
                     ${stats.count > 0 ? `<span class="user-badge" style="background:#e8f0fe; color:#1b6f9c;">${stats.count} record${stats.count > 1 ? 's' : ''}</span>` : ''}
+                    ${isRemoved ? `<span class="user-badge" style="background:#f8d7da; color:#721c24;">🚫 Removed</span>` : ''}
                 </div>
             `;
             userStatsGrid.appendChild(card);
         });
         
+        // Summary card
         const summaryCard = document.createElement('div');
         summaryCard.className = 'user-stat-card';
         summaryCard.style.background = '#0d3b52';
@@ -3204,17 +2833,20 @@
         summaryCard.style.borderColor = '#0d3b52';
         summaryCard.innerHTML = `
             <div class="user-name" style="color:white;">📊 Summary</div>
-            <div class="user-count" style="color:#cce5ff;"><span style="color:white;">${totalActiveRecords}</span> total records from active users</div>
+            <div class="user-count" style="color:#cce5ff;"><span style="color:white;">${totalRecords}</span> total records</div>
             <div class="user-totals" style="color:#cce5ff;">
-                ₵${totalActiveLiability.toFixed(2)} total liability · 
-                ₵${totalActivePayment.toFixed(2)} total paid · 
-                ₵${totalActiveOutstanding.toFixed(2)} total outstanding
+                ₵${totalLiability.toFixed(2)} total liability · 
+                ₵${totalPayment.toFixed(2)} total paid · 
+                ₵${totalOutstanding.toFixed(2)} total outstanding
             </div>
             <div style="margin-top:4px;">
                 <span class="user-badge" style="background:#cce5ff; color:#004085;">${userNames.length} active team members</span>
+                ${removedUsers.length > 0 ? `<span class="user-badge" style="background:#f8d7da; color:#721c24;">${removedUsers.length} removed</span>` : ''}
             </div>
         `;
         userStatsGrid.appendChild(summaryCard);
+        
+        updateRemovedUsersUI();
     }
 
     // =============================================
@@ -3391,6 +3023,36 @@
     }
 
     // =============================================
+    // UPDATE USER LIST
+    // =============================================
+    function updateUserList() {
+        const users = new Set();
+        records.forEach(r => { 
+            if (r.addedBy && !isUserRemoved(r.addedBy)) users.add(r.addedBy); 
+        });
+        if (users.size === 0) { 
+            userListSpan.textContent = 'No active team members'; 
+            return; 
+        }
+        const sortedUsers = Array.from(users).sort();
+        let html = sortedUsers.map(u => {
+            const isAdminUser = u.toLowerCase() === 'admin';
+            if (u === userName) {
+                return `<span style="background:#1b6f9c; color:white; padding:1px 8px; border-radius:10px; font-weight:600;">${u} (You)${isAdminUser ? ' 🔑' : ''}</span>`;
+            }
+            if (isAdminUser) {
+                return `<span style="background:#f8d7da; color:#721c24; padding:1px 8px; border-radius:10px;">${u} 🔑</span>`;
+            }
+            return `<span style="background:#e8e0f0; color:#6f42c1; padding:1px 8px; border-radius:10px;">${u}</span>`;
+        }).join(' ');
+        
+        if (removedUsers.length > 0) {
+            html += ` <span style="font-size:0.55rem; color:#6c757d; margin-left:4px;">| ${removedUsers.length} removed</span>`;
+        }
+        userListSpan.innerHTML = html;
+    }
+
+    // =============================================
     // FIREBASE - REAL-TIME READ
     // =============================================
     function setupFirebaseListener() {
@@ -3450,7 +3112,6 @@
             updateUserList();
             updateAdminStats();
             updateSearchResults();
-            checkForOrphanedRecords();
             lastUpdatedSpan.textContent = 'Updated: ' + getTimestamp();
             setSyncStatus('Synced', 'synced');
             
@@ -3476,6 +3137,100 @@
             setSyncStatus('Error', 'error');
             showToast('⚠️ Firebase connection error', true);
         });
+    }
+
+    // =============================================
+    // PAGINATION FUNCTIONS
+    // =============================================
+    function updatePagination() {
+        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
+        const totalRecords = visibleRecords.length;
+        totalRecordsCount.textContent = totalRecords;
+        
+        if (recordsPerPage === -1) {
+            totalPages = 1;
+            paginatedRecords = visibleRecords;
+        } else {
+            totalPages = Math.ceil(totalRecords / recordsPerPage);
+            if (totalPages === 0) totalPages = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            const start = (currentPage - 1) * recordsPerPage;
+            const end = Math.min(start + recordsPerPage, totalRecords);
+            paginatedRecords = visibleRecords.slice(start, end);
+        }
+        
+        updatePaginationControls();
+        updateSearchResults();
+    }
+
+    function updatePaginationControls() {
+        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
+        const totalRecords = visibleRecords.length;
+        
+        if (totalRecords === 0) {
+            pageStart.textContent = 0;
+            pageEnd.textContent = 0;
+            totalRecordsCount.textContent = 0;
+            pageNumbers.innerHTML = '';
+            firstPageBtn.disabled = true;
+            prevPageBtn.disabled = true;
+            nextPageBtn.disabled = true;
+            lastPageBtn.disabled = true;
+            return;
+        }
+        
+        let start = 0, end = 0;
+        if (recordsPerPage === -1) {
+            start = 1;
+            end = totalRecords;
+        } else {
+            start = (currentPage - 1) * recordsPerPage + 1;
+            end = Math.min(currentPage * recordsPerPage, totalRecords);
+        }
+        
+        pageStart.textContent = start;
+        pageEnd.textContent = end;
+        totalRecordsCount.textContent = totalRecords;
+        
+        let pageNumbersHtml = '';
+        const maxPagesToShow = 7;
+        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+        if (endPage - startPage < maxPagesToShow - 1) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            pageNumbersHtml += `<button class="${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+        }
+        pageNumbers.innerHTML = pageNumbersHtml;
+        
+        firstPageBtn.disabled = currentPage === 1 || totalPages === 0;
+        prevPageBtn.disabled = currentPage === 1 || totalPages === 0;
+        nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+        lastPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+    }
+
+    function goToPage(page) {
+        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
+        const totalRecords = visibleRecords.length;
+        if (recordsPerPage === -1) {
+            currentPage = 1;
+        } else {
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+            currentPage = page;
+        }
+        updatePagination();
+        renderTable();
+    }
+
+    function changeRecordsPerPage() {
+        const val = parseInt(recordsPerPageSelect.value);
+        recordsPerPage = val;
+        currentPage = 1;
+        updatePagination();
+        renderTable();
     }
 
     // =============================================
@@ -3754,6 +3509,275 @@
             resetForm();
             showToast('❌ Edit cancelled');
         }
+    }
+
+    // =============================================
+    // RENDER TABLE
+    // =============================================
+    function renderTable() {
+        tableBody.innerHTML = '';
+        
+        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
+        
+        if (visibleRecords.length === 0) {
+            if (isAdmin) {
+                tableBody.innerHTML = '<tr><td colspan="16" class="empty-state"><i class="fas fa-box-open"></i> No records in the system yet</td></tr>';
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="16" class="empty-state"><i class="fas fa-box-open"></i> You have no records yet. Add your first record!</td></tr>';
+            }
+            downloadBtn.disabled = true;
+            downloadAllBtn.disabled = true;
+            updateStats();
+            updateUserList();
+            updateDashboardStats();
+            return;
+        }
+        
+        downloadBtn.disabled = false;
+        downloadAllBtn.disabled = false;
+        
+        const displayRecords = paginatedRecords;
+        
+        if (displayRecords.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="16" class="empty-state"><i class="fas fa-info-circle"></i> No records on this page</td></tr>';
+            return;
+        }
+        
+        displayRecords.forEach((rec) => {
+            const row = document.createElement('tr');
+            const actualIndex = records.findIndex(r => r._firebaseKey === rec._firebaseKey);
+            const canEdit = canEditRecord(rec);
+            const canDelete = canDeleteRecord(rec);
+            const isRemoved = isUserRemoved(rec.addedBy);
+            const hasMergedFrom = rec.mergedFrom && rec.mergedFrom !== rec.addedBy;
+            const hasPreviousName = rec.previousName && rec.previousName !== rec.addedBy;
+            
+            const cells = [
+                rec.tin || '—', rec.name || '—', rec.telephone || '—', rec.email || '—',
+                rec.location || '—', rec.taxOffice || '—', rec.taxpayerType || '—', rec.sector || '—'
+            ];
+            cells.forEach(text => { const td = document.createElement('td'); td.textContent = text; row.appendChild(td); });
+            
+            const statusCell = document.createElement('td');
+            const status = rec.fileStatus || '—';
+            statusCell.innerHTML = `<span class="status-${status.toLowerCase()}">${status}</span>`;
+            row.appendChild(statusCell);
+            
+            const taxTypesCell = document.createElement('td');
+            taxTypesCell.textContent = rec.taxTypes || '—';
+            row.appendChild(taxTypesCell);
+            
+            const liabilityCell = document.createElement('td');
+            liabilityCell.innerHTML = `<span class="amount liability">${formatMoney(rec.liability || 0)}</span>`;
+            row.appendChild(liabilityCell);
+            const paymentCell = document.createElement('td');
+            paymentCell.innerHTML = `<span class="amount payment">${formatMoney(rec.payment || 0)}</span>`;
+            row.appendChild(paymentCell);
+            const outstandingCell = document.createElement('td');
+            outstandingCell.innerHTML = `<span class="amount outstanding">${formatMoney(rec.outstanding || 0)}</span>`;
+            row.appendChild(outstandingCell);
+            
+            const addedByCell = document.createElement('td');
+            const addedBy = rec.addedBy || '—';
+            const span = document.createElement('span');
+            span.textContent = addedBy;
+            span.className = 'user-name';
+            if (isRemoved) {
+                span.className += ' removed-user';
+                span.textContent = addedBy + ' 🚫';
+            } else if (hasMergedFrom) {
+                span.className += ' merged-user';
+                span.textContent = addedBy + ' 🔄';
+                span.title = `Merged from: ${rec.mergedFrom}`;
+            } else if (hasPreviousName) {
+                span.className += ' renamed';
+                span.textContent = addedBy + ' ✏️';
+                span.title = `Previously: ${rec.previousName}`;
+            } else if (addedBy.toLowerCase() === 'admin') {
+                span.className += ' admin-user';
+                span.textContent = addedBy + ' 🔑';
+            } else if (addedBy === userName) {
+                span.className += ' current-user';
+                span.textContent = addedBy + ' ★';
+            } else {
+                span.className += ' other-user';
+            }
+            addedByCell.appendChild(span);
+            row.appendChild(addedByCell);
+            
+            const sourceCell = document.createElement('td');
+            const source = rec._source || 'unknown';
+            if (source === 'local') {
+                sourceCell.innerHTML = `<span class="source-badge local"><i class="fas fa-server"></i> Offline</span>`;
+            } else if (source === 'firebase') {
+                sourceCell.innerHTML = `<span class="source-badge firebase"><i class="fas fa-cloud"></i> Synced</span>`;
+            } else {
+                sourceCell.textContent = '—';
+            }
+            row.appendChild(sourceCell);
+            
+            const actionCell = document.createElement('td');
+            actionCell.style.whiteSpace = 'nowrap';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'action-btn edit-btn';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            editBtn.title = canEdit ? 'Edit record' : '🔒 Only the owner or Admin can edit';
+            if (!canEdit) editBtn.classList.add('disabled');
+            editBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (canEdit) startEdit(actualIndex);
+                else showToast('⛔ You do not have permission to edit this record.', true);
+            });
+            actionCell.appendChild(editBtn);
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'action-btn delete-btn';
+            deleteBtn.innerHTML = '<i class="fas fa-times-circle"></i>';
+            deleteBtn.title = canDelete ? 'Delete record' : '🔒 Only the owner or Admin can delete';
+            if (!canDelete) deleteBtn.classList.add('disabled');
+            deleteBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (canDelete) deleteRecord(rec._firebaseKey, rec);
+                else showToast('⛔ You do not have permission to delete this record.', true);
+            });
+            actionCell.appendChild(deleteBtn);
+            
+            row.appendChild(actionCell);
+            tableBody.appendChild(row);
+        });
+        
+        recordCountSpan.textContent = visibleRecords.length + ' records';
+        updateStats();
+        updateUserList();
+        updateDashboardStats();
+        updateSearchResults();
+    }
+
+    // =============================================
+    // UPDATE STATS
+    // =============================================
+    function updateStats() {
+        const visibleRecords = records.filter(rec => canViewRecord(rec));
+        let totalLiab = 0, totalPay = 0, totalOut = 0;
+        visibleRecords.forEach(r => {
+            totalLiab += parseFloat(r.liability) || 0;
+            totalPay += parseFloat(r.payment) || 0;
+            totalOut += parseFloat(r.outstanding) || 0;
+        });
+        totalRecordsSpan.textContent = visibleRecords.length;
+        totalLiabilitySpan.textContent = formatMoney(totalLiab);
+        totalPaymentSpan.textContent = formatMoney(totalPay);
+        totalOutstandingSpan.textContent = formatMoney(totalOut);
+    }
+
+    // =============================================
+    // UPDATE DASHBOARD STATS
+    // =============================================
+    function updateDashboardStats() {
+        const visibleRecords = records.filter(rec => canViewRecord(rec));
+        
+        const sectorMap = {};
+        const sectorLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U'];
+        sectorLetters.forEach(letter => { sectorMap[letter] = 0; });
+        let sectorTotal = 0;
+        visibleRecords.forEach(r => {
+            if (r.sector && sectorMap.hasOwnProperty(r.sector)) {
+                sectorMap[r.sector]++;
+                sectorTotal++;
+            }
+        });
+        const sectorGrid = document.getElementById('sectorGrid');
+        sectorGrid.innerHTML = '';
+        sectorLetters.forEach(letter => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `<span class="label">${letter}</span><span class="count">${sectorMap[letter]}</span>`;
+            sectorGrid.appendChild(div);
+        });
+        document.getElementById('sectorTotal').textContent = sectorTotal;
+
+        const typeMap = { 'Company': 0, 'Individual': 0, 'NGO': 0, 'Other': 0 };
+        let typeTotal = 0;
+        visibleRecords.forEach(r => {
+            if (r.taxpayerType && typeMap.hasOwnProperty(r.taxpayerType)) {
+                typeMap[r.taxpayerType]++;
+                typeTotal++;
+            }
+        });
+        const typeList = document.getElementById('taxpayerTypeList');
+        typeList.innerHTML = '';
+        const typeColors = { 'Company': '#1b6f9c', 'Individual': '#6f42c1', 'NGO': '#20c997', 'Other': '#d4a017' };
+        Object.keys(typeMap).forEach(key => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `<span class="label"><span class="dot" style="background:${typeColors[key]}"></span>${key}</span><span class="count">${typeMap[key]}</span>`;
+            typeList.appendChild(div);
+        });
+        document.getElementById('taxpayerTypeTotal').textContent = typeTotal;
+
+        const statusMap = { 'Active': 0, 'Inactive': 0, 'Dormant': 0, 'Deregistered': 0, 'Unassigned': 0 };
+        let statusTotal = 0;
+        visibleRecords.forEach(r => {
+            if (r.fileStatus && statusMap.hasOwnProperty(r.fileStatus)) {
+                statusMap[r.fileStatus]++;
+                statusTotal++;
+            }
+        });
+        const statusList = document.getElementById('statusList');
+        statusList.innerHTML = '';
+        const statusColors = { 'Active': '#1f7b4b', 'Inactive': '#6c757d', 'Dormant': '#d4a017', 'Deregistered': '#b13e4b', 'Unassigned': '#6f42c1' };
+        Object.keys(statusMap).forEach(key => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `<span class="label"><span class="dot" style="background:${statusColors[key]}"></span>${key}</span><span class="count">${statusMap[key]}</span>`;
+            statusList.appendChild(div);
+        });
+        document.getElementById('statusTotal').textContent = statusTotal;
+
+        const taxTypeMap = {};
+        const allTaxTypes = [
+            'Personal Income Tax', 'Corporate Income Tax', 'VAT Standard, NHIL & GETFUND',
+            'PAYE', 'Customs', 'Excise', 'Capital Gains Tax', 'Withholding Tax',
+            'Withholding VAT', 'Gift Tax', 'Rent Tax', 'Stamp Duty', 'VIT',
+            'Financial Sector Recovery Levy', 'Growth and Sustainability Levy',
+            'Flat', 'Flat / COVID-19', 'NHIL/GETFUND/COVID-19', 'NHIL/GETFUND',
+            'Minerals Royalties', 'Tax Stamp', 'Modified Taxation', 'Standard',
+            'Petroleum Tax', 'Mining Tax', 'Communication Service Tax',
+            'Suspense', 'Other'
+        ];
+        allTaxTypes.forEach(type => { taxTypeMap[type] = 0; });
+        let totalRegistrations = 0;
+        visibleRecords.forEach(r => {
+            if (r.taxTypes && r.taxTypes !== 'None') {
+                const types = r.taxTypes.split(',').map(t => t.trim());
+                types.forEach(type => {
+                    if (taxTypeMap.hasOwnProperty(type)) {
+                        taxTypeMap[type]++;
+                        totalRegistrations++;
+                    }
+                });
+            }
+        });
+        const taxTypesList = document.getElementById('taxTypesList');
+        taxTypesList.innerHTML = '';
+        const sortedTaxTypes = Object.keys(taxTypeMap)
+            .filter(key => taxTypeMap[key] > 0)
+            .sort((a, b) => taxTypeMap[b] - taxTypeMap[a] || a.localeCompare(b));
+        if (sortedTaxTypes.length === 0) {
+            taxTypesList.innerHTML = '<div class="item"><span class="label">No tax types registered yet</span></div>';
+        } else {
+            sortedTaxTypes.forEach(key => {
+                const div = document.createElement('div');
+                div.className = 'item';
+                const count = taxTypeMap[key];
+                let displayName = key;
+                if (displayName.length > 20) displayName = displayName.substring(0, 18) + '…';
+                div.innerHTML = `<span class="label"><span class="dot" style="background:#20c997"></span>${displayName}</span><span class="count">${count}</span>`;
+                taxTypesList.appendChild(div);
+            });
+        }
+        document.getElementById('taxTypesTotal').textContent = totalRegistrations;
     }
 
     // =============================================
@@ -4128,15 +4152,7 @@
     console.log('🔵 Rename button is blue');
     console.log('🔵 Merge button is blue');
     console.log('🔴 Remove button is red');
-    console.log('✅ Removed users are COMPLETELY removed from the system');
-    console.log('✅ Removed users do NOT appear in the summary dashboard');
-    console.log('✅ Removed users\' records are transferred to Admin');
-    console.log('📊 Total Records shows ALL records');
-    console.log('📊 User Summary shows only ACTIVE users\' records');
-    console.log('🔍 Orphan record detection: finds records from removed users');
-    console.log('🔧 Fix Orphan Records: transfers orphaned records to Admin');
-    console.log('🔒 NON-ADMIN USERS CAN ONLY SEE THEIR OWN RECORDS (FIXED)');
-    console.log('👤 Angela will only see Angela\'s records');
+    console.log('✅ Merged users are properly removed from the team');
     </script>
 </body>
 </html>
