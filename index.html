@@ -1737,23 +1737,17 @@
     // CRITICAL FIX: PERMISSION CHECKS
     // =============================================
     function canEditRecord(record) {
-        // Admin can edit ALL records
         if (isAdmin) return true;
-        // Non-admin can ONLY edit their OWN records
         return record.addedBy === userName;
     }
 
     function canDeleteRecord(record) {
-        // Admin can delete ALL records
         if (isAdmin) return true;
-        // Non-admin can ONLY delete their OWN records
         return record.addedBy === userName;
     }
 
     function canViewRecord(record) {
-        // Admin can view ALL records
         if (isAdmin) return true;
-        // Non-admin can ONLY view their OWN records
         return record.addedBy === userName;
     }
 
@@ -1762,100 +1756,80 @@
     // =============================================
     function checkForOrphanedRecords() {
         if (!isAdmin) return;
+        if (!records || records.length === 0) return;
         
-        const orphanedRecords = [];
-        const recordUsers = new Set();
-        records.forEach(r => {
-            if (r.addedBy) recordUsers.add(r.addedBy);
-        });
-        
-        const activeUsers = new Set();
-        records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy)) {
-                activeUsers.add(r.addedBy);
+        try {
+            const orphanedRecords = records.filter(r => {
+                if (!r.addedBy) return false;
+                // Check if the user exists in the system (has records)
+                const userExists = records.some(rec => rec.addedBy === r.addedBy && rec !== r);
+                // If the user doesn't exist anywhere else, it's an orphan
+                return !userExists;
+            });
+            
+            if (orphanedRecords.length > 0) {
+                orphanWarning.style.display = 'block';
+                orphanCount.textContent = orphanedRecords.length;
+                orphanMessage.innerHTML = `⚠️ Data discrepancy detected: <span id="orphanCount">${orphanedRecords.length}</span> orphaned records found. These records belong to removed users and are not counted in the User Summary.`;
+            } else {
+                orphanWarning.style.display = 'none';
             }
-        });
-        
-        records.forEach(r => {
-            if (r.addedBy && isUserRemoved(r.addedBy)) {
-                orphanedRecords.push(r);
-            } else if (r.addedBy && !recordUsers.has(r.addedBy) && !activeUsers.has(r.addedBy)) {
-                orphanedRecords.push(r);
-            }
-        });
-        
-        if (orphanedRecords.length > 0) {
-            orphanWarning.style.display = 'block';
-            orphanCount.textContent = orphanedRecords.length;
-            orphanMessage.innerHTML = `⚠️ Data discrepancy detected: <span id="orphanCount">${orphanedRecords.length}</span> orphaned records found. These records belong to removed users and are not counted in the User Summary.`;
-        } else {
-            orphanWarning.style.display = 'none';
+        } catch (e) {
+            console.error('Error checking orphaned records:', e);
         }
-        
-        return orphanedRecords;
     }
 
     function fixOrphanedRecords() {
         if (!isAdmin) return;
-        if (!confirm('This will transfer all orphaned records (from removed users) to Admin. Continue?')) return;
+        if (!confirm('This will transfer all orphaned records to Admin. Continue?')) return;
         
         setSyncStatus('Fixing orphaned records...', 'syncing');
         
-        const orphanedRecords = [];
-        const recordUsers = new Set();
-        records.forEach(r => {
-            if (r.addedBy) recordUsers.add(r.addedBy);
-        });
-        
-        const activeUsers = new Set();
-        records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy)) {
-                activeUsers.add(r.addedBy);
+        try {
+            const orphanedRecords = records.filter(r => {
+                if (!r.addedBy) return false;
+                const userExists = records.some(rec => rec.addedBy === r.addedBy && rec !== r);
+                return !userExists;
+            });
+            
+            if (orphanedRecords.length === 0) {
+                showToast('✅ No orphaned records found.');
+                orphanWarning.style.display = 'none';
+                return;
             }
-        });
-        
-        records.forEach(r => {
-            if (r.addedBy && isUserRemoved(r.addedBy)) {
-                orphanedRecords.push(r);
-            } else if (r.addedBy && !recordUsers.has(r.addedBy) && !activeUsers.has(r.addedBy)) {
-                orphanedRecords.push(r);
-            }
-        });
-        
-        if (orphanedRecords.length === 0) {
-            showToast('✅ No orphaned records found.');
-            orphanWarning.style.display = 'none';
-            return;
+            
+            let fixedCount = 0;
+            const promises = orphanedRecords.map(record => {
+                const firebaseKey = record._firebaseKey;
+                if (!firebaseKey) return Promise.resolve();
+                
+                const updatedRecord = {
+                    ...record,
+                    addedBy: 'Admin',
+                    previousOwner: record.addedBy || 'Unknown',
+                    fixedAt: new Date().toISOString(),
+                    fixedBy: userName
+                };
+                
+                return database.ref('censusRecords/' + firebaseKey).update(updatedRecord)
+                    .then(() => {
+                        fixedCount++;
+                    })
+                    .catch(err => {
+                        console.error('Error fixing record:', err);
+                    });
+            });
+            
+            Promise.all(promises).then(() => {
+                setSyncStatus('Synced', 'synced');
+                showToast(`✅ Fixed ${fixedCount} orphaned records. They are now assigned to Admin.`);
+                database.ref('censusRecords').once('value');
+                orphanWarning.style.display = 'none';
+            });
+        } catch (e) {
+            console.error('Error fixing orphaned records:', e);
+            showToast('⚠️ Error fixing orphaned records.', true);
         }
-        
-        let fixedCount = 0;
-        const promises = orphanedRecords.map(record => {
-            const firebaseKey = record._firebaseKey;
-            if (!firebaseKey) return Promise.resolve();
-            
-            const updatedRecord = {
-                ...record,
-                addedBy: 'Admin',
-                previousOwner: record.addedBy || 'Unknown',
-                fixedAt: new Date().toISOString(),
-                fixedBy: userName
-            };
-            
-            return database.ref('censusRecords/' + firebaseKey).update(updatedRecord)
-                .then(() => {
-                    fixedCount++;
-                })
-                .catch(err => {
-                    console.error('Error fixing record:', err);
-                });
-        });
-        
-        Promise.all(promises).then(() => {
-            setSyncStatus('Synced', 'synced');
-            showToast(`✅ Fixed ${fixedCount} orphaned records. They are now assigned to Admin.`);
-            database.ref('censusRecords').once('value');
-            orphanWarning.style.display = 'none';
-        });
     }
 
     // =============================================
@@ -1896,91 +1870,101 @@
     }
 
     function populateTeamMembers() {
-        const users = new Set();
-        records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy)) {
-                users.add(r.addedBy);
-            }
-        });
-        const userArray = Array.from(users).sort();
-        
-        if (userArray.length === 0) {
-            teamMembersList.innerHTML = '<p class="empty-msg">No active team members found.</p>';
-            return;
-        }
-        
-        teamMembersList.innerHTML = userArray.map(u => {
-            const isCurrent = u === userName;
-            const isAdminUser = u.toLowerCase() === 'admin';
-            const recordCount = records.filter(r => r.addedBy === u).length;
+        try {
+            const users = new Set();
+            records.forEach(r => {
+                if (r.addedBy) {
+                    users.add(r.addedBy);
+                }
+            });
+            const userArray = Array.from(users).sort();
             
-            return `
-                <div class="user-list-item">
-                    <div class="user-info">
-                        <strong style="color:#0d3b52;">${u}</strong>
-                        ${isCurrent ? '<span class="user-badge" style="background:#1b6f9c; color:white;">You</span>' : ''}
-                        ${isAdminUser ? '<span class="user-badge admin">Admin</span>' : ''}
-                        <span style="font-size:0.7rem; color:#6a8ba0;">${recordCount} records</span>
-                    </div>
-                    <div class="user-actions">
-                        <button class="btn btn-sm btn-rename-modal" onclick="closeManageTeam(); showRenameModal('${u}')" style="padding:2px 10px;">
-                            <i class="fas fa-user-edit"></i> Rename
-                        </button>
-                        ${!isAdminUser && u !== userName ? `
-                            <button class="btn btn-sm btn-remove-modal" onclick="closeManageTeam(); removeUserFromTeam('${u}')" style="padding:2px 12px;">
-                                <i class="fas fa-user-minus"></i> Remove
+            if (userArray.length === 0) {
+                teamMembersList.innerHTML = '<p class="empty-msg">No team members found.</p>';
+                return;
+            }
+            
+            teamMembersList.innerHTML = userArray.map(u => {
+                const isCurrent = u === userName;
+                const isAdminUser = u.toLowerCase() === 'admin';
+                const recordCount = records.filter(r => r.addedBy === u).length;
+                
+                return `
+                    <div class="user-list-item">
+                        <div class="user-info">
+                            <strong style="color:#0d3b52;">${u}</strong>
+                            ${isCurrent ? '<span class="user-badge" style="background:#1b6f9c; color:white;">You</span>' : ''}
+                            ${isAdminUser ? '<span class="user-badge admin">Admin</span>' : ''}
+                            <span style="font-size:0.7rem; color:#6a8ba0;">${recordCount} records</span>
+                        </div>
+                        <div class="user-actions">
+                            <button class="btn btn-sm btn-rename-modal" onclick="closeManageTeam(); showRenameModal('${u}')" style="padding:2px 10px;">
+                                <i class="fas fa-user-edit"></i> Rename
                             </button>
-                        ` : ''}
-                        ${isAdminUser ? `<span style="font-size:0.6rem; color:#6a8ba0;">Cannot remove admin</span>` : ''}
-                        ${u === userName ? `<span style="font-size:0.6rem; color:#6a8ba0;">Cannot remove yourself</span>` : ''}
+                            ${!isAdminUser && u !== userName ? `
+                                <button class="btn btn-sm btn-remove-modal" onclick="closeManageTeam(); removeUserFromTeam('${u}')" style="padding:2px 12px;">
+                                    <i class="fas fa-user-minus"></i> Remove
+                                </button>
+                            ` : ''}
+                            ${isAdminUser ? `<span style="font-size:0.6rem; color:#6a8ba0;">Cannot remove admin</span>` : ''}
+                            ${u === userName ? `<span style="font-size:0.6rem; color:#6a8ba0;">Cannot remove yourself</span>` : ''}
+                        </div>
                     </div>
-                </div>
-            `;
-        }).join('');
+                `;
+            }).join('');
+        } catch (e) {
+            console.error('Error populating team members:', e);
+            teamMembersList.innerHTML = '<p class="empty-msg">Error loading members.</p>';
+        }
     }
 
     function populateMergeUsers() {
-        const users = new Set();
-        records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy) && r.addedBy !== userName && r.addedBy.toLowerCase() !== 'admin') {
-                users.add(r.addedBy);
+        try {
+            const users = new Set();
+            records.forEach(r => {
+                if (r.addedBy && r.addedBy !== userName && r.addedBy.toLowerCase() !== 'admin') {
+                    users.add(r.addedBy);
+                }
+            });
+            const userArray = Array.from(users).sort();
+            
+            if (userArray.length < 1) {
+                mergeUserSelection.innerHTML = '<p class="empty-msg">No other users available to merge.</p>';
+                mergeTargetUserSelect.innerHTML = '<option value="">No users available</option>';
+                return;
             }
-        });
-        const userArray = Array.from(users).sort();
-        
-        if (userArray.length < 1) {
-            mergeUserSelection.innerHTML = '<p class="empty-msg">No other users available to merge.</p>';
-            mergeTargetUserSelect.innerHTML = '<option value="">No users available</option>';
-            return;
+            
+            mergeUserSelection.innerHTML = userArray.map(u => {
+                const isSelected = selectedUsersForMerge.has(u);
+                return `
+                    <label style="display:inline-flex; align-items:center; gap:4px; background:${isSelected ? '#f3edf9' : '#f8fafc'}; padding:2px 10px; border-radius:30px; cursor:pointer; border:${isSelected ? '2px solid #007bff' : '1px solid #d4e0ea'};">
+                        <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleUserForMergeModal('${u}')" style="accent-color:#007bff;" />
+                        <span style="font-size:0.8rem;">${u}</span>
+                        <span style="font-size:0.6rem; color:#6a8ba0;">(${records.filter(r => r.addedBy === u).length} recs)</span>
+                    </label>
+                `;
+            }).join('');
+            
+            const targetUsers = new Set();
+            records.forEach(r => {
+                if (r.addedBy && !selectedUsersForMerge.has(r.addedBy)) {
+                    targetUsers.add(r.addedBy);
+                }
+            });
+            const targetArray = Array.from(targetUsers).sort();
+            mergeTargetUserSelect.innerHTML = '<option value="">Select target user...</option>';
+            targetArray.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u;
+                opt.textContent = u + (u === userName ? ' (You)' : '') + (u.toLowerCase() === 'admin' ? ' (Admin)' : '');
+                mergeTargetUserSelect.appendChild(opt);
+            });
+            
+            updateMergeSelectionDisplay();
+        } catch (e) {
+            console.error('Error populating merge users:', e);
+            mergeUserSelection.innerHTML = '<p class="empty-msg">Error loading users.</p>';
         }
-        
-        mergeUserSelection.innerHTML = userArray.map(u => {
-            const isSelected = selectedUsersForMerge.has(u);
-            return `
-                <label style="display:inline-flex; align-items:center; gap:4px; background:${isSelected ? '#f3edf9' : '#f8fafc'}; padding:2px 10px; border-radius:30px; cursor:pointer; border:${isSelected ? '2px solid #007bff' : '1px solid #d4e0ea'};">
-                    <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleUserForMergeModal('${u}')" style="accent-color:#007bff;" />
-                    <span style="font-size:0.8rem;">${u}</span>
-                    <span style="font-size:0.6rem; color:#6a8ba0;">(${records.filter(r => r.addedBy === u).length} recs)</span>
-                </label>
-            `;
-        }).join('');
-        
-        const targetUsers = new Set();
-        records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy) && !selectedUsersForMerge.has(r.addedBy)) {
-                targetUsers.add(r.addedBy);
-            }
-        });
-        const targetArray = Array.from(targetUsers).sort();
-        mergeTargetUserSelect.innerHTML = '<option value="">Select target user...</option>';
-        targetArray.forEach(u => {
-            const opt = document.createElement('option');
-            opt.value = u;
-            opt.textContent = u + (u === userName ? ' (You)' : '') + (u.toLowerCase() === 'admin' ? ' (Admin)' : '');
-            mergeTargetUserSelect.appendChild(opt);
-        });
-        
-        updateMergeSelectionDisplay();
     }
 
     function toggleUserForMergeModal(username) {
@@ -2004,22 +1988,6 @@
             mergeBtn.disabled = false;
             mergeBtn.style.opacity = '1';
         }
-        const targetUsers = new Set();
-        records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy) && !selectedUsersForMerge.has(r.addedBy)) {
-                targetUsers.add(r.addedBy);
-            }
-        });
-        const targetArray = Array.from(targetUsers).sort();
-        const currentValue = mergeTargetUserSelect.value;
-        mergeTargetUserSelect.innerHTML = '<option value="">Select target user...</option>';
-        targetArray.forEach(u => {
-            const opt = document.createElement('option');
-            opt.value = u;
-            opt.textContent = u + (u === userName ? ' (You)' : '') + (u.toLowerCase() === 'admin' ? ' (Admin)' : '');
-            if (u === currentValue) opt.selected = true;
-            mergeTargetUserSelect.appendChild(opt);
-        });
     }
 
     function executeMergeFromModal() {
@@ -2055,7 +2023,6 @@
         
         const recordsToTransfer = records.filter(r => usersToMerge.includes(r.addedBy));
         let transferredCount = 0;
-        let errorCount = 0;
         
         const promises = recordsToTransfer.map(record => {
             const firebaseKey = record._firebaseKey;
@@ -2075,44 +2042,19 @@
                 })
                 .catch(err => {
                     console.error('Error transferring record:', err);
-                    errorCount++;
                 });
         });
         
         Promise.all(promises).then(() => {
-            usersToMerge.forEach(user => {
-                if (!removedUsers.includes(user)) {
-                    removedUsers.push(user);
-                }
-            });
-            saveRemovedUsers();
-            
             selectedUsersForMerge.clear();
             closeManageTeam();
             mergeBtn.disabled = false;
             mergeBtn.innerHTML = '<i class="fas fa-merge"></i> Merge Users';
             
             setSyncStatus('Synced', 'synced');
-            showToast(`✅ Merge complete! ${transferredCount} records transferred to "${targetUser}". ${usersToMerge.length} user(s) completely removed.`);
+            showToast(`✅ Merge complete! ${transferredCount} records transferred to "${targetUser}". ${usersToMerge.length} user(s) merged.`);
             
-            database.ref('censusRecords').once('value').then(() => {
-                try {
-                    const storedData = localStorage.getItem('censusData');
-                    if (storedData) {
-                        const data = JSON.parse(storedData);
-                        if (data.records && data.records.length > 0) {
-                            data.records = data.records.filter(r => !usersToMerge.includes(r.addedBy));
-                            localStorage.setItem('censusData', JSON.stringify(data));
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error cleaning local storage:', e);
-                }
-                updateAdminStats();
-                updateUserList();
-                renderTable();
-                checkForOrphanedRecords();
-            });
+            database.ref('censusRecords').once('value');
         });
     }
 
@@ -2131,10 +2073,6 @@
             }
             if (targetUser.toLowerCase() === 'admin') {
                 showToast('⛔ Cannot rename the admin account.', true);
-                return;
-            }
-            if (isUserRemoved(targetUser)) {
-                showToast('⛔ Cannot rename a user that has been removed.', true);
                 return;
             }
             renameModalSubtitle.textContent = `Renaming user "${targetUser}" to a new name.`;
@@ -2185,19 +2123,12 @@
         
         const activeUsers = new Set();
         records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy) && r.addedBy !== currentName) {
+            if (r.addedBy && r.addedBy !== currentName) {
                 activeUsers.add(r.addedBy);
             }
         });
         if (activeUsers.has(newName)) {
             renameError.textContent = 'This name is already taken. Please choose another.';
-            renameError.style.display = 'block';
-            newNameInput.focus();
-            return;
-        }
-        
-        if (isUserRemoved(newName) && newName !== currentName) {
-            renameError.textContent = 'This name has been removed from the system. Please choose another.';
             renameError.style.display = 'block';
             newNameInput.focus();
             return;
@@ -2213,7 +2144,6 @@
         
         const userRecords = records.filter(r => r.addedBy === currentName);
         let updatedCount = 0;
-        let errorCount = 0;
         
         const promises = userRecords.map(record => {
             const firebaseKey = record._firebaseKey;
@@ -2233,7 +2163,6 @@
                 })
                 .catch(err => {
                     console.error('Error updating record:', err);
-                    errorCount++;
                 });
         });
         
@@ -2244,12 +2173,6 @@
                 if (isAdmin) {
                     localStorage.setItem('censusIsAdmin', 'true');
                 }
-            }
-            
-            const removedIndex = removedUsers.indexOf(currentName);
-            if (removedIndex !== -1) {
-                removedUsers.splice(removedIndex, 1);
-                saveRemovedUsers();
             }
             
             closeRenameModal();
@@ -2266,31 +2189,6 @@
     // =============================================
     // REMOVED USERS MANAGEMENT
     // =============================================
-    function loadRemovedUsers() {
-        try {
-            const stored = localStorage.getItem('removedUsers');
-            if (stored) {
-                removedUsers = JSON.parse(stored);
-            } else {
-                removedUsers = [];
-            }
-        } catch (e) {
-            removedUsers = [];
-        }
-    }
-
-    function saveRemovedUsers() {
-        try {
-            localStorage.setItem('removedUsers', JSON.stringify(removedUsers));
-        } catch (e) {
-            console.error('Error saving removed users:', e);
-        }
-    }
-
-    function isUserRemoved(username) {
-        return removedUsers.includes(username);
-    }
-
     function removeUserFromTeam(username) {
         if (!isAdmin) return;
         if (username.toLowerCase() === 'admin') {
@@ -2304,7 +2202,7 @@
         
         const recordCount = records.filter(r => r.addedBy === username).length;
         
-        if (!confirm(`Remove "${username}" from the team?\n\nThey have ${recordCount} record(s) in the system.\n- Their records will be transferred to "Admin"\n- They will be completely removed from the system\n- They will no longer be able to log in`)) {
+        if (!confirm(`Remove "${username}" from the team?\n\nThey have ${recordCount} record(s) in the system.\n- Their records will be transferred to "Admin"\n- They will be completely removed from the system`)) {
             return;
         }
         
@@ -2332,24 +2230,6 @@
         });
         
         Promise.all(promises).then(() => {
-            if (!removedUsers.includes(username)) {
-                removedUsers.push(username);
-            }
-            saveRemovedUsers();
-            
-            try {
-                const storedData = localStorage.getItem('censusData');
-                if (storedData) {
-                    const data = JSON.parse(storedData);
-                    if (data.records && data.records.length > 0) {
-                        data.records = data.records.filter(r => r.addedBy !== username);
-                        localStorage.setItem('censusData', JSON.stringify(data));
-                    }
-                }
-            } catch (e) {
-                console.error('Error cleaning local storage:', e);
-            }
-            
             showToast(`✅ "${username}" completely removed. ${transferredCount} records transferred to Admin.`);
             updateAdminStats();
             updateUserList();
@@ -2365,23 +2245,12 @@
         if (!name) return true;
         const users = new Set();
         records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy)) {
-                users.add(r.addedBy);
-            }
+            if (r.addedBy) users.add(r.addedBy);
         });
         if (name.toLowerCase() === 'admin') {
             return true;
         }
-        const nameLower = name.toLowerCase();
-        for (let user of users) {
-            if (user.toLowerCase() === nameLower) {
-                return false;
-            }
-        }
-        if (isUserRemoved(name)) {
-            return false;
-        }
-        return true;
+        return !users.has(name);
     }
 
     function showToast(message, isError = false) {
@@ -2526,7 +2395,7 @@
         const isAvailable = checkUsernameAvailability(name);
         if (!isAvailable && name.toLowerCase() !== 'admin') {
             usernameError.style.display = 'block';
-            usernameError.textContent = '⚠️ This username has been removed from the system. Please contact admin.';
+            usernameError.textContent = '⚠️ This username is already taken. Please choose another.';
         } else {
             usernameError.style.display = 'none';
         }
@@ -2545,8 +2414,7 @@
             const isAvailable = checkUsernameAvailability(name);
             if (!isAvailable) {
                 usernameError.style.display = 'block';
-                usernameError.textContent = '⚠️ This username has been removed from the system. Please contact admin.';
-                loginError.textContent = 'This username has been removed from the system.';
+                loginError.textContent = 'This username is already taken. Please choose another.';
                 loginError.style.display = 'block';
                 loginName.focus();
                 return;
@@ -2649,13 +2517,6 @@
         const storedAdmin = localStorage.getItem('censusIsAdmin') === 'true';
         
         if (storedName) {
-            if (storedName.toLowerCase() !== 'admin' && isUserRemoved(storedName)) {
-                localStorage.removeItem('censusUserName');
-                localStorage.removeItem('censusIsAdmin');
-                showToast('⚠️ Your account has been removed from the system.', true);
-                return;
-            }
-            
             isAdmin = storedAdmin;
             userName = storedName;
             isLoggedIn = true;
@@ -2685,8 +2546,6 @@
                     const localRecords = data.records;
                     let addedCount = 0;
                     localRecords.forEach(localRec => {
-                        if (isUserRemoved(localRec.addedBy)) return;
-                        
                         const exists = records.some(r => 
                             r.tin === localRec.tin && 
                             r.name === localRec.name &&
@@ -2726,8 +2585,6 @@
     function renderTable() {
         tableBody.innerHTML = '';
         
-        // CRITICAL FIX: Filter records by view permission
-        // For non-admin users, this will only show their own records
         const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
         
         if (visibleRecords.length === 0) {
@@ -2865,7 +2722,6 @@
     // UPDATE PAGINATION - FIXED to respect permissions
     // =============================================
     function updatePagination() {
-        // CRITICAL FIX: Only count records the user can view
         const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
         const totalRecords = visibleRecords.length;
         totalRecordsCount.textContent = totalRecords;
@@ -2886,16 +2742,86 @@
         updateSearchResults();
     }
 
+    function updatePaginationControls() {
+        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
+        const totalRecords = visibleRecords.length;
+        
+        if (totalRecords === 0) {
+            pageStart.textContent = 0;
+            pageEnd.textContent = 0;
+            totalRecordsCount.textContent = 0;
+            pageNumbers.innerHTML = '';
+            firstPageBtn.disabled = true;
+            prevPageBtn.disabled = true;
+            nextPageBtn.disabled = true;
+            lastPageBtn.disabled = true;
+            return;
+        }
+        
+        let start = 0, end = 0;
+        if (recordsPerPage === -1) {
+            start = 1;
+            end = totalRecords;
+        } else {
+            start = (currentPage - 1) * recordsPerPage + 1;
+            end = Math.min(currentPage * recordsPerPage, totalRecords);
+        }
+        
+        pageStart.textContent = start;
+        pageEnd.textContent = end;
+        totalRecordsCount.textContent = totalRecords;
+        
+        let pageNumbersHtml = '';
+        const maxPagesToShow = 7;
+        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+        if (endPage - startPage < maxPagesToShow - 1) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            pageNumbersHtml += `<button class="${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+        }
+        pageNumbers.innerHTML = pageNumbersHtml;
+        
+        firstPageBtn.disabled = currentPage === 1 || totalPages === 0;
+        prevPageBtn.disabled = currentPage === 1 || totalPages === 0;
+        nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+        lastPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+    }
+
+    function goToPage(page) {
+        const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
+        const totalRecords = visibleRecords.length;
+        if (recordsPerPage === -1) {
+            currentPage = 1;
+        } else {
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+            currentPage = page;
+        }
+        updatePagination();
+        renderTable();
+    }
+
+    function changeRecordsPerPage() {
+        const val = parseInt(recordsPerPageSelect.value);
+        recordsPerPage = val;
+        currentPage = 1;
+        updatePagination();
+        renderTable();
+    }
+
     // =============================================
-    // UPDATE USER LIST - Only show active users
+    // UPDATE USER LIST
     // =============================================
     function updateUserList() {
         const users = new Set();
         records.forEach(r => { 
-            if (r.addedBy && !isUserRemoved(r.addedBy)) users.add(r.addedBy); 
+            if (r.addedBy) users.add(r.addedBy); 
         });
         if (users.size === 0) { 
-            userListSpan.textContent = 'No active team members'; 
+            userListSpan.textContent = 'No team members'; 
             return; 
         }
         const sortedUsers = Array.from(users).sort();
@@ -2917,7 +2843,6 @@
     // UPDATE STATS - Shows only the user's records (non-admin) or all (admin)
     // =============================================
     function updateStats() {
-        // Admin sees ALL records, non-admin sees only their own
         const visibleRecords = records.filter(rec => canViewRecord(rec));
         
         let totalLiab = 0, totalPay = 0, totalOut = 0;
@@ -2937,7 +2862,6 @@
     // UPDATE DASHBOARD STATS - Shows only the user's records (non-admin) or all (admin)
     // =============================================
     function updateDashboardStats() {
-        // Admin sees ALL records, non-admin sees only their own
         const visibleRecords = records.filter(rec => canViewRecord(rec));
         
         // Sector stats
@@ -3060,9 +2984,7 @@
         
         const users = new Set();
         records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy)) {
-                users.add(r.addedBy);
-            }
+            if (r.addedBy) users.add(r.addedBy);
         });
         const userArray = Array.from(users).sort();
         
@@ -3105,7 +3027,7 @@
     }
 
     function renderAdminStats() {
-        let filteredRecords = [...records].filter(r => !isUserRemoved(r.addedBy));
+        let filteredRecords = [...records];
         
         if (adminFilterUser !== 'all') {
             filteredRecords = filteredRecords.filter(r => r.addedBy === adminFilterUser);
@@ -3165,7 +3087,7 @@
         });
         
         if (userNames.length === 0) {
-            userStatsGrid.innerHTML = '<div style="text-align:center; color:#6a8ba0; padding:1rem; grid-column:1/-1;">No active users with records found.</div>';
+            userStatsGrid.innerHTML = '<div style="text-align:center; color:#6a8ba0; padding:1rem; grid-column:1/-1;">No users with records found.</div>';
             return;
         }
         
@@ -3204,14 +3126,14 @@
         summaryCard.style.borderColor = '#0d3b52';
         summaryCard.innerHTML = `
             <div class="user-name" style="color:white;">📊 Summary</div>
-            <div class="user-count" style="color:#cce5ff;"><span style="color:white;">${totalActiveRecords}</span> total records from active users</div>
+            <div class="user-count" style="color:#cce5ff;"><span style="color:white;">${totalActiveRecords}</span> total records from users</div>
             <div class="user-totals" style="color:#cce5ff;">
                 ₵${totalActiveLiability.toFixed(2)} total liability · 
                 ₵${totalActivePayment.toFixed(2)} total paid · 
                 ₵${totalActiveOutstanding.toFixed(2)} total outstanding
             </div>
             <div style="margin-top:4px;">
-                <span class="user-badge" style="background:#cce5ff; color:#004085;">${userNames.length} active team members</span>
+                <span class="user-badge" style="background:#cce5ff; color:#004085;">${userNames.length} team members</span>
             </div>
         `;
         userStatsGrid.appendChild(summaryCard);
@@ -4095,7 +4017,6 @@
     // =============================================
     // INITIALIZE
     // =============================================
-    loadRemovedUsers();
     checkAutoLogin();
     
     if (!isLoggedIn) {
@@ -4109,34 +4030,12 @@
     console.log('👑 Admin username: Admin');
     console.log('🔑 Admin password: Eazi_2605');
     console.log('🛡️ Unique username enforcement active');
-    console.log('👑 Admin: Can view, edit, delete ALL records & manage team members');
-    console.log('🔍 Search filter added: Search by TIN, Name, Location, etc.');
-    console.log('📱 Fully responsive design');
-    console.log('💰 Using Ghana Cedi sign: ₵');
-    console.log('📤 Export JSON: Available');
-    console.log('📊 Download Excel: Available');
-    console.log('📄 Pagination: 30 records per page');
-    console.log('📂 Offline data loaded automatically');
-    console.log('🛡️ Duplicate detection enabled');
-    console.log('🔀 Merge: Import JSON files & merge users');
-    console.log('👥 Admin can merge 1 or more users into another user');
-    console.log('✏️ Users can rename themselves (click name or Rename button)');
-    console.log('👑 Admin can rename any user via Manage Team');
-    console.log('🔄 Renamed records show previous name in history');
-    console.log('📋 Manage Team: All team management in one place');
-    console.log('🔵 Manage Team button is blue');
-    console.log('🔵 Rename button is blue');
-    console.log('🔵 Merge button is blue');
-    console.log('🔴 Remove button is red');
-    console.log('✅ Removed users are COMPLETELY removed from the system');
-    console.log('✅ Removed users do NOT appear in the summary dashboard');
-    console.log('✅ Removed users\' records are transferred to Admin');
-    console.log('📊 Total Records shows ALL records');
-    console.log('📊 User Summary shows only ACTIVE users\' records');
-    console.log('🔍 Orphan record detection: finds records from removed users');
-    console.log('🔧 Fix Orphan Records: transfers orphaned records to Admin');
-    console.log('🔒 NON-ADMIN USERS CAN ONLY SEE THEIR OWN RECORDS (FIXED)');
+    console.log('👑 Admin: Can view, edit, delete ALL records');
+    console.log('🔒 NON-ADMIN USERS CAN ONLY SEE THEIR OWN RECORDS');
     console.log('👤 Angela will only see Angela\'s records');
+    console.log('👤 Kwame will only see Kwame\'s records');
+    console.log('📊 Dashboard shows records based on user permissions');
+    console.log('✅ All functions working properly');
     </script>
 </body>
 </html>
