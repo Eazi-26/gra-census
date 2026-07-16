@@ -199,14 +199,6 @@
         .admin-stats .user-stat-card .user-totals span { font-weight: 600; color: #0d3b52; }
         .admin-stats .user-stat-card .user-badge { font-size: 0.6rem; padding: 1px 6px; border-radius: 10px; background: #d4edda; color: #155724; display: inline-block; }
         .admin-stats .user-stat-card .user-badge.admin { background: #f8d7da; color: #721c24; }
-        .admin-stats .user-stat-card .removed-badge {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 1px 8px;
-            border-radius: 10px;
-            font-size: 0.55rem;
-            font-weight: 600;
-        }
         .admin-stats .user-stat-card .previous-name {
             font-size: 0.6rem;
             color: #6a8ba0;
@@ -662,7 +654,6 @@
         .user-name.current-user { color: #1b6f9c; background: #e6f0f8; padding: 1px 6px; border-radius: 10px; }
         .user-name.other-user { color: #6f42c1; }
         .user-name.admin-user { color: #b13e4b; background: #fce8ea; padding: 1px 6px; border-radius: 10px; }
-        .user-name.removed-user { color: #6c757d; background: #e9ecef; padding: 1px 6px; border-radius: 10px; text-decoration: line-through; }
         .user-name.merged-user { color: #6f42c1; background: #f3edf9; padding: 1px 6px; border-radius: 10px; }
         .user-name.renamed { color: #1b6f9c; background: #d4edda; padding: 1px 6px; border-radius: 10px; }
         
@@ -837,33 +828,9 @@
             outline: none;
         }
         
-        /* Removed Users Section */
+        /* Removed Users Section - HIDDEN - users are completely removed */
         .removed-users-section {
-            margin-top: 1rem;
-            border-top: 2px solid #f8d7da;
-            padding-top: 0.5rem;
-        }
-        .removed-users-section .removed-user-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.3rem 0.5rem;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 0.2rem;
-        }
-        .removed-users-section .removed-user-item .restore-btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            padding: 2px 12px;
-            font-size: 0.6rem;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .removed-users-section .removed-user-item .restore-btn:hover {
-            background: #34ce57;
+            display: none !important;
         }
         
         /* Manage Team Modal */
@@ -1247,13 +1214,6 @@
                 <div class="user-stats-grid" id="userStatsGrid">
                     <div style="text-align:center; color:#6a8ba0; padding:1rem; grid-column:1/-1;">Loading user statistics...</div>
                 </div>
-                <!-- Removed Users Section -->
-                <div class="removed-users-section" id="removedUsersSection" style="display:none;">
-                    <h5 style="font-size:0.75rem; color:#721c24; margin-bottom:0.3rem;">
-                        <i class="fas fa-user-slash"></i> Removed Users
-                    </h5>
-                    <div id="removedUsersList"></div>
-                </div>
             </div>
 
             <!-- DUPLICATE WARNING -->
@@ -1516,7 +1476,6 @@
             <div class="tab-bar">
                 <button class="active" onclick="switchTeamTab('members', this)"><i class="fas fa-users"></i> Members</button>
                 <button onclick="switchTeamTab('merge', this)"><i class="fas fa-merge"></i> Merge Users</button>
-                <button onclick="switchTeamTab('removed', this)"><i class="fas fa-user-slash"></i> Removed</button>
             </div>
             
             <!-- Members Tab -->
@@ -1562,14 +1521,6 @@
                 <div class="modal-actions">
                     <button class="btn btn-secondary" onclick="closeManageTeam()"><i class="fas fa-times"></i> Cancel</button>
                     <button class="btn btn-merge-modal" id="executeMergeFromModal" onclick="executeMergeFromModal()"><i class="fas fa-merge"></i> Merge Users</button>
-                </div>
-            </div>
-            
-            <!-- Removed Tab -->
-            <div class="tab-content" id="tabRemoved">
-                <p style="color:#6a8ba0; font-size:0.85rem; margin-bottom:0.8rem;">Restore users who were previously removed from the team.</p>
-                <div id="removedTeamMembersList">
-                    <p class="empty-msg">No removed users.</p>
                 </div>
             </div>
             
@@ -1651,7 +1602,7 @@
     let duplicateDetected = false;
     let searchTerm = '';
     let searchField = 'all';
-    let removedUsers = [];
+    let removedUsers = []; // Users that have been completely removed (they no longer appear anywhere)
     let selectedUsersForMerge = new Set();
     let renameTargetUser = null;
 
@@ -1721,11 +1672,8 @@
     const adminUserFilter = document.getElementById('adminUserFilter');
     const adminDateFrom = document.getElementById('adminDateFrom');
     const adminDateTo = document.getElementById('adminDateTo');
-    const removedUsersSection = document.getElementById('removedUsersSection');
-    const removedUsersList = document.getElementById('removedUsersList');
     const manageTeamModal = document.getElementById('manageTeamModal');
     const teamMembersList = document.getElementById('teamMembersList');
-    const removedTeamMembersList = document.getElementById('removedTeamMembersList');
     const mergeUserSelection = document.getElementById('mergeUserSelection');
     const mergeTargetUserSelect = document.getElementById('mergeTargetUserSelect');
     const mergeSelectedCountDisplay = document.getElementById('mergeSelectedCountDisplay');
@@ -1768,7 +1716,6 @@
         manageTeamModal.style.display = 'flex';
         populateTeamMembers();
         populateMergeUsers();
-        populateRemovedUsers();
         // Default to Members tab
         const activeTab = document.querySelector('.tab-bar .active');
         if (activeTab) {
@@ -1793,14 +1740,14 @@
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         const tabMap = {
             'members': 'tabMembers',
-            'merge': 'tabMerge',
-            'removed': 'tabRemoved'
+            'merge': 'tabMerge'
         };
         const tabId = tabMap[tab] || 'tabMembers';
         document.getElementById(tabId).classList.add('active');
     }
 
     function populateTeamMembers() {
+        // Only show users that are NOT removed and have records
         const users = new Set();
         records.forEach(r => {
             if (r.addedBy && !isUserRemoved(r.addedBy)) {
@@ -1845,9 +1792,9 @@
     }
 
     function populateMergeUsers() {
+        // Show all non-admin users except the current user and removed users
         const users = new Set();
         records.forEach(r => {
-            // Show all non-admin users except the current user (they can't merge themselves)
             if (r.addedBy && !isUserRemoved(r.addedBy) && r.addedBy !== userName && r.addedBy.toLowerCase() !== 'admin') {
                 users.add(r.addedBy);
             }
@@ -1875,11 +1822,8 @@
         // Update target user dropdown - can be ANY user including the current user
         const targetUsers = new Set();
         records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy)) {
-                // Don't show users that are selected for merge as target
-                if (!selectedUsersForMerge.has(r.addedBy)) {
-                    targetUsers.add(r.addedBy);
-                }
+            if (r.addedBy && !isUserRemoved(r.addedBy) && !selectedUsersForMerge.has(r.addedBy)) {
+                targetUsers.add(r.addedBy);
             }
         });
         const targetArray = Array.from(targetUsers).sort();
@@ -1892,30 +1836,6 @@
         });
         
         updateMergeSelectionDisplay();
-    }
-
-    function populateRemovedUsers() {
-        if (removedUsers.length === 0) {
-            removedTeamMembersList.innerHTML = '<p class="empty-msg">No removed users.</p>';
-            return;
-        }
-        
-        removedTeamMembersList.innerHTML = removedUsers.map(u => `
-            <div class="user-list-item">
-                <div class="user-info">
-                    <span style="color:#6c757d;"><i class="fas fa-user-slash"></i> <strong>${u}</strong></span>
-                    <span class="removed-badge">Removed</span>
-                </div>
-                <div class="user-actions">
-                    <button class="btn btn-sm btn-rename-modal" onclick="closeManageTeam(); showRenameModal('${u}')" style="padding:2px 10px;">
-                        <i class="fas fa-user-edit"></i> Rename
-                    </button>
-                    <button class="btn btn-sm btn-success" onclick="closeManageTeam(); restoreUser('${u}')" style="padding:2px 12px;">
-                        <i class="fas fa-undo"></i> Restore
-                    </button>
-                </div>
-            </div>
-        `).join('');
     }
 
     function toggleUserForMergeModal(username) {
@@ -1932,7 +1852,6 @@
         const count = selectedUsersForMerge.size;
         mergeSelectedCountDisplay.textContent = count;
         const mergeBtn = document.getElementById('executeMergeFromModal');
-        // Allow merging with just 1 user selected (or more)
         if (count < 1) {
             mergeBtn.disabled = true;
             mergeBtn.style.opacity = '0.5';
@@ -1972,7 +1891,6 @@
             return;
         }
         
-        // Check if target is in the merge list
         if (usersToMerge.includes(targetUser)) {
             showToast('⚠️ Target user cannot be one of the users being merged.', true);
             return;
@@ -1982,7 +1900,7 @@
             return;
         }
         
-        if (!confirm(`⚠️ FINAL WARNING: All records from ${usersToMerge.join(', ')} will be transferred to ${targetUser}. The original accounts will be removed. Continue?`)) {
+        if (!confirm(`⚠️ FINAL WARNING: All records from ${usersToMerge.join(', ')} will be transferred to ${targetUser}. The original accounts will be completely removed. Continue?`)) {
             return;
         }
         
@@ -1991,7 +1909,6 @@
         mergeBtn.disabled = true;
         mergeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Merging...';
         
-        // Get all records from users to merge
         const recordsToTransfer = records.filter(r => usersToMerge.includes(r.addedBy));
         let transferredCount = 0;
         let errorCount = 0;
@@ -2019,7 +1936,7 @@
         });
         
         Promise.all(promises).then(() => {
-            // Add merged users to removed list so they no longer appear
+            // COMPLETELY REMOVE merged users - add to removed list
             usersToMerge.forEach(user => {
                 if (!removedUsers.includes(user)) {
                     removedUsers.push(user);
@@ -2027,24 +1944,22 @@
             });
             saveRemovedUsers();
             
-            // Clear selection
             selectedUsersForMerge.clear();
             closeManageTeam();
             mergeBtn.disabled = false;
             mergeBtn.innerHTML = '<i class="fas fa-merge"></i> Merge Users';
             
             setSyncStatus('Synced', 'synced');
-            showToast(`✅ Merge complete! ${transferredCount} records transferred to "${targetUser}". ${usersToMerge.length} user(s) merged and removed.`);
+            showToast(`✅ Merge complete! ${transferredCount} records transferred to "${targetUser}". ${usersToMerge.length} user(s) completely removed.`);
             
-            // Force refresh data from Firebase to update everything
+            // Force refresh data from Firebase
             database.ref('censusRecords').once('value').then(() => {
-                // Also update localStorage to remove any local records from merged users
+                // Clean local storage
                 try {
                     const storedData = localStorage.getItem('censusData');
                     if (storedData) {
                         const data = JSON.parse(storedData);
                         if (data.records && data.records.length > 0) {
-                            // Remove any records from merged users from local storage
                             data.records = data.records.filter(r => !usersToMerge.includes(r.addedBy));
                             localStorage.setItem('censusData', JSON.stringify(data));
                         }
@@ -2052,6 +1967,10 @@
                 } catch (e) {
                     console.error('Error cleaning local storage:', e);
                 }
+                // Force UI refresh
+                updateAdminStats();
+                updateUserList();
+                renderTable();
             });
         });
     }
@@ -2071,6 +1990,10 @@
             }
             if (targetUser.toLowerCase() === 'admin') {
                 showToast('⛔ Cannot rename the admin account.', true);
+                return;
+            }
+            if (isUserRemoved(targetUser)) {
+                showToast('⛔ Cannot rename a user that has been removed.', true);
                 return;
             }
             renameModalSubtitle.textContent = `Renaming user "${targetUser}" to a new name.`;
@@ -2133,7 +2056,7 @@
         }
         
         if (isUserRemoved(newName) && newName !== currentName) {
-            renameError.textContent = 'This name belongs to a removed user. Please choose another.';
+            renameError.textContent = 'This name has been removed from the system. Please choose another.';
             renameError.style.display = 'block';
             newNameInput.focus();
             return;
@@ -2182,12 +2105,11 @@
                 }
             }
             
-            if (isAdmin && currentName !== userName) {
-                const oldRemovedIndex = removedUsers.indexOf(currentName);
-                if (oldRemovedIndex !== -1) {
-                    removedUsers = removedUsers.filter(u => u !== currentName);
-                    saveRemovedUsers();
-                }
+            // If the renamed user was in the removed list, remove them from it
+            const removedIndex = removedUsers.indexOf(currentName);
+            if (removedIndex !== -1) {
+                removedUsers.splice(removedIndex, 1);
+                saveRemovedUsers();
             }
             
             closeRenameModal();
@@ -2202,7 +2124,7 @@
     }
 
     // =============================================
-    // REMOVED USERS MANAGEMENT
+    // REMOVED USERS MANAGEMENT - COMPLETE REMOVAL
     // =============================================
     function loadRemovedUsers() {
         try {
@@ -2215,7 +2137,6 @@
         } catch (e) {
             removedUsers = [];
         }
-        updateRemovedUsersUI();
     }
 
     function saveRemovedUsers() {
@@ -2224,37 +2145,6 @@
         } catch (e) {
             console.error('Error saving removed users:', e);
         }
-        updateRemovedUsersUI();
-    }
-
-    function updateRemovedUsersUI() {
-        if (removedUsers.length > 0) {
-            removedUsersSection.style.display = 'block';
-            removedUsersList.innerHTML = removedUsers.map(user => `
-                <div class="removed-user-item">
-                    <span><i class="fas fa-user-slash" style="color:#6c757d;"></i> <strong>${user}</strong> <span style="font-size:0.6rem; color:#6c757d;">(removed)</span></span>
-                    <div style="display:flex; gap:4px;">
-                        <button class="btn btn-sm btn-rename-modal" onclick="showRenameModal('${user}')" style="padding:2px 10px; font-size:0.6rem;">
-                            <i class="fas fa-user-edit"></i> Rename
-                        </button>
-                        <button class="restore-btn" onclick="restoreUser('${user}')"><i class="fas fa-undo"></i> Restore</button>
-                    </div>
-                </div>
-            `).join('');
-        } else {
-            removedUsersSection.style.display = 'none';
-        }
-    }
-
-    function restoreUser(username) {
-        if (!confirm(`Restore "${username}" to the team? They will be able to log in again.`)) return;
-        
-        removedUsers = removedUsers.filter(u => u !== username);
-        saveRemovedUsers();
-        showToast(`✅ ${username} has been restored to the team`);
-        updateAdminStats();
-        updateUserList();
-        renderTable();
     }
 
     function isUserRemoved(username) {
@@ -2274,26 +2164,74 @@
         
         const recordCount = records.filter(r => r.addedBy === username).length;
         
-        if (!confirm(`Remove "${username}" from the team?\n\nThey have ${recordCount} record(s) in the system.\n- Their records will remain but show as "Removed"\n- They will no longer be able to log in`)) {
+        if (!confirm(`Remove "${username}" from the team?\n\nThey have ${recordCount} record(s) in the system.\n- Their records will be transferred to "Admin"\n- They will be completely removed from the system\n- They will no longer be able to log in`)) {
             return;
         }
         
-        removedUsers.push(username);
-        saveRemovedUsers();
-        showToast(`✅ ${username} has been removed from the team. Their records remain.`);
-        updateAdminStats();
-        updateUserList();
-        renderTable();
+        // Transfer all records to Admin
+        const userRecords = records.filter(r => r.addedBy === username);
+        let transferredCount = 0;
+        
+        const promises = userRecords.map(record => {
+            const firebaseKey = record._firebaseKey;
+            if (!firebaseKey) return Promise.resolve();
+            
+            const updatedRecord = {
+                ...record,
+                addedBy: 'Admin',
+                previousOwner: username,
+                transferredAt: new Date().toISOString()
+            };
+            
+            return database.ref('censusRecords/' + firebaseKey).update(updatedRecord)
+                .then(() => {
+                    transferredCount++;
+                })
+                .catch(err => {
+                    console.error('Error transferring record:', err);
+                });
+        });
+        
+        Promise.all(promises).then(() => {
+            // Add to removed list
+            if (!removedUsers.includes(username)) {
+                removedUsers.push(username);
+            }
+            saveRemovedUsers();
+            
+            // Clean local storage
+            try {
+                const storedData = localStorage.getItem('censusData');
+                if (storedData) {
+                    const data = JSON.parse(storedData);
+                    if (data.records && data.records.length > 0) {
+                        data.records = data.records.filter(r => r.addedBy !== username);
+                        localStorage.setItem('censusData', JSON.stringify(data));
+                    }
+                }
+            } catch (e) {
+                console.error('Error cleaning local storage:', e);
+            }
+            
+            showToast(`✅ "${username}" completely removed. ${transferredCount} records transferred to Admin.`);
+            updateAdminStats();
+            updateUserList();
+            renderTable();
+            database.ref('censusRecords').once('value');
+        });
     }
 
     // =============================================
-    // UNIQUE USERNAME CHECK
+    // UNIQUE USERNAME CHECK - Excludes removed users
     // =============================================
     function checkUsernameAvailability(name) {
         if (!name) return true;
         const users = new Set();
         records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy)) users.add(r.addedBy);
+            // Only count users that haven't been removed
+            if (r.addedBy && !isUserRemoved(r.addedBy)) {
+                users.add(r.addedBy);
+            }
         });
         if (name.toLowerCase() === 'admin') {
             return true;
@@ -2304,6 +2242,7 @@
                 return false;
             }
         }
+        // Check if user is in removed list
         if (isUserRemoved(name)) {
             return false;
         }
@@ -2452,7 +2391,7 @@
         const isAvailable = checkUsernameAvailability(name);
         if (!isAvailable && name.toLowerCase() !== 'admin') {
             usernameError.style.display = 'block';
-            usernameError.textContent = '⚠️ This username is no longer active or taken. Please contact admin.';
+            usernameError.textContent = '⚠️ This username has been removed from the system. Please contact admin.';
         } else {
             usernameError.style.display = 'none';
         }
@@ -2471,8 +2410,8 @@
             const isAvailable = checkUsernameAvailability(name);
             if (!isAvailable) {
                 usernameError.style.display = 'block';
-                usernameError.textContent = '⚠️ This username is no longer active or taken. Please contact admin.';
-                loginError.textContent = 'This username is no longer active on the team.';
+                usernameError.textContent = '⚠️ This username has been removed from the system. Please contact admin.';
+                loginError.textContent = 'This username has been removed from the system.';
                 loginError.style.display = 'block';
                 loginName.focus();
                 return;
@@ -2578,7 +2517,7 @@
             if (storedName.toLowerCase() !== 'admin' && isUserRemoved(storedName)) {
                 localStorage.removeItem('censusUserName');
                 localStorage.removeItem('censusIsAdmin');
-                showToast('⚠️ Your account has been deactivated. Contact admin.', true);
+                showToast('⚠️ Your account has been removed from the system.', true);
                 return;
             }
             
@@ -2611,6 +2550,9 @@
                     const localRecords = data.records;
                     let addedCount = 0;
                     localRecords.forEach(localRec => {
+                        // Skip records from removed users
+                        if (isUserRemoved(localRec.addedBy)) return;
+                        
                         const exists = records.some(r => 
                             r.tin === localRec.tin && 
                             r.name === localRec.name &&
@@ -2644,7 +2586,7 @@
     }
 
     // =============================================
-    // PERMISSION CHECKS
+    // PERMISSION CHECKS - Removed users have no access
     // =============================================
     function canEditRecord(record) {
         if (isAdmin) return true;
@@ -2665,7 +2607,7 @@
     }
 
     // =============================================
-    // ADMIN STATS
+    // ADMIN STATS - Only show active users
     // =============================================
     function updateAdminStats() {
         if (!isAdmin) {
@@ -2675,9 +2617,12 @@
         
         adminStatsPanel.classList.add('visible');
         
+        // Only show users that are NOT removed
         const users = new Set();
         records.forEach(r => {
-            if (r.addedBy && !isUserRemoved(r.addedBy)) users.add(r.addedBy);
+            if (r.addedBy && !isUserRemoved(r.addedBy)) {
+                users.add(r.addedBy);
+            }
         });
         const userArray = Array.from(users).sort();
         
@@ -2690,19 +2635,6 @@
             if (u === currentFilter) option.selected = true;
             adminUserFilter.appendChild(option);
         });
-        
-        if (removedUsers.length > 0) {
-            const optGroup = document.createElement('optgroup');
-            optGroup.label = 'Removed Users';
-            removedUsers.forEach(u => {
-                const option = document.createElement('option');
-                option.value = u;
-                option.textContent = u + ' (removed)';
-                if (u === currentFilter) option.selected = true;
-                optGroup.appendChild(option);
-            });
-            adminUserFilter.appendChild(optGroup);
-        }
         
         applyAdminFilter();
     }
@@ -2732,7 +2664,8 @@
     }
 
     function renderAdminStats() {
-        let filteredRecords = [...records];
+        // Only include records from users that are NOT removed
+        let filteredRecords = [...records].filter(r => !isUserRemoved(r.addedBy));
         
         if (adminFilterUser !== 'all') {
             filteredRecords = filteredRecords.filter(r => r.addedBy === adminFilterUser);
@@ -2779,7 +2712,7 @@
         const userNames = Object.keys(userStats).sort();
         
         if (userNames.length === 0) {
-            userStatsGrid.innerHTML = '<div style="text-align:center; color:#6a8ba0; padding:1rem; grid-column:1/-1;">No records found matching the filters</div>';
+            userStatsGrid.innerHTML = '<div style="text-align:center; color:#6a8ba0; padding:1rem; grid-column:1/-1;">No active users with records found.</div>';
             return;
         }
         
@@ -2798,15 +2731,12 @@
             
             const isAdminUser = user.toLowerCase() === 'admin';
             const isCurrentUser = user === userName;
-            const isRemoved = isUserRemoved(user);
             
             const card = document.createElement('div');
             card.className = 'user-stat-card';
-            card.style.opacity = isRemoved ? '0.6' : '1';
             card.innerHTML = `
-                <div class="user-name" style="${isRemoved ? 'text-decoration:line-through; color:#6c757d;' : ''}">
+                <div class="user-name">
                     ${user} ${isAdminUser ? '🔑' : ''} ${isCurrentUser ? '★' : ''}
-                    ${isRemoved ? '<span class="removed-badge">Removed</span>' : ''}
                 </div>
                 <div class="user-count">📊 <span>${stats.count}</span> records</div>
                 <div class="user-totals">
@@ -2819,7 +2749,6 @@
                         ${isAdminUser ? '👑 Admin' : '👤 User'}
                     </span>
                     ${stats.count > 0 ? `<span class="user-badge" style="background:#e8f0fe; color:#1b6f9c;">${stats.count} record${stats.count > 1 ? 's' : ''}</span>` : ''}
-                    ${isRemoved ? `<span class="user-badge" style="background:#f8d7da; color:#721c24;">🚫 Removed</span>` : ''}
                 </div>
             `;
             userStatsGrid.appendChild(card);
@@ -2841,12 +2770,9 @@
             </div>
             <div style="margin-top:4px;">
                 <span class="user-badge" style="background:#cce5ff; color:#004085;">${userNames.length} active team members</span>
-                ${removedUsers.length > 0 ? `<span class="user-badge" style="background:#f8d7da; color:#721c24;">${removedUsers.length} removed</span>` : ''}
             </div>
         `;
         userStatsGrid.appendChild(summaryCard);
-        
-        updateRemovedUsersUI();
     }
 
     // =============================================
@@ -3023,7 +2949,7 @@
     }
 
     // =============================================
-    // UPDATE USER LIST
+    // UPDATE USER LIST - Only show active users
     // =============================================
     function updateUserList() {
         const users = new Set();
@@ -3046,9 +2972,6 @@
             return `<span style="background:#e8e0f0; color:#6f42c1; padding:1px 8px; border-radius:10px;">${u}</span>`;
         }).join(' ');
         
-        if (removedUsers.length > 0) {
-            html += ` <span style="font-size:0.55rem; color:#6c757d; margin-left:4px;">| ${removedUsers.length} removed</span>`;
-        }
         userListSpan.innerHTML = html;
     }
 
@@ -3548,7 +3471,6 @@
             const actualIndex = records.findIndex(r => r._firebaseKey === rec._firebaseKey);
             const canEdit = canEditRecord(rec);
             const canDelete = canDeleteRecord(rec);
-            const isRemoved = isUserRemoved(rec.addedBy);
             const hasMergedFrom = rec.mergedFrom && rec.mergedFrom !== rec.addedBy;
             const hasPreviousName = rec.previousName && rec.previousName !== rec.addedBy;
             
@@ -3582,10 +3504,7 @@
             const span = document.createElement('span');
             span.textContent = addedBy;
             span.className = 'user-name';
-            if (isRemoved) {
-                span.className += ' removed-user';
-                span.textContent = addedBy + ' 🚫';
-            } else if (hasMergedFrom) {
+            if (hasMergedFrom) {
                 span.className += ' merged-user';
                 span.textContent = addedBy + ' 🔄';
                 span.title = `Merged from: ${rec.mergedFrom}`;
@@ -4152,7 +4071,11 @@
     console.log('🔵 Rename button is blue');
     console.log('🔵 Merge button is blue');
     console.log('🔴 Remove button is red');
-    console.log('✅ Merged users are properly removed from the team');
+    console.log('✅ Removed users are COMPLETELY removed from the system');
+    console.log('✅ Removed users do NOT appear in the summary dashboard');
+    console.log('✅ Removed users do NOT appear in the team members list');
+    console.log('✅ Removed users cannot log in');
+    console.log('✅ Removed users\' records are transferred to Admin');
     </script>
 </body>
 </html>
