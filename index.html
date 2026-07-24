@@ -225,6 +225,75 @@
         }
         .admin-stats .orphan-warning .fix-btn:hover { background: #0069d9; }
         
+        /* Sector Summary Table */
+        .sector-summary-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid #e2ebf3;
+        }
+        .sector-summary-section h5 {
+            font-size: 0.8rem;
+            color: #0d3b52;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .sector-summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.72rem;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e2ebf3;
+        }
+        .sector-summary-table th {
+            background: #0d3b52;
+            color: white;
+            padding: 6px 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.65rem;
+            white-space: nowrap;
+        }
+        .sector-summary-table td {
+            padding: 5px 8px;
+            text-align: center;
+            border-bottom: 1px solid #eef3f8;
+            font-size: 0.7rem;
+        }
+        .sector-summary-table tr:hover td {
+            background: #f8fafc;
+        }
+        .sector-summary-table .sector-label {
+            font-weight: 700;
+            color: #0d3b52;
+            text-align: left;
+        }
+        .sector-summary-table .total-row td {
+            background: #eaf2f9;
+            font-weight: 700;
+            color: #0d3b52;
+            border-top: 2px solid #0d3b52;
+        }
+        .sector-summary-table .total-row:hover td {
+            background: #eaf2f9;
+        }
+        .sector-summary-table .count-company { color: #1b6f9c; font-weight: 600; }
+        .sector-summary-table .count-individual { color: #6f42c1; font-weight: 600; }
+        .sector-summary-table .count-ngo { color: #20c997; font-weight: 600; }
+        .sector-summary-table .count-other { color: #d4a017; font-weight: 600; }
+        .sector-summary-table .count-total { color: #0d3b52; font-weight: 700; }
+        .sector-summary-wrapper {
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 8px;
+        }
+        .sector-summary-wrapper::-webkit-scrollbar { width: 4px; }
+        .sector-summary-wrapper::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .sector-summary-wrapper::-webkit-scrollbar-thumb { background: #c1c7cd; border-radius: 4px; }
+        
         /* Search Filter */
         .search-filter {
             display: flex;
@@ -1104,6 +1173,8 @@
             #renameUserModal .modal-content { padding: 1.5rem; margin: 0.5rem; }
             #manageTeamModal .modal-content .user-list-item { flex-direction: column; align-items: stretch; gap: 4px; }
             #manageTeamModal .modal-content .user-list-item .user-actions { justify-content: center; }
+            .sector-summary-table { font-size: 0.6rem; }
+            .sector-summary-table th, .sector-summary-table td { padding: 3px 4px; }
         }
         
         @media (min-width: 481px) and (max-width: 768px) {
@@ -1114,6 +1185,7 @@
             .dash-card .sector-grid { grid-template-columns: repeat(3, 1fr); }
             .dash-card .tax-grid { grid-template-columns: 1fr; }
             .admin-stats .user-stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .sector-summary-table { font-size: 0.65rem; }
         }
         
         @media (min-width: 769px) and (max-width: 1024px) {
@@ -1238,6 +1310,28 @@
                 </div>
                 <div class="user-stats-grid" id="userStatsGrid">
                     <div style="text-align:center; color:#6a8ba0; padding:1rem; grid-column:1/-1;">Loading user statistics...</div>
+                </div>
+                
+                <!-- SECTOR SUMMARY TABLE - NEW -->
+                <div class="sector-summary-section">
+                    <h5><i class="fas fa-table" style="color:#1b6f9c;"></i> Sector Summary by Taxpayer Type</h5>
+                    <div class="sector-summary-wrapper">
+                        <table class="sector-summary-table" id="sectorSummaryTable">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left; min-width:60px;">Sector</th>
+                                    <th style="color:#1b6f9c;">🏢 Company</th>
+                                    <th style="color:#6f42c1;">👤 Individual</th>
+                                    <th style="color:#20c997;">🏛️ NGO</th>
+                                    <th style="color:#d4a017;">📋 Other</th>
+                                    <th style="background:#0d3b52; color:white;">📊 Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sectorSummaryBody">
+                                <tr><td colspan="6" style="text-align:center; padding:1rem; color:#6a8ba0;">Loading sector data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -1700,6 +1794,7 @@
     const orphanWarning = document.getElementById('orphanWarning');
     const orphanCount = document.getElementById('orphanCount');
     const orphanMessage = document.getElementById('orphanMessage');
+    const sectorSummaryBody = document.getElementById('sectorSummaryBody');
     const manageTeamModal = document.getElementById('manageTeamModal');
     const teamMembersList = document.getElementById('teamMembersList');
     const mergeUserSelection = document.getElementById('mergeUserSelection');
@@ -1734,7 +1829,7 @@
     const toastMessage = document.getElementById('toastMessage');
 
     // =============================================
-    // CRITICAL FIX: PERMISSION CHECKS
+    // PERMISSION CHECKS
     // =============================================
     function canEditRecord(record) {
         if (isAdmin) return true;
@@ -1752,6 +1847,86 @@
     }
 
     // =============================================
+    // SECTOR SUMMARY TABLE - NEW
+    // =============================================
+    function renderSectorSummary() {
+        const visibleRecords = records.filter(rec => canViewRecord(rec));
+        
+        // Initialize sector data
+        const sectors = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U'];
+        const sectorData = {};
+        sectors.forEach(s => {
+            sectorData[s] = {
+                Company: 0,
+                Individual: 0,
+                NGO: 0,
+                Other: 0,
+                total: 0
+            };
+        });
+
+        // Count records by sector and taxpayer type
+        visibleRecords.forEach(record => {
+            if (record.sector && sectorData[record.sector]) {
+                const type = record.taxpayerType || 'Other';
+                if (sectorData[record.sector][type] !== undefined) {
+                    sectorData[record.sector][type]++;
+                    sectorData[record.sector].total++;
+                }
+            }
+        });
+
+        // Build table rows
+        let html = '';
+        let grandTotal = 0;
+        let grandCompany = 0;
+        let grandIndividual = 0;
+        let grandNGO = 0;
+        let grandOther = 0;
+
+        sectors.forEach(sector => {
+            const data = sectorData[sector];
+            const total = data.total;
+            if (total > 0) {
+                grandTotal += total;
+                grandCompany += data.Company;
+                grandIndividual += data.Individual;
+                grandNGO += data.NGO;
+                grandOther += data.Other;
+                
+                html += `
+                    <tr>
+                        <td class="sector-label">Sector ${sector}</td>
+                        <td class="count-company">${data.Company}</td>
+                        <td class="count-individual">${data.Individual}</td>
+                        <td class="count-ngo">${data.NGO}</td>
+                        <td class="count-other">${data.Other}</td>
+                        <td class="count-total">${total}</td>
+                    </tr>
+                `;
+            }
+        });
+
+        // Add total row
+        if (grandTotal > 0) {
+            html += `
+                <tr class="total-row">
+                    <td style="text-align:left; font-weight:700;">📊 TOTAL</td>
+                    <td class="count-company">${grandCompany}</td>
+                    <td class="count-individual">${grandIndividual}</td>
+                    <td class="count-ngo">${grandNGO}</td>
+                    <td class="count-other">${grandOther}</td>
+                    <td class="count-total">${grandTotal}</td>
+                </tr>
+            `;
+        } else {
+            html = `<tr><td colspan="6" style="text-align:center; padding:1rem; color:#6a8ba0;">No records found to display sector summary.</td></tr>`;
+        }
+
+        sectorSummaryBody.innerHTML = html;
+    }
+
+    // =============================================
     // ORPHAN RECORD DETECTION & FIX
     // =============================================
     function checkForOrphanedRecords() {
@@ -1761,9 +1936,7 @@
         try {
             const orphanedRecords = records.filter(r => {
                 if (!r.addedBy) return false;
-                // Check if the user exists in the system (has records)
                 const userExists = records.some(rec => rec.addedBy === r.addedBy && rec !== r);
-                // If the user doesn't exist anywhere else, it's an orphan
                 return !userExists;
             });
             
@@ -2580,7 +2753,7 @@
     }
 
     // =============================================
-    // RENDER TABLE - FIXED to only show user's own records
+    // RENDER TABLE
     // =============================================
     function renderTable() {
         tableBody.innerHTML = '';
@@ -2598,6 +2771,7 @@
             updateStats();
             updateUserList();
             updateDashboardStats();
+            renderSectorSummary();
             return;
         }
         
@@ -2716,10 +2890,11 @@
         updateUserList();
         updateDashboardStats();
         updateSearchResults();
+        renderSectorSummary();
     }
 
     // =============================================
-    // UPDATE PAGINATION - FIXED to respect permissions
+    // UPDATE PAGINATION
     // =============================================
     function updatePagination() {
         const visibleRecords = filteredRecords.filter(rec => canViewRecord(rec));
@@ -2840,7 +3015,7 @@
     }
 
     // =============================================
-    // UPDATE STATS - Shows only the user's records (non-admin) or all (admin)
+    // UPDATE STATS
     // =============================================
     function updateStats() {
         const visibleRecords = records.filter(rec => canViewRecord(rec));
@@ -2859,7 +3034,7 @@
     }
 
     // =============================================
-    // UPDATE DASHBOARD STATS - Shows only the user's records (non-admin) or all (admin)
+    // UPDATE DASHBOARD STATS
     // =============================================
     function updateDashboardStats() {
         const visibleRecords = records.filter(rec => canViewRecord(rec));
@@ -2972,7 +3147,7 @@
     }
 
     // =============================================
-    // ADMIN STATS - Only visible to Admin
+    // ADMIN STATS
     // =============================================
     function updateAdminStats() {
         if (!isAdmin) {
@@ -3000,6 +3175,7 @@
         
         applyAdminFilter();
         checkForOrphanedRecords();
+        renderSectorSummary();
     }
 
     function applyAdminFilter() {
@@ -3373,6 +3549,7 @@
             updateAdminStats();
             updateSearchResults();
             checkForOrphanedRecords();
+            renderSectorSummary();
             lastUpdatedSpan.textContent = 'Updated: ' + getTimestamp();
             setSyncStatus('Synced', 'synced');
             
@@ -4032,9 +4209,8 @@
     console.log('🛡️ Unique username enforcement active');
     console.log('👑 Admin: Can view, edit, delete ALL records');
     console.log('🔒 NON-ADMIN USERS CAN ONLY SEE THEIR OWN RECORDS');
-    console.log('👤 Angela will only see Angela\'s records');
-    console.log('👤 Kwame will only see Kwame\'s records');
-    console.log('📊 Dashboard shows records based on user permissions');
+    console.log('📊 New: Sector Summary Table shows breakdown by Taxpayer Type');
+    console.log('📋 Sector A: Company X, Individual Y, NGO Z, Other W');
     console.log('✅ All functions working properly');
     </script>
 </body>
